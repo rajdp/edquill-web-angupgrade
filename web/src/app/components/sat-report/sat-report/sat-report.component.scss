@@ -1,0 +1,182 @@
+span {
+  i {
+    font-size: 20px;
+    color: #1e6bb8;
+  }
+  img {
+    font-size: 20px;
+    color: #1e6bb8;
+  }
+}
+
+.table-spacing {
+  vertical-align: middle;
+}
+
+
+.table-striped tbody tr:nth-of-type(odd) {
+  //background-color: #cdd9f633;
+  background-color: white;
+}
+
+.table-striped tbody tr:nth-of-type(even) {
+  //background-color: #cdd9f633;
+  background-color: rgba(241, 244, 251, .5);
+}
+
+.table-striped tbody tr.searchInput:hover {
+  //background-color: #cdd9f633;
+  background-color: white;
+}
+
+.table-hover tbody tr:hover {
+  background-color: rgba(241, 244, 251, .5);
+}
+
+.table-input {
+  font-weight: 400;
+  line-height: normal;
+  padding: 0.375em 0.75em;
+  margin-bottom: 0;
+  width: 100%;
+}
+
+.sticky-table {
+  .sticky-col {
+    position: sticky;
+    z-index: 1;
+    left: -1px; 
+    background: #cdd9f6; 
+    min-width: 150px; 
+    max-width: 150px;
+  }
+
+  thead .sticky-col {
+    z-index: 2; /* ensure header cell stays above body cells */
+  }
+
+  tbody .sticky-col {
+    background: #FFFFFF !important;
+  }
+
+}
+
+.card .card-body {
+  z-index: unset !important;
+}
+
+.progress-novoice-border {
+  border: 1px solid #ff0000;
+  background: #FFFFFF !important;
+}
+
+.progress-bar {
+  border-radius: 6px !important;
+}
+
+.progress-master {
+  background-color: #007bff !important;
+}
+
+.progress-advanced {
+  background-color: #28A745 !important;
+}
+
+.progress-expert {
+  background-color: #ffc107 !important;
+}
+
+.progress-novoice {
+  background-color: #ff0000 !important;
+}
+
+.tableFixHead {
+  overflow-y: auto;
+  max-height: 400px;
+}
+
+.tableFixHead thead th {
+  position: sticky;
+  top: -1px;
+  background: #cdd9f6 !important;
+}
+
+.font-16 {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.text-blue {
+  color: #007bff !important;
+}
+
+.text-green {
+  color: #28A745 !important;
+}
+
+.text-yellow {
+  color: #ffc107 !important;
+}
+
+.text-red {
+  color: #ff0000 !important;
+}
+
+.tableFixedRow, .tableFixedRow tr td:first-child {
+  position: sticky;
+  left: 1px;
+  top: 2.7rem;
+  z-index: 999;
+  background: #fff;
+  border: 1px solid #dee2e6;
+}
+.tableFixedRow:hover {
+  background: #fff !important;
+  border: 1px solid #dee2e6 !important;
+ }
+.table tbody tr td {
+  vertical-align: middle;
+}
+
+.nav-tabs {
+
+  border-bottom: 1px solid #8F008A;
+
+  .nav-link {
+    margin-bottom: -2px;
+    &:hover {
+      border: 1px solid #8F008A;
+      border-bottom: none #fff;
+    }
+  }
+
+  .nav-link.active, .nav-tabs .nav-item.show .nav-link {
+    color: #8F008A;
+    background-color: #fff;
+    border: 1px solid #8F008A;
+    border-bottom: none #fff;
+  }
+}
+
+.button-absolute {
+  position: absolute;
+  top: -8px;
+  right: 17px;
+}
+
+.modal-body {
+  position: relative; /* makes it the reference for absolute children */
+}
+
+.scroll-to-top {
+  position: absolute;
+  bottom: 15px;
+  right: 15px;
+  opacity: 0;
+  transition: all .2s ease-in-out;
+  z-index: 1051;
+}
+
+.show-scroll {
+  opacity: 1;
+}

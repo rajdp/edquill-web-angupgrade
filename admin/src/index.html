@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en"  xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8">
+  <title>Loading</title>
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="assets/favicon-Web-32.ico" id="appIcon" rel="icon" type="image/x-icon">
+  <script src="//cdn.ckeditor.com/4.7.1/full/ckeditor.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.js"></script>
+  <script src="//code.jquery.com/pep/0.4.3/pep.js"></script>
+  <script type="text/javascript" src="assets/js/jsxgraphcore.js"></script>
+  <!--  <script type="text/javascript" src="src/assets/js/mathjs2.js"></script>-->
+  <script type="text/javascript" src="assets/js/jsxgraph.css"></script>
+
+  <script src="https://www.wiris.net/demo/plugins/app/WIRISplugins.js?viewer=image"></script>
+  <!--  <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/5/tinymce.min.js" referrerpolicy="origin"></script>-->
+  <script src="https://cdn.tiny.cloud/1/ku7lmhqp5kuubc17r132kleoxa4430oz1tb13q81fwj148yb/tinymce/5/tinymce.min.js" referrerpolicy="origin"></script>
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+  <style>
+    /*destop to all device*/
+    @media only screen and (min-width: 1000px) {
+      #Myproject{
+        display: block;
+      }
+      #showContent{
+        display: none;
+      }
+    }
+    /*tab view*/
+    @media only screen and (min-width: 700px) and (max-width: 900px) {
+      body {
+        font-family: Georgia, serif;
+        display: flex;
+        height: 100%;
+        justify-content: center;
+        align-items: center;
+      }
+      @keyframes changeLetter {
+        0% {
+          content: "Rotate Your Tab in Landscape";
+        }
+        50% {
+          color: white;
+        }
+        100% {
+          content: "Rotate Your Tab in Landscape";
+        }
+      }
+      #showContent {
+        display: block;
+        text-align: center;
+        justify-content: center;
+        display: flex;
+        align-items: center;
+        min-height: 100vh;
+      }
+      #showContent:after {
+        animation: changeLetter 3s linear infinite alternate;
+        display: block;
+        content: "Rotate Your Tab in Landscape";
+        font-size: 80px;
+      }
+      #Myproject{
+        display: none;
+      }
+    }
+    /*mobile view only*/
+    @media only screen and (max-width: 575px) {
+      #Myproject{
+        display: block;
+      }
+      #showContent{
+        display: none;
+      }
+    }
+    /*@media only screen and (max-width: 768px) {*/
+    /*  #Myproject{*/
+    /*    display: block;*/
+    /*  }*/
+    /*  #showContent{*/
+    /*    display: none;*/
+    /*  }*/
+    /*}*/
+  </style>
+  <script type="text/javascript" async="async"
+          src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=MML_CHTML">
+  </script>
+</head>
+<body>
+  <app-root></app-root>
+  <p id="myDiv"></p>
+  <script type="text/javascript">
+    // MathJax.Hub.Config({
+    //   // extensions: ["http://cs.jsu.edu/mathjax-ext/contrib/forminput/forminput.js"],
+    //   // tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]},
+    //   // TeX: {extensions: ["AMSmath.js","AMSsymbols.js"]}
+    // });
+    // document.body.addEventListener('change' , )
+    // const tinymceBind = window.tinymce.DOM.bind;
+    // window.tinymce.DOM.bind = (target, name, func, scope) => {
+    //   // TODO This is only necessary until https://github.com/tinymce/tinymce/issues/4355 is fixed
+    //   if (name === 'mouseup' && func.toString().includes('throttle()')) {
+    //     return func;
+    //   } else {
+    //     return tinymceBind(target, name, func, scope);
+    //   }
+    // };
+    // document.getElementById('myDiv');
+    document.getElementById('myDiv').addEventListener("click", ()=> {
+      // alert('s')
+
+      MathJax.Hub.Typeset();
+    });
+    // document.addEventListener("mouseover", ()=> {
+    //   // MathJax.Hub.Update();
+    //   MathJax.Hub.Typeset();
+    // });
+
+
+
+  </script>
+</body>
+</html>

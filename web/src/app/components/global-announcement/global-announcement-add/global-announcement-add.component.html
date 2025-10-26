@@ -1,0 +1,84 @@
+<!-- Container-fluid starts-->
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="card tab2-card">
+                <div class="card-header py-3">
+                    <h5 class="text-capitalize">{{type == 'add' ? 'Add' : 'Edit'}} Global Announcement</h5>
+                    <label class="text-muted mb-0">All fields marked with <span class="text-danger">*</span> are required</label>
+                </div>
+                <div class="card-body tab2-card">
+                    <form [formGroup]="announcementForm" class="needs-validation user-add" novalida>
+                        <div class="form-group row">
+                            <label for="validationCustom1" class="col-xl-3 col-md-4"><span>*</span>
+                                Title</label>
+                            <div class="col-xl-8 col-md-7">
+                                <input class="form-control" formControlName="title" id="validationCustom1"
+                                       type="text" placeholder="Title" required>
+                                <em class="error" *ngIf="!announcementForm.get('title').valid && (announcementForm.get('title').dirty || announcementForm.get('title').touched)">Title is required</em>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="validationCustom2" class="col-xl-3 col-md-4"><span>*</span>
+                                Description</label>
+                            <div class="col-xl-8 col-md-7">
+                                <textarea class="form-control" formControlName="description" id="validationCustom2"
+                                          type="email" placeholder="Description"></textarea>
+                                <em class="error" *ngIf="!announcementForm.get('description').valid && (announcementForm.get('description').dirty || announcementForm.get('description').touched)">Description is required</em>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="validationCustom2" class="col-xl-3 col-md-4"><span>*</span>
+                                From Date</label>
+                            <div class="col-xl-8 col-md-7">
+                                <div class="d-flex align-items-baseline">
+                                    <input class="form-control"  formControlName="fromDate" placeholder="From Date"
+                                           name="dp" angular-mydatepicker #dp="angular-mydatepicker" autocomplete="off"
+                                           [options]="myDpOptions" (dateChanged)="onDateChanged($event)" (click)="dp.toggleCalendar()">
+                                    <div class="input-group-append">
+                                        <button type="button" class="btn btn-primary" (click)="dp.toggleCalendar()">
+                                            <i class="fa fa-calendar-o"></i></button>
+                                    </div>
+                                </div>
+                                <em class="error" *ngIf="!announcementForm.get('fromDate').valid && (announcementForm.get('fromDate').dirty || announcementForm.get('fromDate').touched)">From Date is required</em>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="validationCustom2" class="col-xl-3 col-md-4"><span>*</span>
+                                To Date</label>
+                            <div class="col-xl-8 col-md-7">
+                                <div class="d-flex align-items-baseline">
+                                    <input class="form-control"  formControlName="toDate" placeholder="To Date"
+                                           name="dp1" angular-mydatepicker #dp1="angular-mydatepicker" autocomplete="off"
+                                           [options]="myDpOptions" (dateChanged)="onDateChanged($event)" (click)="dp1.toggleCalendar()">
+                                    <div class="input-group-append">
+                                        <button type="button" class="btn btn-primary" (click)="dp1.toggleCalendar()">
+                                            <i class="fa fa-calendar-o"></i></button>
+                                    </div>
+                                </div>
+                                <em class="error" *ngIf="!announcementForm.get('toDate').valid && (announcementForm.get('toDate').dirty || announcementForm.get('toDate').touched)">To Date is required</em>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="validationCustom5" class="col-xl-3 col-md-4"><span>*</span>
+                                Status</label>
+                            <div class="col-xl-8 col-md-7">
+                                <select class="form-control" formControlName="status" id="validationCustom5">
+                                    <option selected disabled>&#45;&#45;Select&#45;&#45;</option>
+                                    <option value="1">Active</option>
+                                    <option value="2">Suspended</option>
+<!--                                    <option *ngIf="type =='edit'" value="3">Disengaged</option>-->
+                                    <option *ngIf="type =='edit'" value="4">Deleted</option>
+                                </select>
+                                <em class="error" *ngIf="!announcementForm.get('status').valid && (announcementForm.get('status').dirty || announcementForm.get('status').touched)">Status is required</em>
+                            </div>
+                        </div>
+                    </form>
+                    <div class="pull-right">
+                        <button (click)="addOrEditSubjectService()" type="button" class="btn btn-primary">{{type == 'add' ? 'Save' : 'Update'}}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

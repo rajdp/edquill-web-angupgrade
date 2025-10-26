@@ -1,0 +1,932 @@
+<script src="content-home.component.ts"></script>
+<div class="container-fluid" *ngIf="schoolStatus?.length != 0 || this.auth.getRoleId() == '3'">
+    <div class="card">
+        <div class="row">
+            <div class="col-md-12" *ngIf="manageOwnContent || !backContentIcon">
+                <div class="m-2 pull-right">
+                    <button class="btn btn-outline-primary mr-3" *ngIf="multiContentId.length > 1" (click)="multiAssignOfContent()">Assign</button>
+                    <a class="btn btn-outline-primary mr-3" *ngIf="backContentIcon" [routerLink]="'/content-text-resource/passage'">Reading Passages</a>
+                    <a class="btn btn-outline-primary mr-3" *ngIf="manageOwnContent" [routerLink]="'/classroom/list-classroom'">Content Folder</a>
+                    <button class="btn btn-outline-primary mr-3" *ngIf="manageOwnContent" [routerLink]="'/repository/create-test/add'">Create Test</button>
+                    <button class="btn btn-primary mr-3" *ngIf="manageOwnContent" (click)="showAdd()">Create Content</button>
+                    <button class="btn btn-primary" *ngIf="!backContentIcon" (click)="enterList()"><i class="fa fa-long-arrow-left fa-1x" aria-hidden="true"></i> Back</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-5 col-lg-3 col-xl-3">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="float-left mb-1 topDivision cursor letter" (click)="clearall();"><span class="text-underline">Clear Filters</span></div>
+                        <div class="pull-right mb-1">
+                            <input (change)="sortExact()" [(ngModel)]="exactSearch" type="checkbox"> Exact Search
+                        </div>
+                        <div class="input-group">
+                            <input id= "myInput" type="text" class="form-control"  style="height:45px" size="50" placeholder="Subject / Name / Grade " [(ngModel)]="searchKey" (input)="updateFilter(searchKey)">
+                            <div class="input-group-append">
+                                <button class="btn btn-primary" type="submit"><i class="fa fa-search" aria-hidden="true"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-12 mt-3">
+                        <select class="form-control" [(ngModel)]="libraryselection" (change)="library($event)">
+                            <option value="0">Entire Library</option>
+                            <option value="1">Resource</option>
+                            <option value="2">Assignment</option>
+                            <option value="3">Assessment</option>
+                        </select>
+                    </div>
+                    <div class="col-md-12 mt-3">
+<!--                        <button class="btn-dashboard w-100" [ngClass]="{'active2': contentUserId == auth.getUserId()}" (click)="authorizedBy()">Authored By Me</button>-->
+                        <button class="btn-dashboard w-100 text-underline" [ngClass]="selectAuthored" (click)="callCurrentBtn('authored')">Authored By Me</button>
+                    </div>
+                    <div class="col-md-12 mt-3">
+<!--                        <button class="btn-dashboard w-100" [ngClass]="{'active2': typeid == 'mydraft'}" (click)="mydraft('mydraft')">My Draft</button>-->
+                        <button class="btn-dashboard w-100 text-underline" [ngClass]="selectDraft" (click)="callCurrentBtn('mydraft')">My Draft</button>
+                    </div>
+                    <div class="col-md-12">
+                        <hr>
+                    </div>
+                    <div class="col-md-12">
+                        <p><b>Sort</b></p>
+                        <select class="form-control" [(ngModel)]="sortfilter" (change)="sort($event)">
+                            <option selected  value="0">Recent</option>
+                            <option value="AZ">A - Z</option>
+                            <option value="ZA">Z - A</option>
+                            <option value="-1">Popularity</option>
+<!--                            <option *ngFor="let cc of cclist" value="{{cc.content_user_id}}">{{cc.name}} (Content Creator)</option>-->
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <p class="float-left mt-3"><b>Filter</b></p>
+                    </div>
+                    <div class="col-md-12">
+                        <ng-select [items]="gradeData"
+                                   [(ngModel)]="gradeid"
+                                   bindLabel="grade_name"
+                                   bindValue="grade_id"
+                                   placeholder="Select Grade"
+                                   typeToSearchText=""
+                                   multiple ="true"
+                                   (change)="selectedgrade($event)"
+                        >
+                        </ng-select>
+                        <ng-select class="mt-3" [items]="subjectData"
+                                   [(ngModel)]="subjectid"
+                                   bindLabel="subject_name"
+                                   bindValue="subject_id"
+                                   placeholder="Select Subject"
+                                   typeToSearchText=""
+                                   multiple ="true"
+                                   (change)="selectedsubject($event)"
+                        >
+                        </ng-select>
+                        <ng-select class="mt-3" [items]="tagData"
+                                   [(ngModel)]="tagid"
+                                   bindLabel="tag_name"
+                                   bindValue="tag_id"
+                                   placeholder="Tags"
+                                   typeToSearchText=""
+                                   multiple ="true"
+                                   (change)="selectedtag($event)"
+                        >
+                        </ng-select>
+                    </div>
+                </div>
+            </div>
+            <div class="col-7 col-lg-9 col-xl-9 scrollPanel">
+                <div class="row d-flex justify-content-center" *ngIf="contentdata.length == 0 && (manageOwnContent || manageInstitutionContent)">
+                    <div class="col-4">
+                        <button class="nodataList">No Data Available!</button>
+                    </div>
+                </div>
+
+                <div class="row d-flex justify-content-center" *ngIf="!manageOwnContent && !manageInstitutionContent">
+                    <div class="col-6">
+                        <button class="nodataList">You don't have permission to access content. Please contact admin!</button>
+                    </div>
+                </div>
+
+                <div *ngIf="contentdata.length != 0 && (manageOwnContent || manageInstitutionContent)"
+                     class="search-results row"
+                     infiniteScroll
+                     [infiniteScrollDistance]="2"
+                     [infiniteScrollThrottle]="50"
+                     [infiniteScrollContainer]="selector"
+                     [fromRoot]="true"
+                        (scrolled)="onScrollDown($event)"
+                        (scrolledUp)="onUp($event)"
+                >
+                <div class="col-12 col-lg-12 col-xl-12"  *ngFor="let list of contentdata; let i = index">
+                    <div class="card flex-fill class-card class-hover col-12 cursor" (click)="navigateToPreview(list)" [title]="list.name">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-1 d-inline-flex pl-0" (click)="$event.stopPropagation()">
+<!--                                <input *ngIf="contentIcon == true || backContentIcon == false" [checked]="list.checked" [disabled]="list.details == 'Draft'" (change)="selectOrUnSelectContentList(list, $event)" type="checkbox" class="mr-2 cursor">-->
+                                <input *ngIf="assignDirect || !backContentIcon" [checked]="list.checked" [disabled]="list.details == 'Draft'" (change)="selectOrUnSelectContentList(list, $event)" type="checkbox" class="mr-2 cursor">
+                                <img class="cursor rounded-circle" (click)="detailPreview(i, 'details')" *ngIf="list.profile_url == '' && list.content_type == 1" src="assets/images/ristaschool/resource.png" alt="" style="width: 50px;height: 50px;" title="View Details">
+                                <img class="cursor rounded-circle" (click)="detailPreview(i, 'details')" *ngIf="list.profile_url == '' && list.content_type == 2" src="assets/images/ristaschool/option-writing-checkbox-concepts-survey.png" alt="" style="width: 50px;height: 50px;" title="View Details">
+                                <img class="cursor rounded-circle" (click)="detailPreview(i, 'details')" *ngIf="list.profile_url == '' && list.content_type == 3" src="assets/images/ristaschool/assessment.png" alt="" style="width: 50px;height: 50px;" title="View Details">
+                                <img class="cursor rounded-circle" (click)="detailPreview(i, 'details')" *ngIf="list.profile_url != ''" [src]="sanitizer.bypassSecurityTrustResourceUrl(webhost + '/' + list.profile_url)" style="width: 50px;height: 50px;" alt="" title="View Details">
+                            </div>
+                            <div class="col-8">
+                                <h4 class="t-period"><span class="font-weight-bold">{{ (list.name.length>50)? (list.name | slice:0:50)+'...':(list.name) }}</span> &nbsp;<span (click)="$event.stopPropagation();"><i class="fa fa-info-circle text-info cursor mr-1" style="font-size: 21px;" (click)="showInfo(list, i)" aria-hidden="true" title="Information"></i></span>
+                                </h4>
+                                <div class="col-12 px-0 d-flex justify-content-between">
+                                    <span *ngIf="list.content_type == '1'" class="badge badge-green font-weight-bold align-self-center">Resource</span>
+                                    <span *ngIf="list.content_type == '2'" class="badge badge-warning font-weight-bold align-self-center">Assignment</span>
+                                    <span *ngIf="list.content_type == '3'" class="badge badge-primary font-weight-bold align-self-center">Assessment</span>
+                                    <div class="col-10 px-0"><p><span>Grade:</span>&nbsp;<b class="contenttext">{{ list.grade_name}}</b>
+                                        &nbsp;&nbsp;<span>Subject:</span>&nbsp; <b class="contenttext">{{ list.subject_name}}</b></p></div>
+                                </div>
+                            </div>
+                            <div class="col-3 d-flex flex-wrap justify-content-end">
+                                <p class="col-12 px-0 mb-0"><span class="float-right"><span class="contenttext">{{list.details}}</span></span>
+<!--                                    <span>-->
+<!--                                        <button *ngIf="(roleid == '2' && list.access != '3' && list.access != '4') || (roleid == '6' && list.access == '4')" class="btn-outline-primary btn-sm-view mt-1 ml-1 float-right"  (click)="removeContent(list)" title="Delete"><i class="fa fa-trash" aria-hidden="true"></i></button>-->
+<!--                                        <button *ngIf="detailButtonPreview == true" class="btn-outline-primary btn-sm-view mt-1 ml-1 float-right"  (click)="detailPreview(i, 'details')" title="Details"><i class="fa fa-address-card-o" aria-hidden="true"></i></button>-->
+<!--                                        <button (click)="PreviewPage(list, list.content_type)" *ngIf="list.content_format == 1" class="btn-outline-primary btn-sm-view mt-1 float-right" title="Preview"><i class="fa fa-eye" aria-hidden="true"></i></button>-->
+<!--                                        <button (click)="PreviewText(list, list.content_type)" *ngIf="list.content_format == 3" class="btn-outline-primary btn-sm-view mt-1 float-right" title="Preview"><i aria-hidden="true" class="fa fa-eye"></i></button>-->
+<!--                                        <button (click)="assignResource(i, 'browseAssign')" *ngIf="browseAllAssign == true && assignDirect == false " class="btn-outline-primary btn-sm-view mt-1 mr-1 float-right" title="Assign"><i aria-hidden="true" class="fa fa-users"></i></button>-->
+<!--                                        <button class="btn-outline-primary btn-sm-view mt-1 mr-1 float-right" *ngIf="showIcon == true && assignIcon == true" (click)="assignResource(i, 'assign')" title="Assign"><i class="fa fa-users" aria-hidden="true"></i></button>-->
+<!--                                        <button class="btn-outline-primary btn-sm-view mt-1 mr-1 float-right" *ngIf="assignDirect == true" [disabled]="allowCurriculum == false" (click)="assignResource(i, 'notassign')" title="Assign"><i class="fa fa-users" aria-hidden="true"></i></button>-->
+<!--                                        <button class="{{(list.access == '3' && (this.schoolId != list.school_id)) || list.access == '4' ? 'btn-outline-primary' : 'btn-primary'}} btn-sm-view mt-1 mr-1 float-right" [disabled]="(list.access == '3' && (this.schoolId != list.school_id)) || list.access == '4'" *ngIf="list.content_format == 3 && roleid == '2'" (click)="editAction(list, 'addText', '0')" title="Edit"><i class="fa fa-pencil" aria-hidden="true"></i></button>-->
+<!--                                        <button class="{{(list.access == '3' && (this.schoolId != list.school_id)) || list.access == '4' ? 'btn-outline-primary' : 'btn-primary'}} btn-sm-view mt-1 mr-1 float-right" [disabled]="(list.access == '3' && (this.schoolId != list.school_id)) || list.access == '4'" *ngIf="list.content_format == 1 && roleid == '2'" (click)="editAction(list, 'addPdf', '0')" title="Edit"><i class="fa fa-pencil" aria-hidden="true"></i></button>-->
+<!--                                        <button class="{{list.edit_status == '0' || !allowEdit ? 'btn-outline-primary' : 'btn-primary'}} btn-sm-view mt-1 mr-1 float-right" title="Edit"><i class="fa fa-pencil" aria-hidden="true"></i></button>-->
+<!--                                        <button class="{{list.edit_status == '0' || !allowEdit ? 'btn-outline-primary' : 'btn-primary'}} btn-sm-view mt-1 mr-1 float-right" [disabled]="list.edit_status == '0' || !allowEdit"  title="Edit"><i class="fa fa-pencil" aria-hidden="true"></i></button></span>-->
+                                </p>
+                                <div class="dropdown" (click)="$event.stopPropagation()">
+                                    <button class="btn-sm-i btn-outline-primary">Action <i class="fa fa-sort-desc float-right ml-2" aria-hidden="true"></i></button>
+                                    <div class="dropdown-content cursor" style="right: 1px">
+                                        <a *ngIf="(roleid == '4' && list.edit_status == '1') || (roleid == '6' && list.edit_status != '0')" (click)="editAction(list, list.content_format == 3 ? 'addText' : 'addPdf', '0')"><i class="fa fa-pencil pl-1 pr-1" aria-hidden="true"></i> Edit</a>
+                                        <a *ngIf="roleid == '2' && !(auth.getSessionData('school_id') != list.school_id && list.access == '3') && list.access != '4'" (click)="editAction(list, list.content_format == 3 ? 'addText' : 'addPdf', '0')"><i class="fa fa-pencil pl-1 pr-1" aria-hidden="true"></i> Edit</a>
+                                        <a *ngIf="showIcon && assignIcon" (click)="assignResource(i, 'assign')"><i class="fa fa-users" aria-hidden="true"></i> Assign</a>
+                                        <a *ngIf="assignDirect" (click)="assignResource(i, 'notassign')"><i class="fa fa-users" aria-hidden="true"></i> Assign</a>
+                                        <a *ngIf="browseAllAssign == true && assignDirect == false" (click)="assignResource(i, 'browseAssign')"><i class="fa fa-users" aria-hidden="true"></i> Assign</a>
+                                        <a (click)="PreviewPage(list, list.content_type)" *ngIf="list.content_format == 1"><i class="fa fa-eye" aria-hidden="true"></i> Preview</a>
+                                        <a (click)="PreviewText(list, list.content_type)" *ngIf="list.content_format == 3"><i class="fa fa-eye" aria-hidden="true"></i> Preview</a>
+                                        <a *ngIf="detailButtonPreview == true" (click)="detailPreview(i, 'details')"><i class="fa fa-address-card-o" aria-hidden="true"></i> Details</a>
+                                        <a *ngIf="(roleid == '2' && list.access != '3' && list.access != '4') || (roleid == '6' && list.access == '4') ||
+                                            (roleid == '4' && list.edit_status == '1')" (click)="removeContent(list)"><i class="fa fa-trash" aria-hidden="true"></i> Delete</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-12" *ngIf="list.showDetails">
+                                <div class="row mt-3 d-flex justify-content-center">
+                                    <div class="col-5">
+                                        <p><span>Created by:</span> <b class="contenttext">&nbsp;{{list.created_by}}</b><br/>
+                                            <span>Created Date:</span> <b class="contenttext">&nbsp;{{list.created_date | customDateFormat}}</b>
+                                        </p>
+                                    </div>
+                                    <div class="col-5">
+                                        <p><span>Content Type:<span class="contenttext font-weight-bold">
+                                             {{list.content_type == 1 ? 'Resources' : list.content_type == 2 ? 'Assignment' : 'Assessment'}} {{list.content_format == 3 ? '(TEXT)' : list?.is_pdf_content == 0 ? '(LINK)' : '(PDF)'}}</span>
+                                        <br/></span>
+                                            <small>Access:</small> <b class="contenttext"><span *ngIf="list.access == '1'"> Access to all within Org</span> <span *ngIf="list.access == '2'"> Access only for you</span><span *ngIf="list.access == '4'"> Access within corporate</span></b>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+<!--                    <p><span class="row">-->
+<!--                        <span class="col-10 cursor" (click)="detailPreview(i, 'details')" *ngIf="list.content_type == 1"><b>{{ (list.name.length>50)? (list.name | slice:0:50)+'...':(list.name) }}</b></span>-->
+<!--                        <span class="col-10 cursor" (click)="detailPreview(i, 'details')" *ngIf="list.content_type == 2"><b>{{ (list.name.length>50)? (list.name | slice:0:50)+'...':(list.name) }}</b></span>-->
+<!--                        <span class="col-10 cursor" (click)="detailPreview(i, 'details')" *ngIf="list.content_type == 3"><b>{{ (list.name.length>50)? (list.name | slice:0:50)+'...':(list.name) }}</b></span>-->
+<!--                        <span class="col-2" *ngIf="(roleid == '2' && list.access != '3' && list.access != '4') || (roleid == '6' && list.access == '4')"><i class="fa fa-trash float-right letter fa-2x" aria-hidden="true" style="cursor:pointer" (click)="removeContent(list)"></i></span>-->
+<!--                    </span>-->
+<!--                    <small>Created by:</small> <b class="contenttext">{{list.created_by}}</b><br/>-->
+<!--                    <small>Created Date:</small> <b class="contenttext">{{list.created_date | date: 'MM/dd/yyyy'}}</b><br/>-->
+<!--                    <small>Grade:</small> <b  class="contenttext">{{list.grade_name}}</b><br/>-->
+<!--                    <small>Subject:</small> <b class="contenttext">{{list.subject_name}}</b><br/>-->
+<!--                        <small>Access:</small> <b class="contenttext"><span *ngIf="list.access == '1'">Within Institution</span> <span *ngIf="list.access == '2'">Access only for you</span> <span *ngIf="list.access == '3'">Public</span><span *ngIf="list.access == '4'">Access within corporate</span></b><br/>-->
+<!--                    <span class="float-right letter"><small>{{list.details}}</small></span>-->
+<!--                    <span *ngIf="list.content_type == 1"><small>Content Type:</small> <b class="contenttext">Resources-->
+<!--                    <span *ngIf="list.content_format == 1">(PDF)</span>-->
+<!--                    <span *ngIf="list.content_format == 2">(LINK)</span>-->
+<!--                    <span *ngIf="list.content_format == 3">(TEXT)</span></b><br/></span>-->
+<!--                    <span *ngIf="list.content_type == 2"><small>Content Type:</small> <b class="contenttext">Assignment-->
+<!--                    <span *ngIf="list.content_format == 1">(PDF)</span>-->
+<!--                    <span *ngIf="list.content_format == 2">(LINK)</span>-->
+<!--                    <span *ngIf="list.content_format == 3">(TEXT)</span></b><br/></span>-->
+<!--                    <span *ngIf="list.content_type == 3"><small>Content Type:</small> <b class="contenttext">Assessment-->
+<!--                    <span *ngIf="list.content_format == 1">(PDF)</span>-->
+<!--                    <span *ngIf="list.content_format == 2">(LINK)</span>-->
+<!--                    <span *ngIf="list.content_format == 3">(TEXT)</span></b><br/></span>-->
+<!--                    </p>-->
+<!--                    <p class="w-100">-->
+<!--                    <button class="{{list.edit_status == '0' || !allowEdit ? 'btn-outline-primary' : 'btn-primary'}} w-32 mt-1 mr-1" [disabled]="list.edit_status == '0' || !allowEdit" *ngIf="list.content_format == 1 && roleid != '2'" (click)="editAction(list, 'addPdf', '0')">Edit</button>-->
+<!--                    <button class="{{list.edit_status == '0' || !allowEdit ? 'btn-outline-primary' : 'btn-primary'}} w-32 mt-1 mr-1" [disabled]="list.edit_status == '0' || !allowEdit" *ngIf="list.content_format == 3 && roleid != '2'" (click)="editAction(list, 'addText', '0')">Edit</button>-->
+<!--                    <button class="{{(list.access == '3' && (this.schoolId != list.school_id)) || list.access == '4' ? 'btn-outline-primary' : 'btn-primary'}} w-32 mt-1 mr-1" [disabled]="(list.access == '3' && (this.schoolId != list.school_id)) || list.access == '4'" *ngIf="list.content_format == 1 && roleid == '2'" (click)="editAction(list, 'addPdf', '0')">Edit</button>-->
+<!--                    <button class="{{(list.access == '3' && (this.schoolId != list.school_id)) || list.access == '4' ? 'btn-outline-primary' : 'btn-primary'}} w-32 mt-1 mr-1" [disabled]="(list.access == '3' && (this.schoolId != list.school_id)) || list.access == '4'" *ngIf="list.content_format == 3 && roleid == '2'" (click)="editAction(list, 'addText', '0')">Edit</button>-->
+<!--                        <button class="btn-outline-primary w-32 mt-1 mr-1" *ngIf="assignDirect == true" (click)="assignResource(i, 'notassign')">Assign</button>-->
+<!--                        <button class="btn-outline-primary w-32 mt-1 mr-1" *ngIf="showIcon == true && assignIcon == true" (click)="assignResource(i, 'assign')">Assign</button>-->
+<!--                        <button class="btn-outline-primary w-32 mt-1 mr-1" *ngIf="browseAllAssign == true && assignDirect == false " (click)="assignResource(i, 'browseAssign')">Assign</button>-->
+<!--                        <button (click)="PreviewText(list, list.content_type)" *ngIf="list.content_format == 3" class="btn-outline-primary w-32 mt-1">Preview</button>-->
+<!--                        <button (click)="PreviewPage(list, list.content_type)" *ngIf="list.content_format == 1" class="btn-outline-primary w-32 mt-1">Preview</button>-->
+<!--                        <button *ngIf="detailButtonPreview == true" class="btn-outline-primary w-32 mt-1 ml-1"  (click)="detailPreview(i, 'details')">Details</button>-->
+<!--                    </p>-->
+                    </div>
+                    </div>
+                    </div>
+                </div>
+
+                <!--<virtual-scroller #scroll  [enableUnequalChildrenSizes]="randomSize" [items]="contentdata" (vsChange)="scrollEnd($event)">-->
+                    <!--<div class="col-md-4 flex-fill"  *ngFor="let list of contentdata; let i = index">-->
+                        <!--<div class="card flex-fill">-->
+                            <!--<img class="card-img-top w-100" *ngIf="list.profile_url == ''" src="assets/images/ristaschool/resource.png" style="width: 100%;height: 180px;" alt="">-->
+                            <!--<img class="card-img-top w-100" *ngIf="list.profile_url != ''" [src]="sanitizer.bypassSecurityTrustResourceUrl(webhost + '/' + list.profile_url)" style="width: 100%;height: 180px;" alt="">-->
+                            <!--<div class="card-body">-->
+                                <!--<p><b>{{list.name | titlecase}}</b><br/>-->
+                                    <!--<small>Created by:</small> <b class="contenttext">{{list.created_by}}</b><br/>-->
+                                    <!--<small>Grade:</small> <b  class="contenttext">{{list.grade_name}}</b><br/>-->
+                                    <!--<small>Subject:</small> <b class="contenttext">{{list.subject_name}}</b><br/>-->
+                                    <!--<span class="float-right"><small class="pr-3">{{details}}</small></span>-->
+                                    <!--<span *ngIf="list.content_type == 1"><small>Content Type:</small> <b class="contenttext">Resources-->
+                                        <!--<span *ngIf="list.content_format == 1">(PDF)</span>-->
+                                        <!--<span *ngIf="list.content_format == 2">(LINK)</span>-->
+                                        <!--<span *ngIf="list.content_format == 3">(TEXT)</span></b><br/></span>-->
+                                    <!--<span *ngIf="list.content_type == 2"><small>Content Type:</small> <b class="contenttext">Assignment-->
+                                        <!--<span *ngIf="list.content_format == 1">(PDF)</span>-->
+                                        <!--<span *ngIf="list.content_format == 2">(LINK)</span>-->
+                                        <!--<span *ngIf="list.content_format == 3">(TEXT)</span></b><br/></span>-->
+                                    <!--<span *ngIf="list.content_type == 3"><small>Content Type:</small> <b class="contenttext">Assessment-->
+                                        <!--<span *ngIf="list.content_format == 1">(PDF)</span>-->
+                                        <!--<span *ngIf="list.content_format == 2">(LINK)</span>-->
+                                        <!--<span *ngIf="list.content_format == 3">(TEXT)</span></b><br/></span>-->
+                                <!--</p>-->
+                                <!--<p class="w-100">-->
+                                    <!--<button class="btn-outline-primary w-32 mt-1 mr-1" *ngIf="list.file_text == ''&& showIcon == true" (click)="editAction(list, 'addPdf', '0')">Edit</button>-->
+                                    <!--<button class="btn-outline-primary w-32 mt-1 mr-1" *ngIf="list.file_text != ''&& showIcon == true" (click)="editAction(list, 'addText', '0')">Edit</button>-->
+                                    <!--<button class="btn-outline-primary w-32 mt-1 mr-1" *ngIf="showIcon == false" (click)="assignResource(i)">Assign</button>-->
+                                    <!--<button class="btn-outline-primary w-32 mt-1 mr-1">Preview</button>-->
+                                    <!--<button class="btn-outline-primary btn-sm-i mt-1" (click)="detailPreview(i)">Details</button>-->
+                                <!--</p>-->
+                            <!--</div>-->
+                        <!--</div>-->
+                    <!--</div>-->
+                <!--</virtual-scroller>-->
+            </div>
+        </div>
+    </div>
+</div>
+<div *ngIf="schoolStatus?.length == 0">
+    <app-emptyschool>
+    </app-emptyschool>
+</div>
+<ng-template #detailsTemplate let-c="close" let-d="dismiss">
+    <div  class="modal-header">
+        <h5><b>{{contentName}}</b></h5>
+        <i class="fa fa-close" style="cursor: pointer" (click)="close()"></i>
+    </div>
+    <div class="modal-body">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="row-6">
+                    <img *ngIf="profileurl == '' && contentType == 1" src="assets/images/ristaschool/resource.png" style="width: 370px; height: 270px" alt="">
+                    <img *ngIf="profileurl == '' && contentType == 2" src="assets/images/ristaschool/option-writing-checkbox-concepts-survey.png" style="width: 370px; height: 270px" alt="">
+                    <img *ngIf="profileurl == '' && contentType == 3" src="assets/images/ristaschool/assessment.png" style="width: 370px; height: 270px" alt="">
+                    <img *ngIf="profileurl != ''" [src]="sanitizer.bypassSecurityTrustResourceUrl(webhost + '/' + profileurl)" style="width: 370px; height: 270px" alt="">
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="row">
+<!--                    <button class="btn btn-outline-primary col-md-4">Preview</button>-->
+                    <!--<img class="pull-right ml-2 mr-2 col-md-2 pdf-icons"  src="assets/images/pdf-icons/draw.png" alt="">-->
+                    <img *ngIf="sortdetails" class="pull-right ml-2 col-md-2 pdf-icons" src="assets/images/pdf-icons/Icon material-delete.png" alt="">
+                </div>
+                <div class="mt-2">
+                    <!--<span class="float-right"><i class="fa fa-pencil-square-o fa-3x cursor" aria-hidden="true" *ngIf="contentDetaildata.file_text == '' && contentDetaildata.edit_status != '0'"  (click)="editAction(contentDetaildata, 'addPdf', '1')"></i></span>-->
+                    <!--<span class="float-right"><i class="fa fa-pencil-square-o fa-3x cursor" aria-hidden="true" *ngIf="contentDetaildata.file_text != '' && contentDetaildata.edit_status != '0'" (click)="editAction(contentDetaildata, 'addText', '1')"></i></span>-->
+                    <p class="mt-2" *ngIf="description != ''">Description
+                        <br><span class="contenttext">{{ (description.length>100)? (description | slice:0:100)+'..':(description) }}</span>
+                    </p>
+                    <p>Created by <br><b class="contenttext">{{createdby}}</b>
+                    </p>
+                    <p>Grade <br><b class="contenttext">{{gradename}}</b></p>
+                    <p>Subject <br><b class="contenttext">{{subjectname}}</b></p>
+                    <p>Tags <br><b class="contenttext">{{tags}}</b></p>
+                </div>
+                <div class="row">
+                    <div class="col-md-5">
+                        <p>No of Questions <br><b class="contenttext">{{noofquestions}}</b></p>
+                    </div>
+                    <div class="col-md-3">
+                        <p>Points <br><b class="contenttext">{{totalpoints}}</b></p>
+                    </div>
+                    <div class="col-md-4">
+                        <p>Status <br><b class="contenttext">{{details}}</b></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</ng-template>
+<ng-template #select let-c="close" let-d="dismiss">
+    <div class="modal-header align-items-center">
+        <h4 class="modal-title w-100 text-center"><b>Select type of the content</b></h4>
+        <i class="fa fa-close" style="cursor: pointer" (click)="close()"></i>
+    </div>
+    <div class="modal-body">
+        <div class="row">
+            <div class="col-md-4 text-center">
+                <img alt="Add Resources" src="assets/images/pdf-icons/books-stack-of-three.png">
+                <button type="button" class="btn btn-primary w-100 mt-4 mb-2" [disabled]="neededButtonType != 'resources' && contentAssign == 'class' && neededButtonType != undefined"
+                        (click)="upload('resource')">Add Resources</button>
+            </div>
+            <div class="col-md-4 text-center">
+                <img alt="Add Assignment" src="assets/images/pdf-icons/book.png">
+                <button type="button"  class="btn btn-primary w-100 mt-4 mb-2" [disabled]="neededButtonType != 'assignments' && contentAssign == 'class' && neededButtonType != undefined"
+                        (click)="upload('assignment')">Add Assignment</button>
+            </div>
+            <div class="col-md-4 text-center">
+                <img alt="Add Assessment" src="assets/images/pdf-icons/exam.png">
+                <button type="button"  class="btn btn-primary w-100 mt-4 mb-2" [disabled]="neededButtonType != 'assessments' && contentAssign == 'class' && neededButtonType != undefined"
+                        (click)="upload('assessment')">Add Assessment</button>
+            </div>
+        </div>
+    </div>
+</ng-template>
+<!--<ng-template #resources let-c="close" let-d="dismiss">-->
+<!--    <div class="modal-header align-items-center">-->
+<!--        <h4 class="modal-title w-100 text-center"><b>Add Resources</b></h4>-->
+<!--        <i class="fa fa-close" style="cursor: pointer" (click)="close()"></i>-->
+<!--    </div>-->
+<!--    <div class="modal-body">-->
+<!--        <div class="row">-->
+<!--            <div class="col-md-6 text-center" style="border-right: 1px solid #c4c4c4;">-->
+<!--                <img src="assets/images/pdf-icons/Icon ionic-md-cloud-upload.png">-->
+<!--                <h4 class="mt-3">Create From PDF</h4>-->
+<!--                <h5 class="mt-3">Upload Resource as a PDF format and proceed to assign it to your students</h5>-->
+<!--                <div class="d-flex align-items-baseline">-->
+<!--                    <input accept=".pdf" style="display: none" type="file" (change)="encodePdfFileAsURL($event, 'resource')" #hiddenfileinput>-->
+<!--                    <button class="btn btn-primary mt-3 mb-2 w-100" type="file" aria-describedby="inputGroupFileAddon01"-->
+<!--                            (click)="hiddenfileinput.click()">Browse</button>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--            <div class="col-md-6 text-center">-->
+<!--                <img src="assets/images/pdf-icons/Icon material-library-books.png">-->
+<!--                <h4 class="mt-3">Create From Scratch</h4>-->
+<!--                <h5 class="mt-3">Write your resource content and proceed to assign it to your student</h5>-->
+<!--                <div class="d-flex align-items-baseline">-->
+<!--                    <button type="button"  class="btn btn-primary w-100 mt-3 mb-2" [routerLink]="'/content-text-resource/text-resource/add'" (click)="close()">Create Content</button>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--</ng-template>-->
+<!--<ng-template #assignment let-c="close" let-d="dismiss">-->
+<!--    <div class="modal-header align-items-center">-->
+<!--        <h4 class="modal-title w-100 text-center"><b>Add Assignment</b></h4>-->
+<!--        <i class="fa fa-close" style="cursor: pointer" (click)="close()"></i>-->
+<!--    </div>-->
+<!--    <div class="modal-body">-->
+<!--        <div class="row">-->
+<!--            <div class="col-md-6 text-center" style="border-right: 1px solid #c4c4c4;">-->
+<!--                <img src="assets/images/pdf-icons/Icon ionic-md-cloud-upload.png">-->
+<!--                <h4 class="mt-3">Create From PDF</h4>-->
+<!--                <h5 class="mt-3">Upload Assignment as a PDF format and proceed to assign it to your students</h5>-->
+<!--                <div class="d-flex align-items-baseline">-->
+<!--                    <input accept=".pdf" style="display: none" type="file" (change)="encodePdfFileAsURL($event, 'assignment')" #hiddenfileinput>-->
+<!--                    <button class="btn btn-primary mt-3 mb-2 w-100" type="file" aria-describedby="inputGroupFileAddon01"-->
+<!--                            (click)="hiddenfileinput.click()">Browse</button>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--            <div class="col-md-6 text-center">-->
+<!--                <img src="assets/images/pdf-icons/Icon material-library-books.png">-->
+<!--                <h4 class="mt-3">Create From Scratch</h4>-->
+<!--                <h5 class="mt-3">Write your assignment content and proceed to assign it to your student</h5>-->
+<!--                <div class="d-flex align-items-baseline">-->
+<!--                    <button type="button" class="btn btn-primary w-100 mb-2 mt-3" (click)="openText('assignment')">Create Content</button>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--</ng-template>-->
+<!--<ng-template #assessment let-c="close" let-d="dismiss">-->
+<!--    <div class="modal-header align-items-center">-->
+<!--        <h4 class="modal-title w-100 text-center"><b>Add Assessment</b></h4>-->
+<!--        <i class="fa fa-close" style="cursor: pointer" (click)="close()"></i>-->
+<!--    </div>-->
+<!--    <div class="modal-body">-->
+<!--        <div class="row">-->
+<!--            <div class="col-md-6 text-center" style="border-right: 1px solid #c4c4c4;">-->
+<!--                <img src="assets/images/pdf-icons/Icon ionic-md-cloud-upload.png">-->
+<!--                <h4 class="mt-3">Create From PDF</h4>-->
+<!--                <h5 class="mt-3">Upload Assessment as a PDF format and proceed to assign it to your students</h5>-->
+<!--                <div class="d-flex align-items-baseline">-->
+<!--                    <input accept=".pdf" style="display: none" type="file" (change)="encodePdfFileAsURL($event, 'assessment')" #hiddenfileinput>-->
+<!--                    <button class="btn btn-primary mt-3 mb-2 w-100"  type="file" aria-describedby="inputGroupFileAddon01"-->
+<!--                            (click)="hiddenfileinput.click()">Browse</button>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--            <div class="col-md-6 text-center">-->
+<!--                <img src="assets/images/pdf-icons/Icon material-library-books.png">-->
+<!--                <h4 class="mt-3">Create From Scratch</h4>-->
+<!--                <h5 class="mt-3">Write your assessment content and proceed to assign it to your student</h5>-->
+<!--                <div class="d-flex align-items-baseline">-->
+<!--                    <button type="button" class="btn btn-primary w-100 mb-2 mt-3" (click)="openText('assessment')">Create Content</button>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--</ng-template>-->
+
+<ng-template id="myModal11" #assign let-c="close" let-d="dismiss">
+    <div class="modal-dialog1">
+        <div class="modal-header">
+            <h4 class="contenttext mb-0">{{contentName ? contentName : 'Multi Content Assign'}}</h4>
+        </div>
+        <div class="modal-body">
+            <form [formGroup]="linkform">
+                <div class="row form-group" *ngIf="firstAssign == true">
+                    <div class="col-md-12">
+                        <label class="font-weight-bold">Assign Resource For</label>
+                    </div>
+                    <div class="col-md-12">
+                        <select id="selectBox" class="form-control"  formControlName="typeSelection" (change)="typeSelection()">
+                            <option value="n/a" disabled>Select type</option>
+                            <option value="1">Class</option>
+                            <option *ngIf="contentName" value="2">Content Folder</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row form-group" *ngIf="multiContentId.length != 0 && !contentName">
+                    <label class="col-12 font-weight-bold">Selected Content</label>
+                    <mat-form-field class="col-12">
+                        <mat-chip-grid #chipList>
+                            <mat-chip-row
+                                          *ngFor="let item of multiContentId; let i=index"
+                                          (removed)="removeSelectedMultiContent(item, i)" name="chips">{{item.name}}
+                                <mat-icon *ngIf="multiContentId.length > 1" matChipRemove>cancel</mat-icon>
+                            </mat-chip-row>
+                            <input placeholder="" readonly [matChipInputFor]="chipList"
+                                   [matChipInputAddOnBlur]="true"
+                                   />
+                        </mat-chip-grid>
+                    </mat-form-field>
+                </div>
+                <div>
+                    <div class="row form-group" *ngIf="resourcetype == true">
+                        <div class="col-md-12">
+                            <label class="font-weight-bold">Class</label>
+                        </div>
+                        <div class="col-md-12" *ngIf="classDropDown == false">
+                            <input class="form-control" formControlName="classname" readonly type="text" placeholder="Enter the Class Name" value="{{className}}">
+                        </div>
+                        <div *ngIf="classDropDown == true" class="col-md-8">
+                            <ng-select [items]="classData"
+                                       formControlName="classSelect"
+                                       bindValue="class_id"
+                                       bindLabel="class_name"
+                                       placeholder="Select Class *"
+                                       typeToSearchText=""
+                                       [multiple]="true"
+                                       (remove)="dummyStudent()"
+                                       [closeOnSelect]="false"
+                                       [attr.title]="selectedClassName"
+                                       (change)="updateClassName()"
+                                       (close)="dummyStudent()"
+                                       (clear)="clearFormArray()"
+                            >
+                                <ng-template ng-option-tmp let-item="item">
+                                    <div [attr.title]="item.class_name">{{ item.class_name }}</div>
+                                </ng-template>
+                            </ng-select>
+                        </div>
+                        <div *ngIf="classDropDown == true" class="col-md-4">
+                            <ng-select (change)="teacherFilter($event)"
+                                       [items]="teacherData"
+                                       bindLabel="teacher_name"
+                                       bindValue="teacher_id"
+                                       formControlName="teacherSelect"
+                                       placeholder="Teacher Filter"
+                                       typeToSearchText=""
+                            >
+                            </ng-select>
+                        </div>  
+                    </div>
+                    <div class="row form-group" *ngIf="resourcetype == true && topicsData.length != 0 && linkform.controls.classSelect.value.length <= 1">
+                        <div class="col-md-12">
+                            <label class="font-weight-bold">Topics</label>
+                        </div>
+                        <div class="col-md-12">
+                            <ng-select [items]="topicsData"
+                                       formControlName="topicSelect"
+                                       bindValue="topic_id"
+                                       bindLabel="topic"
+                                       placeholder="Select Topic"
+                                       typeToSearchText=""
+                            >
+                            </ng-select>
+                        </div>
+                    </div>
+                    <div class="row form-group" *ngIf="showBatch">
+                        <div class="col-md-12">
+                            <label class="font-weight-bold">Content Folder</label>
+                        </div>
+                        <div class="col-md-12 px-0">
+                            <app-treeview-contentfolder [type]="'add'" [calledForm]="'contentLibrary'"
+                                                        [treeviewHeight]="300" [selectedbatch]="[]"></app-treeview-contentfolder>
+                        </div>
+                    </div>
+                    <div class="row form-group" *ngIf="resourcetype == true && linkform.controls.classSelect.value.length != 0">
+                        <div class="col-md-8">
+                            <label class="font-weight-bold">Selected Students</label>
+                            <div class="col-md-12 d-flex align-items-center">
+                                <input id="allStudents" class="mr-2 cursor" type="radio" formControlName="radio" value="1" (change)="checkValue1($event)">
+                                    <label for="allStudents" class="mr-4 mb-0 cursor"> All Students in selected class</label>
+                                <input id="specificStudents" class="mr-2 cursor" type="radio" formControlName="radio" value="0" (change)="checkValue($event)">
+                                    <label class="mr-2 mb-0 cursor" for="specificStudents"> Specific Students</label>
+                            </div>
+                        </div>
+                        <div class="col-md-8 mt-2" *ngIf="listStudent">
+                            <ng-select [items]="studentData"
+                                       formControlName="specificstudent"
+                                       bindValue="student_id"
+                                       bindLabel="name"
+                                       placeholder="Select Student"
+                                       typeToSearchText=""
+                                       multiple="true">
+                            </ng-select>
+                        </div>
+                    </div>
+                    <div class="row form-group" *ngIf="resourcetype && ((!contentName && downloadContentAvailable) || (contentName && contentDetaildata && contentDetaildata?.download != '0'))">
+                        <div class="col-md-3">
+                            <div class="col-12" style="position: relative; font-size: 15px; left: 0.4rem">
+                                <input type="checkbox" class="form-check-input cursor" id="download" formControlName="downloadcontent">
+                                <label style="font-size: 14px" class="cursor mb-0 font-weight-bold" for="download">Download Content</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row form-group" *ngIf="resourcetype">
+                        <div class="col-md-12">
+                            <label class="font-weight-bold">Release Score</label>
+                        </div>
+                        <div class="col-md-12">
+                            <select (change)="releaseScoreFilter($event)" *ngIf="isEssay != '1'" formControlName="releaseScore" class="form-control mb-1">
+                                <option value="n/a" disabled>Select Response type</option>
+                                <option value="0">Instructor Graded</option>
+                                <option value="1">Auto Graded</option>
+                                <option value="2" *ngIf="contentFormat == '3' || !contentName">Real-Time Grading</option>
+                            </select>
+
+                            <select (change)="releaseScoreFilter($event)" *ngIf="isEssay == '1'" formControlName="releaseScore" class="form-control mb-1">
+                                <option value="n/a" disabled>Select Response type</option>
+                                <option value="0">Teacher Review Only</option>
+                                <option value="1">Automatic Feedback</option>
+                            </select>
+                            <span class="notes_style" *ngIf="!contentName || (contentName)">(Note:
+                                <span *ngIf="linkform.controls.releaseScore.value == '0' && isEssay == '0'">Responses will be reviewed and graded manually. Scores will be released after the final submission</span>
+                                <span *ngIf="linkform.controls.releaseScore.value == '1' && isEssay == '0'">Responses will be graded automatically, but scores and feedback will only be released after the final submission</span>
+                                <span *ngIf="linkform.controls.releaseScore.value == '2' && isEssay == '0'">Responses will be graded automatically and scores will be available immediately after each submission</span>
+                                <span *ngIf="linkform.controls.releaseScore.value == '0' && isEssay == '1'">Essay will be manually reviewed by the teacher to provide feedback and scores. System generated feedback is not available</span>
+                                <span *ngIf="linkform.controls.releaseScore.value == '1' && isEssay == '1'">Student can request for Automatic system generated feedback and score. Teacher can provide final feedback and score after the final submission</span>)</span>
+                        </div>
+                    </div>
+                    <div *ngIf="!checkAutoRelease" class="col-12 px-0">
+                        <p class="assign-error text-center">Auto score release is not applicable for this content</p>
+                    </div>
+
+                    <div class="row form-group" *ngIf="resourcetype && ((contentFormat == '3' && contentName) || !contentName)">
+                        <div class="col-md-2">
+                            <div class="col-12" style="position: relative; font-size: 15px; left: 0.4rem">
+                                <input type="checkbox" class="form-check-input cursor" id="workspace" formControlName="workspace">
+                                <label style="font-size: 14px" class="cursor mb-0 font-weight-bold" for="workspace">Workspace</label>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="col-12" style="position: relative; font-size: 15px; left: 0.4rem">
+                                <input type="checkbox" class="form-check-input cursor" id="feedback" formControlName="feedback">
+                                <label style="font-size: 14px" class="cursor mb-0 font-weight-bold" for="feedback">FeedBack</label>
+                            </div>
+                        </div>
+                        <div class="col-md-2" *ngIf="showTimer">
+                            <div class="col-12" style="position: relative; font-size: 15px; left: 0.4rem">
+                                <input type="checkbox" class="form-check-input cursor" id="showTimer" formControlName="showTimer">
+                                <label style="font-size: 14px" class="cursor mb-0 font-weight-bold" for="showTimer">Show Timer</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div *ngIf="showBatch == false" class="row form-group">
+                        <div class="col-md-12 mb-2 {{first ? '' : 'mt-1'}}" *ngFor="let list of linkform.get('dateRanges')['controls']; let i=index; let first = first" formArrayName="dateRanges">
+                            <div class="row" [formGroupName]="i">
+                                <div class="col-md-12 mb-2">
+                                    <div class="row contenttext">
+                                        <div class="align-content-center col-md-4">
+                                            <span style="color:#777777;" class="mb-0">Class Name: </span><span class="font-weight-bold">{{list['controls'].class_name.value}}</span>
+                                        </div>
+                                        <div class="align-content-center col-md-3 pl-0">
+                                            <span style="color:#777777;" class="mb-0">Class Start Date: </span><span class="t-name font-weight-bold">{{list.get('class_startDate').value | customDateFormat}}</span>
+                                        </div>
+                                        <div class="align-content-center col-md-3 pl-0">
+                                            <span style="color:#777777;" class="mb-0">Class End Date: </span><span class="font-weight-bold">{{list.get('class_endDate').value | customDateFormat}}</span>
+                                        </div>
+                                        <div class="col-md-2 text-right" *ngIf="first && linkform.get('dateRanges')['controls'].length > 1">
+                                            <button (click)="applyToAll(list)" class="btn btn-outline-primary">Apply To All</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="row align-items-center">
+                                        <label class="col-md-4 mb-0 pr-2 font-weight-bold">Start Date</label>
+                                        <input class="form-control col-md-8" formControlName="startDate" placeholder="Start Date"
+                                               name="dp" angular-mydatepicker #dp="angular-mydatepicker" autocomplete="off"
+                                               [options]="myDpOptions2" (dateChanged)="onDateChanged($event)" (click)="dp.toggleCalendar()">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="row align-items-center">
+                                        <label class="mb-0 ml-3 mr-1 font-weight-bold">Start Time</label>
+                                        <div class="col-md-8 px-0">
+                                            <ngb-timepicker formControlName="startTime" [meridian]="meridian" [spinners]="spinner"></ngb-timepicker>
+                                        </div>
+                                        <em class="error" *ngIf="linkform.get('startTime').invalid && (linkform.get('startTime').dirty || linkform.get('startTime').touched)">
+                                            StartTime is invalid
+                                        </em>
+                                        <div class="small form-text text-danger" *ngIf="checkTimeDifference(list)">
+                                            Select valid Time Period
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="row align-items-center">
+                                        <label class="col-md-4 mb-0 font-weight-bold">End Date</label>
+                                        <input class="form-control col-md-8" formControlName="endDate" placeholder="End Date"
+                                               name="dp1" angular-mydatepicker #dp1="angular-mydatepicker" autocomplete="off"
+                                               [options]="myDpOptions1" (dateChanged)="onDateChanged1($event)" (click)="dp1.toggleCalendar()">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="row align-items-center">
+                                        <label class="mb-0 ml-3 mr-1 font-weight-bold">End Time</label>
+                                        <div class="col-md-8 px-0">
+                                            <ngb-timepicker [meridian]="meridian" formControlName="endTime" [spinners]="spinner"></ngb-timepicker>
+                                            <em class="error" *ngIf="linkform.get('endTime').invalid && (linkform.get('endTime').dirty || linkform.get('endTime').touched)">
+                                                EndTime is invalid
+                                            </em>
+
+                                            <div class="small form-text text-danger" *ngIf="checkTimeDifference(list)">
+                                                Select valid Time Period
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+<!--                    <div *ngIf="showBatch == false" class="row form-group">-->
+<!--                        <div class="col-md-2">-->
+<!--                            <div class="row-md-12">-->
+<!--                                <label>Start Date</label>-->
+<!--                            </div>-->
+<!--                            <div class="row-md-12">-->
+<!--                                <input class="form-control" formControlName="startDate" placeholder="Start Date"-->
+<!--                                       name="dp" angular-mydatepicker #dp="angular-mydatepicker" autocomplete="off"-->
+<!--                                       [options]="myDpOptions2" (dateChanged)="onDateChanged($event)" (click)="dp.toggleCalendar()">-->
+<!--                            </div>-->
+<!--                        </div>-->
+<!--                        <div class="col-md-4">-->
+<!--                            <div class="row-md-12">-->
+<!--                                <label>Start Time</label>-->
+<!--                            </div>-->
+<!--                            <div class="row-md-12">-->
+<!--                                <ngb-timepicker (keypress)="changeStartTime()" formControlName="startTime" [meridian]="meridian" [spinners]="spinner"></ngb-timepicker>-->
+<!--                            </div>-->
+<!--                            <em class="error" *ngIf="linkform.get('startTime').invalid && (linkform.get('startTime').dirty || linkform.get('startTime').touched)">-->
+<!--                                StartTime is invalid-->
+<!--                            </em>-->
+<!--                            <div class="small form-text text-danger" *ngIf="timeErr">-->
+<!--                                <div *ngIf="timeErr">Select valid Time Period</div>-->
+<!--                            </div>-->
+<!--                        </div>-->
+<!--                        <div class="col-md-2">-->
+<!--                            <div class="row-md-12">-->
+<!--                                <label>End Date</label>-->
+<!--                            </div>-->
+<!--                            <div class="row-md-12">-->
+<!--                                <input class="form-control" formControlName="endDate" placeholder="End Date"-->
+<!--                                       name="dp1" angular-mydatepicker #dp1="angular-mydatepicker" autocomplete="off"-->
+<!--                                       [options]="myDpOptions1" (dateChanged)="onDateChanged1($event)" (click)="dp1.toggleCalendar()">-->
+<!--                            </div>-->
+<!--                        </div>-->
+<!--                        <div class="col-md-4">-->
+<!--                            <div class="row-md-12">-->
+<!--                                <label>End Time</label>-->
+<!--                            </div>-->
+<!--                            <div class="row-md-12">-->
+<!--                                <ngb-timepicker (keypress)="changeStartTime()" [meridian]="meridian" formControlName="endTime" [spinners]="spinner"></ngb-timepicker>-->
+<!--                            </div>-->
+<!--                            <em class="error" *ngIf="linkform.get('endTime').invalid && (linkform.get('endTime').dirty || linkform.get('endTime').touched)">-->
+<!--                                EndTime is invalid-->
+<!--                            </em>-->
+<!--                            <div class="small form-text text-danger" *ngIf="timeErr">-->
+<!--                                <div *ngIf="timeErr">Select valid Time Period</div>-->
+<!--                            </div>-->
+<!--                        </div>-->
+<!--                    </div>-->
+                    <!--            <div class="row form-group" *ngIf="resourcetype">-->
+                    <!--                <div class="col-md-12">-->
+                    <!--                    <label>Notes </label>-->
+                    <!--                </div>-->
+                    <!--                <div class="col-md-12">-->
+                    <!--                    <textarea  type="text" class="form-control" placeholder="Enter Notes" formControlName="notes"></textarea>-->
+                    <!--                </div>-->
+                    <!--            </div>-->
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline-primary" *ngIf="firstAssign == false" (click)="close1()">Cancel</button>
+            <button class="btn btn-outline-primary" *ngIf="firstAssign == true" (click)="cancel()">Cancel</button>
+            <button (click)="submitAssign('1')" *ngIf="defaultShow == true" [disabled]="!checkAutoRelease" class="btn btn-primary">Submit</button>
+        </div>
+    </div>
+</ng-template>
+<ng-template #batchassign let-c="close" let-d="dismiss">
+    <div class="modal-header">
+        <h4 class="contenttext">{{contentName}}</h4>
+    </div>
+    <div class="modal-body">
+        <form [formGroup]="linkform">
+        <div class="row form-group">
+        <div class="col-md-12">
+            <label>Content Folder</label>
+        </div>
+            <div class="col-md-12">
+                <input class="form-control" formControlName="batch" readonly type="text" placeholder="Enter the Class Name" value="{{className}}">
+            </div>
+        </div>
+            <div *ngIf="resourcetype && !showBatch && allowScore" class="row form-group">
+                <div class="col-md-12">
+                    <label>Release Score</label>
+                </div>
+                <div class="col-md-12">
+                    <select (change)="releaseScoreFilter($event)"  class="form-control" formControlName="releaseScore">
+                        <option value="n/a" disabled>Select Response type</option>
+                        <option *ngIf="isEssay == '0'" value="0">Instructor Graded</option>
+                        <option *ngIf="isEssay == '0'" value="1">Auto Graded</option>
+                        <option *ngIf="isEssay == '1'" value="0">Teacher Review Only</option>
+                        <option *ngIf="isEssay == '1'" value="1">Automatic Feedback</option>
+                        <option value="2" *ngIf="isEssay == '0' && (contentFormat == '3' || !contentName)">Real-Time Grading</option>
+                    </select>
+                    <span *ngIf="!contentName || (contentName)" style="color: #757070; font-size: 13px">Note:
+                                <span *ngIf="linkform.controls.releaseScore.value == '0' && isEssay == '0'">Responses will be reviewed and graded manually. Scores will be released after the final submission</span>
+                                <span *ngIf="linkform.controls.releaseScore.value == '1' && isEssay == '0'">Responses will be graded automatically, but scores and feedback will only be released after the final submission</span>
+                                <span *ngIf="linkform.controls.releaseScore.value == '2' && isEssay == '0'">Responses will be graded automatically and scores will be available immediately after each submission</span>
+                                <span *ngIf="linkform.controls.releaseScore.value == '0' && isEssay == '1'">Essay will be manually reviewed by the teacher to provide feedback and scores. System generated feedback is not available</span>
+                                <span *ngIf="linkform.controls.releaseScore.value == '1' && isEssay == '1'">Student can request for Automatic system generated feedback and score. Teacher can provide final feedback and score after the final submission</span>
+                            </span>
+                </div>
+            </div>
+            <div *ngIf="!checkAutoRelease" class="col-12 px-0">
+                <p class="assign-error text-center">Auto score release is not applicable for this content</p>
+            </div>
+<!--        <div class="row form-group">-->
+<!--            <div class="col-md-2">-->
+<!--                <div class="row-md-12">-->
+<!--                    <label>Start Date</label>-->
+<!--                </div>-->
+<!--                <div class="row-md-12">-->
+<!--                    <input class="form-control" formControlName="startDate" placeholder="Start Date"-->
+<!--                           name="dp" angular-mydatepicker #dp="angular-mydatepicker" autocomplete="off"-->
+<!--                           [options]="myDpOptions" (dateChanged)="onDateChanged($event)" (click)="dp.toggleCalendar()"/>-->
+<!--                </div>-->
+<!--                <em class="error" *ngIf="linkform.get('startDate').invalid && (linkform.get('startDate').dirty || linkform.get('startDate').touched)">-->
+<!--                    StartDate is invalid-->
+<!--                </em>-->
+<!--            </div>-->
+<!--            <div class="col-md-4">-->
+<!--                <div class="row-md-12">-->
+<!--                    <label>Start Time</label>-->
+<!--                </div>-->
+<!--                <div class="row-md-12">-->
+<!--                    <ngb-timepicker (keypress)="changeStartTime()" formControlName="startTime" [meridian]="meridian" [spinners]="spinner"></ngb-timepicker>-->
+<!--                </div>-->
+<!--                <em class="error" *ngIf="linkform.get('startTime').invalid && (linkform.get('startTime').dirty || linkform.get('startTime').touched)">-->
+<!--                    StartTime is invalid-->
+<!--                </em>-->
+<!--                <div class="small form-text text-danger" *ngIf="timeErr">-->
+<!--                    <div *ngIf="timeErr">Select valid Time Period</div>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--            <div class="col-md-2">-->
+<!--                <div class="row-md-12">-->
+<!--                    <label>End Date</label>-->
+<!--                </div>-->
+<!--                <div class="row-md-12">-->
+<!--                    <input class="form-control" formControlName="endDate" placeholder="End Date"-->
+<!--                           name="dp1" angular-mydatepicker #dp1="angular-mydatepicker" autocomplete="off"-->
+<!--                           [options]="myDpOptions1" (dateChanged)="onDateChanged1($event)" (click)="dp1.toggleCalendar()"/>-->
+<!--                </div>-->
+<!--                <em class="error" *ngIf="linkform.get('endDate').invalid && (linkform.get('endDate').dirty || linkform.get('endDate').touched)">-->
+<!--                    EndDate is invalid-->
+<!--                </em>-->
+<!--            </div>-->
+<!--            <div class="col-md-4">-->
+<!--                <div class="row-md-12">-->
+<!--                    <label>End Time</label>-->
+<!--                </div>-->
+<!--                <div class="row-md-12">-->
+<!--                    <ngb-timepicker (keypress)="changeStartTime()" [meridian]="meridian" formControlName="endTime" [spinners]="spinner"></ngb-timepicker>-->
+<!--                </div>-->
+<!--                <em class="error" *ngIf="linkform.get('endTime').invalid && (linkform.get('endTime').dirty || linkform.get('endTime').touched)">-->
+<!--                    EndTime is invalid-->
+<!--                </em>-->
+<!--                <div class="small form-text text-danger" *ngIf="timeErr">-->
+<!--                    <div *ngIf="timeErr">Select valid Time Period</div>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </div>-->
+        </form>
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-outline-primary" (click)="close1()">Cancel</button>
+        <button (click)="submitAssign('2')" class="btn btn-primary">Submit</button>
+    </div>
+</ng-template>
+<ng-template #delete let-c="close" let-d="dismiss">
+    <div class="modal-header">
+        <h4 class="modal-title col-12"><b>Delete Content From Repository</b></h4>
+    </div>
+    <div class="modal-body">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-sm-12">
+                    <h5 class="my-2"> Are you sure you want to delete the "{{deleteValue.name}}"?</h5>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn cancel" (click)="close()">Cancel</button>
+        <button type="button" class="btn btn-primary" (click)="deleteContent(deleteValue)">Confirm</button>
+    </div>
+</ng-template>
+<ng-template #allCreateContent let-c="close" let-d="dismiss">
+    <div class="modal-header align-items-center">
+        <h4 class="modal-title w-100 text-center"><b>Add Content</b></h4>
+        <i class="fa fa-close" style="cursor: pointer" (click)="close()"></i>
+    </div>
+    <div class="modal-body">
+        <div class="row">
+            <div class="col-md-6" style="min-height: 200px">
+                <div class="row d-flex align-items-center justify-content-center">
+                    <div class="col-11 text-center select-div" [routerLink]="'/Books/create-Books/add'" (click)="close()">
+                        <img src="assets/images/pdf-icons/Icon ionic-md-cloud-upload.png">
+                        <h4 class="mt-3">Create From PDF or Link</h4>
+                        <h5 class="mt-3">Upload Content as a PDF format or upload link and proceed to assign it to your students</h5>
+                        <!-- <div class="d-flex align-items-baseline">
+                                <input accept=".pdf" style="display: none" type="file" (change)="encodePdfFileAsURL($event, 'assessment')" #hiddenfileinput>
+                                <button class="btn btn-primary mt-3 mb-2 w-100"  type="file" aria-describedby="inputGroupFileAddon01"
+                                (click)="hiddenfileinput.click()">Browse</button>
+                            </div> -->
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6" style="min-height: 200px">
+                <div class="row d-flex align-items-center justify-content-center" style="height: 100%">
+                    <div class="col-11 text-center select-div" (click)="callCreateFrom()" style="height: 100%">
+                        <img src="assets/images/pdf-icons/Icon material-library-books.png">
+                        <h4 class="mt-3">Create From Scratch</h4>
+                        <h5 class="mt-3">Write your content and proceed to assign it to your student</h5>
+                        <!-- <div class="d-flex align-items-baseline">
+                                <button type="button" class="btn btn-primary w-100 mb-2 mt-3" (click)="openText('assessment')">Create Content</button>
+                            </div> -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</ng-template>
+
+<ng-template #createScratch let-c="close" let-d="dismiss">
+    <div class="modal-header align-items-center">
+        <h4 class="modal-title w-100 text-center"><b>Select type of the content</b></h4>
+        <i class="fa fa-close" style="cursor: pointer" (click)="close()"></i>
+    </div>
+    <div class="modal-body">
+        <div class="row">
+            <div class="col-md-4 text-center">
+                <img src="assets/images/pdf-icons/books-stack-of-three.png">
+<!--                <h4 class="mt-3">Upload from Local</h4>-->
+                <button type="button" class="btn btn-primary w-100 mt-4 mb-2" [disabled]="neededButtonType != 'resources' && contentAssign == 'class' && neededButtonType != undefined"
+                [routerLink]="'/content-text-resource/text-resource/add'" (click)="close()">Add Resources</button>
+            </div>
+            <div class="col-md-4 text-center">
+                <img src="assets/images/pdf-icons/book.png">
+<!--                <h4 class="mt-3">Upload from Library</h4>-->
+                <button type="button"  class="btn btn-primary w-100 mt-4 mb-2" [disabled]="neededButtonType != 'assignments' && contentAssign == 'class' && neededButtonType != undefined"
+                    (click)="scratchTypeQuestions('assignment')">Add Assignment</button>
+            </div>
+            <div class="col-md-4 text-center">
+                <img src="assets/images/pdf-icons/exam.png">
+<!--                <h4 class="mt-3">Upload from Link</h4>-->
+                <button type="button"  class="btn btn-primary w-100 mt-4 mb-2" [disabled]="neededButtonType != 'assessments' && contentAssign == 'class' && neededButtonType != undefined"
+                    (click)="scratchTypeQuestions('assessment')">Add Assessment</button>
+            </div>
+        </div>
+    </div>
+</ng-template>

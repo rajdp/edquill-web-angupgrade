@@ -1,0 +1,112 @@
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <div class="row">
+          <div class="col-12 d-flex align-items-center">
+            <h5 class="px-0">Order List Details</h5>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="form-group col-4">
+            <input (input)="searchList()" [(ngModel)]="searchedValue" style="height: 36px" type='text' class="form-control"
+                   [placeholder]="'Search using Student name or Order Id'"/>
+          </div>
+          <div class="col-12">
+            <ngx-datatable #table
+                           style="border: 1px solid #d1d4d7; border-radius: 2px"
+                           class="bootstrap ngx-datatable-design"
+                           [externalSorting]="false" [rows]="rows"
+                           [headerHeight]="50"
+                           [limit]="recordPerPage"
+                           [footerHeight]="50" [rowHeight]="'auto'"
+                           [scrollbarH]="false"
+                           [columnMode]="'force'"
+                           [messages]="{emptyMessage: 'No Orders Available!'}"
+            >
+              <!-- Row Detail Template -->
+              <ngx-datatable-row-detail  [rowHeight]="'auto'" #rowDetail>
+                <ng-template let-row="row" ngx-datatable-row-detail-template>
+                  <div class="p-3 ms-2 me-4 my-2 table-responsive table">
+                    <table class="col-12 px-0 table-bordered">
+                      <thead style="background: #8F008A; color: #FFFFFF">
+                      <th>Course Name</th>
+                      <th>Schedule Name</th>
+                      <th>Price</th>
+                      <th>Quantity</th>
+                      <th>Total Price</th>
+                      </thead>
+                      <tbody>
+                      <tr *ngFor="let orderData of row.cart_data">
+                        <td><span class="primary-color">{{orderData.course_name}}</span></td>
+                        <td><span class="primary-color">{{orderData.schedule_name}}</span></td>
+                        <td><span class="primary-color">${{orderData.price}}</span></td>
+                        <td><span class="primary-color">{{orderData.quantity}}</span></td>
+                        <td><span class="primary-color">${{orderData.total_price}}</span></td>
+                      </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </ng-template>
+              </ngx-datatable-row-detail>
+
+              <ngx-datatable-column name="Order Id" prop="payment_id">
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  <span>  {{row.payment_id}}</span>
+                </ng-template>
+              </ngx-datatable-column>
+
+              <ngx-datatable-column name="Student Name">
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  <span class="text-capitalize">{{row.full_name}}</span>
+                </ng-template>
+              </ngx-datatable-column>
+
+              <ngx-datatable-column name="Email-Id">
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  <span class="text-capitalize">{{row.email_id}}</span>
+                </ng-template>
+              </ngx-datatable-column>
+
+              <ngx-datatable-column name="Contact Number">
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  <span class="text-capitalize">{{row.mobile && row.mobile != '' ? row.mobile : '-'}}</span>
+                </ng-template>
+              </ngx-datatable-column>
+
+              <ngx-datatable-column name="Order Created Date">
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  <span>{{row.payment_date | customDateFormat }}</span>
+                </ng-template>
+              </ngx-datatable-column>
+
+              <ngx-datatable-column name="Total Amount">
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  <span>${{row.total}}</span>
+                </ng-template>
+              </ngx-datatable-column>
+
+              <ngx-datatable-column name="Payment Status">
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  <span class="badge badge-success" *ngIf="row.payment_status == '1'">Success</span>
+                  <span class="badge badge-danger" *ngIf="row.payment_status != '1'">Failed</span>
+                </ng-template>
+              </ngx-datatable-column>
+
+              <ngx-datatable-column name="Action" prop="batch">
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                    <span (click)="table.rowDetail.toggleExpandRow(row)">
+                      <i style="font-size: 20px" class="fa fa-eye color-primary cursor text-center" aria-hidden="true" title="View Order Details"></i>
+                    </span>
+                </ng-template>
+              </ngx-datatable-column>
+
+            </ngx-datatable>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

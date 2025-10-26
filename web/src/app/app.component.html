@@ -1,0 +1,28 @@
+@if (allow() && zoomAllowed()) {
+  <div class="internet" [ngClass]="connectivityClass()">
+    <router-outlet></router-outlet>
+  </div>
+}
+
+@if (allow() && zoomAllowed()) {
+  <div class="floating">
+    <div id="meetingSDKElement"></div>
+    <div id="meetingSDKChatElement"></div>
+  </div>
+}
+
+<div [ngClass]="overlayClass()">
+  <div class="row w-100" style="background: red;justify-content: center;">
+    <span>Your Internet Connection is Unstable</span>
+  </div>
+</div>
+
+@if (!allow()) {
+  <div class="internet" [ngClass]="invertedConnectivityClass()">
+    <div [ngClass]="offlineOverlayClass()">
+      <div class="row w-100" style="background: red;justify-content: center;">
+        <span>Your Internet Connection is Unstable</span>
+      </div>
+    </div>
+  </div>
+}

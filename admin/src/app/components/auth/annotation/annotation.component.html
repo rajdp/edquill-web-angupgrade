@@ -1,0 +1,100 @@
+<div [hidden]="toolHide == true" class="row mt-1">
+    <div class="col-md-{{deleteAnnatation ? 8 : 12}} d-flex {{toolAlignCenter ? 'justify-content-center' : ''}} mb-2 px-0">
+        <div class="pdf-assign-btn pdf-tools {{toolAlignCenter ? '' : 'col-md-4'}}">
+            <img (click)="incrementZoom(0.1)" alt="" src="assets/images/pdf-icons/add-circle.png" style="cursor: pointer" title="Zoom-in">
+            <img (click)="incrementZoom(-0.1)"  alt="" src="assets/images/pdf-icons/minus-circle.png" style="cursor: pointer" title="Zoom-out">
+            <img (click)="selectedDeleteIcon = !selectedDeleteIcon" (click)="deleteSvg()"  [ngClass]="selectedDeleteIcon ? 'deleteIcon': ''" alt="" src="assets/images/pdf-icons/Icon material-delete-1.png" style="cursor: pointer"  title="Delete">
+        </div>
+        <div class="pdf-assign-btn pdf-tools {{toolAlignCenter ? '' : 'col-md-8'}} pr-2 px-0">
+            <input (click)="backToQuestion()" [(ngModel)]="svgColor" class="pull-right" name="favcolor" style="margin-top: 6px" title="Color"  type="color">
+            <img (click)="backToQuestion()" (click)="tools('path', 'crosshair')" [ngClass]="shapesType == 'path'? 'selected-tool-color': ''" alt=""  class="pull-right" src="assets/images/pdf-icons/Icon awesome-pencil-alt.png" title="Sketch">
+            <img (click)="backToQuestion()" (click)=" tools('highlight', 'crosshair')" [ngClass]="shapesType == 'highlight'? 'selected-tool-color': ''" alt="" class="pull-right" src="assets/images/pdf-icons/highlighter-icon.png" title="Highlighter">
+            <img (click)="backToQuestion()" (click)=" tools('text', 'auto')" [ngClass]="shapesType == 'text'? 'selected-tool-color': ''" alt=""  class="pull-right"  src="assets/images/pdf-icons/Text.png" title="Text">
+            <img (click)="backToQuestion()" (click)="tools('rectMask', 'crosshair')" [ngClass]="shapesType == 'rectMask'? 'selected-tool-color': ''" alt=""  class="pull-right" src="assets/images/pdf-icons/eraser@2x.png" title="Erase">
+            <img (click)="backToQuestion()" (click)="tools('rect', 'crosshair')" [ngClass]="shapesType == 'rect'? 'selected-tool-color': ''" alt="" class="pull-right" src="assets/images/pdf-icons/stop.png" title="Extract">
+            <img (click)="backToQuestion()" (click)="tools('select', 'auto')" [ngClass]="shapesType == 'select' ? 'selected-tool-color': ''" alt="" class="pull-right" src="assets/images/pdf-icons/cursor (2).png" title="Mark">
+            <select [(ngModel)]="textFontSize" class="form-control pull-right mr-3" style="width: 80px" title="Font size">
+                <option disabled selected value="">--Font Size--</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+                <option value="9">9</option>
+                <option value="10">10</option>
+                <option value="11">11</option>
+                <option value="12">12</option>
+                <option value="13">13</option>
+                <option value="14">14</option>
+                <option value="15">15</option>
+                <option value="16">16</option>
+                <option value="17">17</option>
+                <option value="18">18</option>
+                <option value="19">19</option>
+                <option value="20">20</option>
+            </select>
+        </div>
+    </div>
+</div>
+<div class="row">
+<!--    <div class="col-md-{{deleteAnnatation ? 8 : 12}}" *ngIf="customPdfLoader" >-->
+<!--        <div id="custom-pdf-loader" *ngIf="customPdfLoader" style="height: 100vh;">-->
+<!--            <img src="assets/images/pre-loader/loader-01.svg" alt="">-->
+<!--        </div>-->
+<!--    </div>-->
+    <div #pdfPage (click)="mouseEvent($event)"  (mousedown)="mouseEvent($event)"
+         (mousemove)="mouseEvent($event)"
+         (mouseup)="mouseEvent($event)"
+         class="col-md-{{deleteAnnatation ? 8 : 12}}"
+         id="pdf-page">
+        <div id="custom-pdf-loader" *ngIf="customPdfLoader" style="height: 100vh;">
+            <img src="assets/images/pre-loader/loader-01.svg" alt="">
+        </div>
+        <pdf-viewer (page-rendered)="pageRendered($event)"
+                     (pageChange)="pagechanging($event)"
+                     (text-layer-rendered)="textRender($event)"
+                    (pages-initialized)="pagechanging($event)"
+                    (after-load-complete)="callBackFn($event)"
+                    (error)="onerror($event)"
+                    [(page)]="pageVariable"
+                     [fit-to-page]="true"
+                     [original-size]="true"
+                     [render-text]="this.shapesType == 'select'" [show-all]="true"
+                     [src]="pdfTemplate" [zoom]="zoom" style="display: block;height: 100vh;"></pdf-viewer>
+    </div>
+    <div *ngIf="deleteAnnatation" class="col-md-4">
+        <div class="col-md-12">
+            <button (click)="backToQuestion()" *ngIf="deleteAnnatation" class="btn btn-primary w-100 mb-3" type="button">Back</button>
+        </div>
+        <ng-container *ngIf="deleteAnnatation">
+            <app-remove-annatation (hoverleaveremoveItem)="hoverLeaveRemoveItemEnter($event)"
+                                   (hoverremoveItem)="hoverRemoveItemEnter($event)"
+                                   (openDeleteDialog)="deleteAction()"
+                                   (removeItem)="removeAnnatation($event)"
+                                   (undoDeleteAnnatation)="undoDeleteAnnatation($event)"
+                                   [items]="itemSelect"
+                                   class="scrollPanel"></app-remove-annatation>
+        </ng-container>
+    </div>
+</div>
+<ng-template #class let-c="close" let-d="dismiss">
+
+    <div class="modal-body" style="border: 0px">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-sm-12 text-right">
+                    <i (click)="close()" class="fa fa-close cursor" style="font-size: 2rem"></i>
+                </div>
+                <div class="col-sm-12 text-center">
+                    <h3 class="modal-title headerText">Delete Annotation</h3>
+                </div>
+
+                <div class="col-sm-12">
+                    <h5 class="text-center mt-3">Are you sure  want to delete Annotation(s) ?</h5>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button (click)="deleteAllAnnotation()" class="btn btn-outline-primary" type="button">All Page </button>
+        <button (click)="deleteCurrentPageAnnotation()" class="btn btn-outline-primary" type="button">This Page</button>
+    </div>
+</ng-template>

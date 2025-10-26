@@ -1,0 +1,77 @@
+<section>
+    <div class="container-fluid card">
+        <div class="card-header my-2">
+            <h5 class="text-capitalize">{{type == 'add' ? 'Add' : 'Update'}} Category</h5>
+            <label class="text-muted">All fields marked with <span class="text-danger">*</span> are required</label>
+        </div>
+        <div class="card-body">
+            <form class="mt-3" [formGroup]="form">
+                <div class="form-group row mt-1">
+                    <label class="col-sm-2 col-form-label"><span class="text-danger">*</span> Category Name </label>
+                    <div class="col-sm-10">
+                        <input class="form-control" formControlName="category_name" placeholder="Category Name">
+                        <em *ngIf="!form.get('category_name').valid && (form.get('category_name').dirty || form.get('category_name').touched)"
+                            class="error">Category Name is required</em>
+                    </div>
+                </div>
+                <div class="form-group row mt-1">
+                    <label class="col-sm-2 col-form-label"><span style="visibility: hidden">*</span> Description</label>
+                    <div class="col-sm-10">
+                        <div class="main-content">
+                            <app-tiny-mice [height]="300" [editorPatchValue]="type == 'add' ? false : description"
+                                           (emitEditorValue)="editorValue($event)"
+                                           [hideMatEditor]="true"></app-tiny-mice>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label class="col-xl-2 col-md-2"><span class="text-danger">*</span>
+                        Display Order</label>
+                    <div class="col-xl-10 col-md-10">
+                        <input maxlength="4" (keypress)="numberValidate($event)" class="form-control"
+                               formControlName="display_order"
+                               placeholder="Enter Display Order Number" type="text">
+                        <em *ngIf="!form.get('display_order').valid && (form.get('display_order').dirty || form.get('display_order').touched)"
+                            class="error">Display Order Number is required</em>
+                        <em class="error">{{showErrorMessage()}}</em>
+                    </div>
+                </div>
+                <div class="form-group row mt-1">
+                    <label class="col-sm-2 col-form-label"><span style="visibility: hidden">*</span> Cover Image</label>
+                    <div class="col-sm-10">
+                        <input #myInput (change)="encodeImageFileAsURL($event)" accept=".png, .jpg, .jpeg,.webp"
+                               class="custom-upload-input col-md-12 px-0" type="file">
+                        <span class="color-grey mb-0 font-weight-bold"
+                              style="font-size: 12px">Recommended Size 1MB</span>
+                    </div>
+                </div>
+                <div class="form-group col-12 d-flex" *ngIf="imagePath != ''">
+                    <label style="visibility: hidden" class="col-sm-2 col-form-label"><span
+                            class="mr-1 text-danger">*</span>Cover Image</label>
+                    <div class="col-xl-10 col-md-10 px-0">
+                        <i (click)="deleteImg()" class="fa fa-times-circle close-icon" title="close"></i>
+                        <div class="files-list fit-img2">
+                            <img [src]="sanitizer.bypassSecurityTrustResourceUrl(webhost  + '/' + imagePath)" class="w-30" alt="">
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group row mt-1">
+                    <label class="col-sm-2 col-form-label"><span style="visibility: hidden">*</span> Status</label>
+                    <div class="col-sm-10">
+                        <div class="main-content">
+                            <select class="form-control" formControlName="status">
+                                <option value="A">Active</option>
+                                <option value="I">Suspended</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="card-footer">
+            <button class="button float-right btn btn-primary mb-2"
+                    (click)="addcategory()">{{categoryId == '' ? 'Add Content' : 'Update Content'}}</button>
+            <a class="float-right btn cancel mb-2 mr-2" routerLink="/content/category/list">Close</a>
+        </div>
+    </div>
+</section>

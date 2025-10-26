@@ -1,0 +1,139 @@
+<!-- Container-fluid starts-->
+
+<!--<ng-template #content let-c="close" let-d="dismiss">-->
+<!--    <div class="modal-header">-->
+<!--        <h4 class="modal-title" id="modal-basic-title">Delete Books details</h4>-->
+<!--    </div>-->
+<!--    <div class="modal-body">-->
+<!--        &lt;!&ndash; Container-fluid starts&ndash;&gt;-->
+<!--        <div class="container-fluid">-->
+<!--            <div class="row">-->
+<!--                <div class="col-12">-->
+<!--                    <h5 class="text-center mt-3">Are you sure you want to delete Books details ?</h5>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </div>-->
+
+<!--        &lt;!&ndash; Container-fluid Ends&ndash;&gt;-->
+
+
+<!--    </div>-->
+<!--    <div class="modal-footer">-->
+<!--        <button type="button" class="btn btn-outline-primary" (click)="onSave()">Cancel</button>-->
+<!--    </div>-->
+<!--</ng-template>-->
+<ng-template #content let-c="close" let-d="dismiss">
+    <div class="modal-header">
+        <h4 class="modal-title" id="modal-basic-title">Settings details</h4>
+        <i class="fa fa-close fa-lg mt-1" aria-hidden="true" style="color:#7F3486; cursor: pointer; float: right;" (click)="close()"></i>
+    </div>
+    <div class="modal-body">
+        <!-- Container-fluid starts-->
+        <div class="container-fluid">
+                <form [formGroup]="settingsform" class="needs-validation user-add">
+                    <div class="row">
+
+                <div class="col-sm-12">
+                    <div class="card-body pt-2">
+                        <div class="form-group row">
+                            <label for="validationCustom0" class="col-xl-4 col-md-4">
+                                 Name</label>
+                            <div class="col-xl-8 col-md-7">
+                                <input class="form-control " formControlName="name" id="validationCustom0"
+                                       type="text" placeholder="First Name" required="" readonly>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="validationCustom1" class="col-xl-4 col-md-4">
+                                Description</label>
+                            <div class="col-xl-8 col-md-7">
+                                <textarea class="form-control " id="validationCustom1" formControlName="description"
+                                          type="text" placeholder="Description" required=""></textarea>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="validationCustom2" class="col-xl-4 col-md-4">
+                                Value<span>*</span></label>
+                            <div class="col-xl-8 col-md-7">
+                                <input class="form-control " id="validationCustom2" formControlName="value"
+                                          type="text" placeholder="Value" required="">
+                                <em class="error" *ngIf="!settingsform.get('value').valid && (settingsform.get('value').dirty || settingsform.get('value').touched)">Value is required</em>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                    </div>
+
+                </form>
+        </div>
+
+        <!-- Container-fluid Ends-->
+
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn cancel" (click)="close()">Cancel</button>
+        <button type="button"  (click)="editsettings()" class="btn btn-primary" >Save</button>
+
+    </div>
+</ng-template>
+
+<!--<ng-template #bulkModal let-c="close" let-d="dismiss">-->
+<!--    <div class="modal-header">-->
+<!--        <h4 class="modal-title" id="modal-bulkUpload">Bulk Upload</h4>-->
+<!--        <p class="text-right">-->
+<!--            <i class="fa fa-close" aria-hidden="true" style="cursor:pointer" (click)="close()"></i>-->
+<!--        </p>-->
+<!--    </div>-->
+<!--    <div class="modal-body">-->
+<!--        <div class="row">-->
+<!--            <div class="col-12">-->
+<!--                <div class="card-body pt-2">-->
+<!--                    <div class="row">-->
+
+<!--                        <div class="col-12 text-right" style="padding-top: 25px">-->
+<!--                            <div (click)="downloadExcel()" style="cursor: pointer"> Download Sample Excel <i class="fa fa-download" aria-hidden="true" style="color:#329688"></i></div>-->
+<!--                        </div>-->
+<!--                        <div class="custom-file" style="margin-top: 19px;">-->
+<!--                            <input #fileUploader type="file" class="custom-file-input" id="inputGroupFile02"-->
+<!--                                   aria-describedby="inputGroupFileAddon01" accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" name="file"  (click)="fileUploader.value = null " (change)="readUrl($event)">-->
+<!--                            <label *ngIf="filetype == ''" class="custom-file-label">Upload Excel</label>-->
+<!--                            <label *ngIf="filetype != ''" class="custom-file-label">{{filetype[0]}}.{{filetype[1]}}</label>-->
+<!--                        </div>-->
+<!--                        <div class="mt-3">-->
+<!--                            <span style="color: firebrick">*</span><small>Note: Upload format should be same as Sample Excel Format</small>-->
+<!--                        </div>-->
+<!--                    </div>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--    <div class="modal-footer">-->
+<!--        <div class="btn-popup pull-right">-->
+<!--            <button class="btn btn-primary" (click)="onUploadFinished()">Submit</button>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--</ng-template>-->
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-header">
+<!--            <div class="row">-->
+<!--                <div class="col-6">-->
+<!--                    <h5>Books Details</h5>-->
+<!--                </div>-->
+<!--                <div class="col-6">-->
+<!--                    <div class="btn-popup pull-right">-->
+<!--                        <a *ngIf="allowAdd" class="btn btn-primary ml-3" [routerLink]="'/Books/create-Books/add'">Add Books</a>-->
+<!--                    </div>-->
+<!--                </div>-->
+<!--            </div>-->
+        </div>
+        <div class="card-body">
+            <div id="batchDelete" class="category-table custom-datatable transcation-datatable user-image">
+                <div class="table-responsive">
+                    <ng2-smart-table [settings]="settings" [source]="listData"  (custom)="onCustomAction($event)"></ng2-smart-table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

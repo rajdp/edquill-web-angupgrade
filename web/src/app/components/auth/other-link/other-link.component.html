@@ -1,0 +1,54 @@
+<div class="my-4 resource-link-card">
+    <div class="col-md-12 d-flex justify-content-between">
+        <h4 class="font-weight-bold">{{titleName}}</h4>
+        <span *ngIf="showLink">
+            <i class="fa fa-edit f-22px ml-3 cursor color-primary" title="Edit Resource Link"
+                (click)="isEditLink = true" *ngIf="arrayValue.length != 0 && !isEditLink"></i>
+            <i class="fa fa-plus-circle f-22px ml-3 cursor color-primary" title="Add Resource Link"
+                 *ngIf="arrayValue.length == 0 || (arrayValue.length != 0 && isEditLink)" (click)="addLinkArray()"></i>
+            <i class="fa fa-times-circle color-red f-22px ml-3 cursor" title="Close"
+                 (click)="filterEmptyArrayValue()" *ngIf="isEditLink"></i>
+        </span>
+    </div>
+    <div class="col-md-12 d-flex justify-content-center align-items-center" style="height: 20vh"
+         *ngIf="arrayValue.length == 0">
+        <span class="text-info">No Resource Links available!</span>
+    </div>
+    <div class="col-md-12 py-3 d-flex flex-wrap align-items-{{isEditLink ? 'start' : 'center'}}" *ngFor="let items of arrayValue; let i = index">
+        <a (click)="showVideo(items.link)" *ngIf="!isEditLink">
+            <img *ngIf="items.type == 'document'" class="size-38px" src="assets/images/icons/doc-icon.png" alt="doc">
+            <img *ngIf="items.type == 'audio'" class="size-38px" src="assets/images/icons/audio-icon.png" alt="mp3">
+            <img *ngIf="items.type == 'video'" class="size-38px" src="assets/images/icons/video-icon.png" alt="mp4">
+            <img *ngIf="items.type == 'ppt'" class="size-38px" src="assets/images/icons/ppt-icon.png" alt="ppt">
+            <img *ngIf="items.type == 'Others'" class="size-38px" src="assets/images/icons/others-icon.png" alt="others">
+        </a>
+        <div class="col-md-2 px-0" *ngIf="isEditLink">
+            <select [(ngModel)]="items.type" class="form-control" [ngModelOptions]="{standalone: true}">
+                <option [value]="list"
+                        *ngFor="let list of linksType">{{list == 'ppt' ? (list | uppercase) : (list | titlecase)}}</option>
+            </select>
+        </div>
+        <div class="col-md-2 px-0" *ngIf="isEditLink">
+            <input type="text" (input)="$event.target.value.trimStart() != '' && items?.error ? items.error = false : items.error = false" placeholder="{{items.type | titlecase}} Name" *ngIf="isEditLink" [(ngModel)]="items.name"
+                   [ngModelOptions]="{standalone: true}" class="form-control ml-2" [ngClass]="{'input-error': items?.error}">
+            <span *ngIf="items?.error" class="errormessage ml-2">Name is required</span>
+        </div>
+        <div class="col-md-{{isEditLink ? '8' : '11'}} d-flex align-items-center">
+            <a class="cursor" (click)="showVideo(items.link)" *ngIf="!isEditLink">{{items.name}}</a>
+            <a class="cursor" (click)="showVideo(items.link)" *ngIf="!isEditLink && showLink">&nbsp;&nbsp;-&nbsp;&nbsp;{{items.link}}</a>
+            <input type="text" placeholder="Enter {{items.type | titlecase}} Link {{i + 1}} *" *ngIf="isEditLink"
+                   [(ngModel)]="items.link" [ngModelOptions]="{standalone: true}" class="form-control">
+            <i class="fa fa-trash color-red f-22px ml-2 cursor" title="Delete {{items.type | titlecase}} Link"
+               (click)="deleteArray(i)" *ngIf="isEditLink"></i>
+        </div>
+    </div>
+
+    <div id="showVideo" class="card col-12 p-3" *ngIf="selectedVideolinkData">
+        <div style="position: relative; padding-bottom: 52.083333333333336%; height: 0;"><iframe [src]="selectedVideolinkData" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe></div>
+    </div>
+
+    <div class="col-md-12 col-12 d-flex justify-content-end">
+        <button *ngIf="selectedVideolinkData" class="btn btn-outline-primary" (click)="selectedVideolinkData = ''">Close</button>
+        <button *ngIf="isEditLink" class="btn btn-primary ml-2" (click)="filterEmptyArrayValue()">Save</button>
+    </div>
+</div>

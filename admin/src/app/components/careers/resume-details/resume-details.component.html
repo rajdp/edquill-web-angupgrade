@@ -1,0 +1,21 @@
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-header">
+            <div class="row">
+                <div class="col-6">
+                    <h5>Resume Details</h5>
+                </div>
+                <div class="col-6 text-right">
+                    <button class="btn btn-outline-primary" [routerLink]="'/careers/application'">Back</button>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div id="batchDelete" class="category-table custom-datatable transcation-datatable user-image">
+                <div class="table-responsive">
+                    <ng2-smart-table [settings]="settings" [source]="resumeData" (custom)="onCustomAction($event)" ></ng2-smart-table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

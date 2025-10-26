@@ -1,0 +1,45 @@
+<!-- Container-fluid starts-->
+
+<ng-template #content let-c="close" let-d="dismiss">
+    <div class="modal-header">
+        <h4 class="modal-title" id="modal-basic-title">Delete User</h4>
+    </div>
+    <div class="modal-body">
+        <!-- Container-fluid starts-->
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-sm-12">
+                    <h5 class="text-center mt-3" *ngIf="!allowDelete">You have no permission to delete your account</h5>
+                    <h5 class="text-center mt-3" *ngIf="allowDelete">Are you sure you want to delete user '{{deleteUser.first_name}}'?</h5>
+
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Container-fluid Ends-->
+
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-primary" *ngIf="allowDelete" (click)="deleteConfirm()" >Delete</button>
+        <button type="button" class="btn btn-outline-dark" (click)="onSave()">Cancel</button>
+    </div>
+</ng-template>
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-header">
+            <h5>User Details</h5>
+        </div>
+        <div class="card-body">
+            <div class="btn-popup pull-right">
+                <a class="btn btn-secondary" [routerLink]="'/users/create-user'">Create User</a>
+            </div>
+            <div id="batchDelete" class="category-table custom-datatable transcation-datatable user-image">
+                <div class="table-responsive">
+                    <ng2-smart-table [settings]="settings" [source]="listData" (custom)="onCustomAction($event)"></ng2-smart-table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Container-fluid Ends-->

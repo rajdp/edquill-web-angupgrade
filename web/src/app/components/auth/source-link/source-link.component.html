@@ -1,0 +1,39 @@
+<div class="container-fluid px-0 pb-3">
+    <div class="col-md-12 px-0">
+        <a class="cursor" (click)="showVideo(pdfPath.link)" [title]="pdfPath.link">
+            <div class="col-md-12 flex-center flex-wrap link-card" style="height: 90vh" *ngIf="showWithIcon">
+                <div class="col-md-12 d-flex justify-content-center">
+                    <a [title]="pdfPath.link">
+                        <img *ngIf="pdfPath.type == 'document'" class="size-120px"
+                             src="assets/images/icons/doc-icon.png" alt="doc">
+                        <img *ngIf="pdfPath.type == 'audio'" class="size-120px" src="assets/images/icons/audio-icon.png"
+                             alt="mp3">
+                        <img *ngIf="pdfPath.type == 'video'" class="size-120px" src="assets/images/icons/video-icon.png"
+                             alt="mp4">
+                        <img *ngIf="pdfPath.type == 'ppt'" class="size-120px" src="assets/images/icons/ppt-icon.png"
+                             alt="ppt">
+                        <img *ngIf="pdfPath.type == 'Others'" class="size-120px"
+                             src="assets/images/icons/others-icon.png" alt="others">
+                    </a>
+                </div>
+                <a>{{pdfPath.name}}</a>
+            </div>
+            <div class="col-md-12 d-flex justify-content-center align-items-center p-4 link-card color-primary" *ngIf="!showWithIcon">
+                {{pdfPath.link}}
+            </div>
+        </a>
+    </div>
+
+    <div id="showVideo" class="card col-12 my-3 p-3" *ngIf="selectedVideolinkData">
+        <div [ngStyle]="{'padding-bottom' : setHeight ? '52.08%' : '30%'}" style="position: relative; height: 0">
+            <iframe [src]="selectedVideolinkData" frameborder="0" webkitallowfullscreen mozallowfullscreen
+                    allowfullscreen [ngStyle]="{'height' : setHeight ? '100%' : '100%'}" style="position: absolute; top: 0; left: 0; width: 100%"></iframe>
+        </div>
+        <div class="col-12 px-0 mt-3">
+            <button *ngIf="selectedVideolinkData" class="col-2 pull-right btn btn-outline-primary"
+                    (click)="selectedVideolinkData = ''">Close
+            </button>
+        </div>
+    </div>
+
+</div>

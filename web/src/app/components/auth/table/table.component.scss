@@ -1,0 +1,42 @@
+span {
+  i {
+    font-size: 20px;
+    color: #1e6bb8;
+  }
+  img {
+    font-size: 20px;
+    color: #1e6bb8;
+  }
+}
+
+.table-spacing {
+  vertical-align: middle;
+}
+
+
+.table-striped tbody tr:nth-of-type(odd) {
+  //background-color: #cdd9f633;
+  background-color: white;
+}
+
+.table-striped tbody tr:nth-of-type(even) {
+  //background-color: #cdd9f633;
+  background-color: rgba(241, 244, 251, .5);
+}
+
+.table-striped tbody tr.searchInput:hover {
+  //background-color: #cdd9f633;
+  background-color: white;
+}
+
+.table-hover tbody tr:hover {
+  background-color: rgba(241, 244, 251, .5);
+}
+
+.table-input {
+  font-weight: 400;
+  line-height: normal;
+  padding: 0.375em 0.75em;
+  margin-bottom: 0;
+  width: 100%;
+}

@@ -1,0 +1,139 @@
+<div class="container">
+    <div class="col-md-12">
+        <div class="card tab2-card">
+            <div class="card-header">
+                <h5 *ngIf="type == 'add'" class="text-capitalize">Add Blog</h5>
+                <h5 *ngIf="type == 'edit'" class="text-capitalize">Edit Blog</h5>
+                <label class="text-muted">All fields marked with <span class="text-danger">*</span> are required</label>
+            </div>
+            <div class="card-body tab2-card">
+                <form [formGroup]="blogForm" class="needs-validation user-add">
+                    <div class="form-group row">
+                        <label class="col-xl-3 col-md-4" for="validationCustom4"><span>*</span>
+                            Title</label>
+                        <div class="col-xl-8 col-md-7">
+                            <input class="form-control " formControlName="name" id="validationCustom4"
+                                   placeholder="Enter Title" required="" type="text">
+                            <em *ngIf="!blogForm.get('name').valid && (blogForm.get('name').dirty || blogForm.get('name').touched)" class="error">Title is required</em>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label class="col-xl-3 col-md-4" for="validationCustom4"><span>*</span>
+                            Author Name</label>
+                        <div class="col-xl-8 col-md-7">
+                            <input class="form-control " formControlName="author"
+                                   placeholder="Enter Author Name" required="" type="text">
+                            <em *ngIf="!blogForm.get('author').valid && (blogForm.get('author').dirty || blogForm.get('author').touched)" class="error">Author Name is required</em>
+                        </div>
+                    </div>
+<!--                    <div class="form-group row">-->
+<!--                        <label class="col-xl-3 col-md-4"><span  style="visibility: hidden">*</span>-->
+<!--                            Short Description</label>-->
+<!--                        <div class="col-xl-8 col-md-7">-->
+<!--                            <textarea class="form-control" cols="30" formControlName="shortDescription" placeholder="Enter Description Shortly" rows="3"></textarea>-->
+<!--                        </div>-->
+<!--                    </div>-->
+                    <div class="form-group row">
+                        <label class="col-xl-3 col-md-4"><span>*</span>
+                            Description</label>
+                        <div class="col-xl-8 col-md-7">
+                            <app-tiny-mice (emitEditorValue)="getDescriptionValue($event)"
+                                           [editorPatchValue]= "false"
+                                           [height]="300"
+                                           [id]="'description'"
+                                           [showDropBtn]="false"
+                                           [showInputBtn]="false">
+                            </app-tiny-mice>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <label class="col-xl-3 col-md-4"><span>*</span>
+                            Display</label>
+                        <div class="col-xl-8 col-md-7">
+                            <select class="form-control " formControlName="displayType">
+                                <option value="1">General</option>
+                                <option value="2">Learning center</option>
+                                <option value="3">Tutors</option>
+                                <option value="4">Publishers</option>
+                            </select>
+                            <em *ngIf="!blogForm.get('displayType').valid && (blogForm.get('displayType').dirty || blogForm.get('displayType').touched)" class="error">Display Type is required</em>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <label class="col-xl-3 col-md-4"><span>*</span>
+                            Status</label>
+                        <div class="col-xl-8 col-md-7">
+                            <select class="form-control " formControlName="status">
+                                <option value="1">Active</option>
+                                <option value="2">Inactive</option>
+                            </select>
+                            <em *ngIf="!blogForm.get('status').valid && (blogForm.get('status').dirty || blogForm.get('status').touched)" class="error">status is required</em>
+                        </div>
+                    </div>
+                    <div *ngIf="blogForm.controls.status.value == '1'" class="form-group row pt-3">
+                        <label class="col-xl-3 col-md-4"><span style="visibility: hidden">*</span>
+                            Display From</label>
+                        <div class="col-xl-8 col-md-7 form-group d-flex">
+                            <div class="input-group col-md-6 px-0">
+                                <input #dp="angular-mydatepicker" (dateChanged)="onDateChanged($event)" (keypress)="datePattern($event)" [options]="myDpOptions"
+                                       angular-mydatepicker class="form-control" formControlName="displayFrom" name="mydate"
+                                       placeholder="mm-dd-yyyy"/>
+                                <div class="input-group-append">
+                                    <button (click)="dp.toggleCalendar()" class="btn btn-primary" type="button">
+                                        <i class="fa fa-calendar-o"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <ngb-timepicker [meridian]="false" [seconds]="false" [spinners]="false" class="removeFieldSet" formControlName="displayFromTime"></ngb-timepicker>
+                            </div>
+                        </div>
+                    </div>
+                    <div *ngIf="blogForm.controls.status.value == '1'" class="form-group row">
+                        <label class="col-xl-3 col-md-4"><span style="visibility: hidden">*</span>
+                            Display Until</label>
+                        <div class="col-xl-8 col-md-7 form-group d-flex">
+                            <div [ngClass]="blogForm.controls.displayFrom.value == '' ? 'div-disable' : ''" class="input-group col-md-6 px-0">
+                                <input #dp1="angular-mydatepicker" (keypress)="datePattern($event)" [options]="myDpOptions1" [readOnly]="blogForm.controls.displayFrom.value == ''" angular-mydatepicker
+                                       class="form-control" formControlName="displayUntil" name="mydate" placeholder="mm-dd-yyyy"/>
+                                <div class="input-group-append">
+                                    <button (click)="blogForm.controls.displayFrom.value == '' ? none() : dp1.toggleCalendar()" class="btn btn-primary" type="button">
+                                        <i class="fa fa-calendar-o"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <ngb-timepicker [meridian]="false" [seconds]="false" [spinners]="false" class="removeFieldSet" formControlName="displayUntilTime"></ngb-timepicker>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label class="col-xl-3 col-md-4"><span style="visibility: hidden">*</span>Cover Image</label>
+                        <div class="col-xl-6 col-md-4">
+                            <input #myInput (change)="encodeImageFileAsURL($event)" class="custom-upload-input col-md-12 px-0" type="file" >
+                            <span class="color-grey mb-0 font-weight-bold" style="font-size: 12px">Recommended Size: 1078 × 400 pixels</span>
+                        </div>
+                    </div>
+                    <div class="form-group col-12 d-flex justify-content-center">
+                        <div class="col-xl-3 col-md-4" style="margin-right: 16.8rem">
+                            <div class="col-12 mb-1 d-flex justify-content-end">
+                                <i (click)="deleteImg()" *ngIf="imagepath.length != 0"
+                                   class="fa fa-times" style="cursor: pointer;
+                                        background: #eeeeee; padding: 10px; border-radius: 45px;" title="close" ></i>
+                            </div>
+                            <div *ngFor="let file of imagepath; let i= index" class="files-list fit-img2">
+                                <img *ngIf="imagepath.length != 0"  [src]="sanitizer.bypassSecurityTrustResourceUrl(webhost + '/' + file)"  alt="" class="w-95">
+                            </div>
+                        </div>
+                    </div>
+                </form>
+                <div class="pull-right">
+                    <button (click)="reset()" *ngIf="type == 'add'" class="btn btn-outline-primary mr-2" type="button">Reset</button>
+                    <button (click)="addBlog()" class="btn btn-primary" type="button" >{{type == 'add' ? 'Save' : 'Update'}}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

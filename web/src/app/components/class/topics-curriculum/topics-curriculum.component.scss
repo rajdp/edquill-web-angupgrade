@@ -1,0 +1,216 @@
+.viewTitle {
+  width: 100%;
+  font-weight: bolder;
+  font-size: 20px;
+  background: #f8f8f9;
+}
+
+.dropdotted {
+  position: relative;
+  margin-right: auto;
+  margin-left: auto;
+  display: inline-block;
+  border-radius: 15px;
+  min-height: 110px;
+  background-color: #fff;
+  box-shadow: rgba(149, 157, 165, 0.2) 0 8px 24px;
+}
+
+.custom-label {
+  position: absolute;
+  font-size: 18px;
+  font-weight: 600;
+  color: #cacaca;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  top: 40px;
+}
+
+example-container {
+  width: 400px;
+  max-width: 100%;
+  margin: 0 25px 25px 0;
+  display: inline-block;
+  vertical-align: top;
+}
+
+.example-listCustom {
+  border: solid 1px #ccc;
+  min-height: 60px;
+  background: white;
+  border-radius: 4px;
+  overflow: hidden;
+  display: block;
+}
+
+.example-box {
+  padding: 20px 10px;
+  border-bottom: solid 1px #ccc;
+  color: rgba(0, 0, 0, 0.87);
+  cursor: move;
+  background: white;
+  font-size: 14px;
+}
+
+::ng-deep .custom-accordion .accordion > .card > .card-header {
+  border-bottom: 1px solid #e5e5e5;
+  background: #f8f8f8;
+  height: 55px;
+  cursor: move;
+
+  button {
+    padding: 0.5rem 1.5rem;
+    border-radius: 5px;
+    letter-spacing: 1px;
+    line-height: 20px;
+    font-size: 14px;
+    font-weight: 700;
+    transition: 0.3s ease-in-out;
+    text-decoration: none;
+    text-transform: capitalize;
+  }
+}
+
+::ng-deep .custom-accordion .accordion > .card {
+  overflow: visible;
+  border: 1px solid #e5e5e5;
+  box-shadow: rgba(100, 100, 111, 0.2) 0 7px 29px 0;
+}
+
+::ng-deep .custom-content .dropdown {
+  position: absolute;
+  display: inline-block;
+  cursor: pointer;
+  right: 2%;
+  top: 35%;
+}
+
+.icon_circle {
+  font-size: 20px;
+  padding: 12px;
+  border: 1px solid #f5f5f5 !important;
+  border-radius: 50%;
+}
+
+.tickMark {
+  font-size: 8px;
+  font-weight: 400;
+  position: absolute;
+  top: 17px !important;
+  right: 52px;
+}
+
+.error {
+  color: red;
+}
+
+.upload-file {
+  align-items: center;
+  border: 1px solid #8f008aad;
+  border-radius: .25rem;
+  display: inline-flex;
+  font-size: .875rem;
+  margin-bottom: 0.5rem;
+  padding: .5rem 1rem;
+  transition: transform .3s ease, box-shadow .3s ease;
+  cursor: pointer;
+  color: #8F008A;
+}
+
+.upload-file:hover {
+  box-shadow: 0 0.5rem 1rem rgba(8, 8, 8, .15);
+}
+
+h3, h4, p {
+  font-family: Roboto, Arial, sans-serif;
+}
+
+.text-wrapper {
+  display: table-cell;
+  vertical-align: middle;
+}
+
+.centered {
+  font-family: sans-serif;
+  font-size: 1.3em;
+  text-align: center;
+}
+
+.dropzone {
+  height: 200px;
+  display: table;
+  width: 100%;
+  background-color: #eee;
+  border: dotted 1px #aaa;
+}
+
+input[type="file"] {
+  display: none;
+}
+
+.textLink {
+  background-color: #8F008A;
+  color: #fff;
+  padding: 10px;
+  border-radius: 5px;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+}
+
+.text-wrapper {
+  display: table-cell;
+  vertical-align: middle;
+}
+
+.centered {
+  font-family: sans-serif;
+  font-size: 1.3em;
+  text-align: center;
+}
+
+.fileItem-input {
+  width: calc(25% - 16px);
+}
+
+
+.fileItem {
+  width: calc(25% - 6px);
+  overflow: hidden;
+  min-height: 6rem;
+  height: fit-content;
+  margin: 3px;
+  padding: 10px;
+  display: flex;
+  align-content: center;
+  position: relative;
+  float: left;
+  border: 2px dashed #778899;
+  border-radius: 5px;
+  transition: .3s ease;
+  cursor: pointer;
+}
+
+.fileItem .fa-trash-o:hover {
+  transform: scale(1.1);
+  color: red;
+}
+
+.fileItem:hover .fileItemIcon::before {
+  content: "\f00d";
+  color: whitesmoke;
+}
+
+.fileItemIconDiv {
+  text-align: center;
+}
+
+.fileItemIcon::before {
+  font-style: normal;
+  font-weight: 900;
+}
+
+.fileItemText {
+  text-align: center;
+  margin-top: 10px;
+  font-size: 8px;
+}

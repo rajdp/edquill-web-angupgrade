@@ -1,0 +1,261 @@
+<section class="row dashboard_section py-{{globalAnnouncementList.length != 0 ? '4' : '5'}} dashboard px-4">
+
+    <div class="col-12 px-2" *ngIf="globalAnnouncementList.length != 0">
+        <div class="card">
+            <div class="card-body">
+                <div class="marquee">
+                    <div class="marquee-item">
+                        <span *ngFor="let announcement of globalAnnouncementList; let i = index; let last = last">
+                            <span class="font-weight-bold">{{ announcement.title + ' - ' }}</span>
+                            <span class="color-primary"> {{(announcement.description ?? '') }} {{globalAnnouncementList.length > 1 && !last ? ', ' : ''}}</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-4">
+        <div class="row">
+            <div class="col-12 px-2">
+                <div class="card" style="background: #f7f6f8;border-radius: 16px">
+                    <div class="card-body p-4">
+                        <div class="row px-2 align-items-center justify-content-between pb-3">
+                            <div class="d-flex">
+                                <app-feather-icons class="d-flex" [icon]="'calendar'"></app-feather-icons>
+                                <span class="font-weight-bold color-primary ml-1">Today's Schedule</span>
+                            </div>
+                            <span (click)="routePage('schedule')" class="text-right cursor" style="font-size: 10px">
+                        <a>View Details</a></span>
+                        </div>
+                        <div class="row d-flex justify-content-center align-items-center" *ngIf="scheduleData.length == 0">
+                            <div class="col-12 mt-4">
+                                <button class="nodataList border-0">No Schedule Available!</button>
+                            </div>
+                        </div>
+                        <div class="row px-2 div-height" *ngIf="scheduleData.length != 0">
+                            <div class="col-12 cursor card dashboard-hover dashboard-card_even px-0" *ngFor="let item of scheduleData; let j = index; let even = even">
+                                <div class="card-body">
+                                    <h5 style="font-size: 14px;line-height: 20px" class="color-primary align-self-center mb-0">{{item.class_name}}</h5>
+                                    <div class="row" style="margin-top: 10px">
+                                        <h6 class="mb-0 fs-12 col-6">{{item.slotstarttime + ' - ' + item.slotendtime}}</h6>
+                                        <div class="col-6 text-right align-self-center">
+                                            <i class="fa fa-bullhorn color-primary mr-1" title="New Announcement">
+                                                <span class="upload-count">{{item.announcement_count ?? '0'}}</span>
+                                            </i>
+                                            <i class="fa fa-commenting-o color-primary mr-1" title="New Inbox Message">
+                                                <span class="upload-count">{{item.inbox_count ?? '0'}}</span>
+                                            </i>
+                                            <i class="fa fa-video-camera mr-1" title="Enter Online Class"></i>
+                                            <i class="fa fa-info mr-1" title="Class Info"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <div class="col-4">
+        <div class="row">
+            <div class="col-12 px-2">
+                <div class="card" style="background: #f7f6f8;border-radius: 16px">
+                    <div class="card-body p-4">
+                        <div class="row px-2 align-items-center justify-content-between">
+                            <div class="d-flex">
+                                <app-feather-icons class="d-flex" [icon]="'book'"></app-feather-icons>
+                                <span class="font-weight-bold color-primary ml-1">My Classes</span>
+                            </div>
+                            <span (click)="routePage('class')" class="text-right cursor" style="font-size: 10px">
+                            <a>View All</a></span>
+                        </div>
+                        <div class="row my-3 px-1">
+                            <button *ngFor="let data of buttonName" (click)="updateClassData(data.id)" [ngClass]="{'active': data.active}"
+                                    class="dashboard-button {{data.className}}">{{data.name}}<span class="badge {{data.badge_class}} ml-1">{{data.count}}</span></button>
+                        </div>
+                        <div class="row d-flex justify-content-center align-items-center" *ngIf="filteredClassData.length == 0">
+                            <div class="col-12 mt-4">
+                                <button class="nodataList border-0">No {{selectedButtonForClass == '2' ? 'In-Progress' : selectedButtonForClass == '4' ? 'Upcoming' : 'Completed'}} Class Available!</button>
+                            </div>
+                        </div>
+                        <div class="row px-2 div-height2" *ngIf="filteredClassData.length != 0">
+                            <div [ngClass]="{'dashboard-card_inProgress' : selectedButtonForClass == '2', 'dashboard-card_upcoming' : selectedButtonForClass == '4', 'dashboard-card_completed' : selectedButtonForClass == '3'}"
+                                 class="col-12 cursor card dashboard-hover px-0" *ngFor="let item of filteredClassData; let j = index">
+                                <div class="card-body">
+                                    <h5 style="font-size: 14px;line-height: 20px" class="color-primary align-self-center mb-0">{{item.class_name}}</h5>
+                                    <h6 style="line-height: 18px" class="mb-0 fs-12 pr-0">{{item.subject_name}}</h6>
+                                    <div class="row">
+                                        <h6 class="mb-0 col-12 text-right align-self-center">
+                                            <span [title]="returnDayTitle(item, day.id, day.value)" [ngClass]="{'scheduledDate': checkAvailabilityDate(item, day.id)}"
+                                                    style="color: #817d7d; padding: 6px 8px; margin-left: 4px; margin-right: 4px"
+                                                  class="circle_design fs-10" *ngFor="let day of days;">{{day.day}}</span>
+                                        </h6>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 px-2 mt-1">
+                <div class="card" style="background: #f7f6f8;border-radius: 16px">
+                    <div class="card-body p-4">
+                        <div class="row px-2 align-items-center justify-content-between pb-3">
+                            <div class="d-flex">
+                                <span class="font-weight-bold color-primary ml-1">Recent Scores</span>
+                            </div>
+                            <span class="d-flex align-items-center" style="font-size: 10px">
+                                <i style="color: #00a8ff !important;font-size: 14px !important;" class="fa fa-square"></i>- Assignment
+                                <i style="color: #81ba00 !important;font-size: 14px !important;" class="fa fa-square"></i>- Assessment
+                            </span>
+                        </div>
+                        <div class="row d-flex justify-content-center align-items-center" *ngIf="recentScore.length == 0">
+                            <div class="col-12">
+                                <button class="nodataList border-0">No Recent Score released!</button>
+                            </div>
+                        </div>
+                        <div class="row px-2 div-height" *ngIf="recentScore.length != 0">
+                            <div [ngClass]="{'dashboard-card_upcoming' : item.content_type == '2', 'dashboard-card_completed' : item.content_type == '3'}"
+                                 class="col-12 card px-0" *ngFor="let item of recentScore; let j = index">
+                                <div class="card-body">
+                                    <h5 style="font-size: 14px;line-height: 20px" class="color-primary align-self-center mb-0">{{item.content_name}}</h5>
+                                    <h6 style="line-height: 18px" class="fs-12 mb-0">{{item.class_name}}</h6>
+                                    <div class="d-flex align-items-center justify-content-end">
+                                        <span style="background-color: #5FAE99" class="badge badge-warning">
+                                            {{item.obtained_score}} / {{item.total_score}}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-4">
+        <div class="row">
+            <div class="col-12 px-2">
+                <div class="card" style="background: #f7f6f8;border-radius: 16px">
+                    <div class="card-body p-4">
+                        <div class="row px-2 align-items-center justify-content-between pb-3">
+                            <div class="d-flex">
+                                <app-feather-icons class="d-flex" [icon]="'rotate-cw'"></app-feather-icons>
+                                <span class="font-weight-bold color-primary ml-1">Recent Tasks</span>
+                            </div>
+                            <span class="d-flex align-items-center" style="font-size: 10px">
+                                <i style="color: #13c9ca !important;font-size: 14px !important;" class="fa fa-square"></i>- Not Started
+                                <i style="color: #F8C269 !important;font-size: 14px !important;" class="fa fa-square"></i>- In-Porgress
+                            </span>
+                        </div>
+                        <div class="row d-flex justify-content-center align-items-center" *ngIf="recentTask.length == 0">
+                            <div class="col-12">
+                                <button class="nodataList border-0">No Recent Task Available!</button>
+                            </div>
+                        </div>
+                        <div class="row px-2 div-height" *ngIf="recentTask.length != 0">
+                            <div [ngClass]="{'recent_inProgress' : item.student_content_status == '2',
+                            'recent_not_started' : item.student_content_status == '1', 'dashboard-card_odd' : item.content_type == 1}"
+                                 class="col-12 cursor card dashboard-hover px-0" *ngFor="let item of recentTask; let j = index">
+                                <div class="card-body">
+                                    <h5 style="font-size: 14px; line-height: 18px" class="color-primary align-self-center mb-0">{{item.content_name}}</h5>
+                                    <h6 style="line-height: 18px" class="mb-0 fs-12">{{item.class_name}}</h6>
+                                    <div class="d-flex justify-content-between align-items-center mt-1">
+                                        <h6 [ngStyle]="{'visibility': item.end_date != '0000-00-00' ? 'none' : 'hidden'}"
+                                            class="fs-12 mb-0 text-right">Due Date:
+                                            <span *ngIf="item.end_date != '0000-00-00'" style="color: #81ba00" class="fs-12 font-weight-bold">
+                                                {{item.end_date | date : 'MM/dd/yyyy'}}, {{item.end_time}}</span></h6>
+                                        <span *ngIf="item.content_type == '1'" class="badge fs-10 badge-warning">Resource</span>
+                                        <span *ngIf="item.content_type == '2'" class="badge badge-info fs-10">Assignment</span>
+                                        <span *ngIf="item.content_type == '3'" class="badge fs-10 badge-success">Assessment</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 mt-1 px-2">
+                <div class="card" style="background: #f7f6f8;border-radius: 16px">
+                    <div class="card-body p-4">
+                        <div class="row px-2 align-items-center justify-content-between pb-3">
+                            <div class="d-flex">
+                                <app-feather-icons class="d-flex" [icon]="'bell'"></app-feather-icons>
+                                <span class="font-weight-bold color-primary ml-1">Recent Update</span>
+                            </div>
+                            <span class="d-flex align-items-center" style="font-size: 10px">
+                                <i style="color: #e6baea !important;font-size: 14px !important;" class="fa fa-square"></i>- Inbox
+                                <i style="color: #8d6eeb !important;font-size: 14px !important;" class="fa fa-square"></i>- Announcement
+                            </span>
+                        </div>
+                        <div class="row d-flex justify-content-center align-items-center" *ngIf="recentUpdate.length == 0">
+                            <div class="col-12">
+                                <button class="nodataList border-0">No Recent Updates!</button>
+                            </div>
+                        </div>
+                        <div class="row px-2 div-height">
+                            <div [ngClass]="{'dashboard-card_odd' : item.message_type == 'inbox', 'dashboard-announcement-card ' : item.message_type != 'inbox'}"
+                                 class="col-12 cursor card dashboard-hover px-0" *ngFor="let item of recentUpdate; let j = index">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-3 d-flex align-items-center justify-content-center">
+                                            <i *ngIf="item.message_type != 'inbox'" class="fa fa fa-bullhorn" style="font-size: 35px; color: #8d6eeb !important;"></i>
+                                            <img *ngIf="item.message_type == 'inbox'" class="msg-img" [src]="'assets/images/dashboard/default.png'" alt="Default Image">
+                                       </div>
+                                       <div class="col-9 pl-0 align-self-center">
+                                           <p *ngIf="item.message_type == 'inbox'" class="m-0 color-primary">{{item.message.body}}</p>
+                                           <p class="announcement_notes m-0" *ngIf="item.message_type != 'inbox'" [innerHTML]="item.message.note"></p>
+                                           <small class="d-flex align-items-center justify-content-between text-secondary"><span>Sridhar</span>
+                                               <span *ngIf="item.message_type == 'inbox'">{{item.message.created_date | date : 'MM/dd/yyyy, h:mm a'}}</span>
+                                               <span *ngIf="item.message_type != 'inbox'">Dec 23, 2024 | 12:00 AM</span>
+                                           </small>
+                                       </div>
+                                   </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 mt-1 px-2">
+                <div class="card" style="background: #f7f6f8;border-radius: 16px">
+                    <div class="card-body p-4">
+                        <div class="row px-2 align-items-center justify-content-between pb-3">
+                            <div class="d-flex">
+                                <app-feather-icons class="d-flex" [icon]="'alert-circle'"></app-feather-icons>
+                                <span class="font-weight-bold color-primary ml-1">Overdue Tasks</span>
+                            </div>
+                        </div>
+                        <div class="row d-flex justify-content-center align-items-center" *ngIf="overdueTask.length == 0">
+                            <div class="col-12">
+                                <button class="nodataList border-0">No Overdue Task!</button>
+                            </div>
+                        </div>
+                        <div class="row px-2 div-height" *ngIf="overdueTask.length != 0">
+                            <div class="col-12 cursor card dashboard-hover dashboard-card_odd px-0" *ngFor="let item of overdueTask; let j = index">
+                                <div class="card-body">
+                                    <h5 style="font-size: 14px;line-height: 20px" class="color-primary align-self-center mb-0">{{item.content_name}}</h5>
+                                    <h6 style="line-height: 18px" class="mb-0 fs-12">{{item.class_name}}</h6>
+                                    <div class="d-flex justify-content-between align-items-center mt-1">
+                                        <h6 [ngStyle]="{'visibility': item.end_date != '0000-00-00' ? 'none' : 'hidden'}"
+                                            class="fs-12 mb-0 text-right">Due Date:
+                                            <span *ngIf="item.end_date != '0000-00-00'" style="color: red" class="fs-12 font-weight-bold">
+                                                {{item.end_date | date : 'MM/dd/yyyy'}}, {{item.end_time}}</span></h6>
+                                        <span *ngIf="item.content_type == '1'" class="badge fs-10 badge-warning">Resource</span>
+                                        <span *ngIf="item.content_type == '2'" class="badge badge-info fs-10">Assignment</span>
+                                        <span *ngIf="item.content_type == '3'" class="badge fs-10 badge-success">Assessment</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</section>

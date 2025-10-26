@@ -1,0 +1,282 @@
+<section class="row dashboard_section py-5 dashboard px-4">
+    <div class="col-8">
+        <div class="row">
+            <div class="col-12">
+                <div class="card" style="background: #f7f6f8;border-radius: 16px">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center justify-content-between pb-3">
+                            <div class="d-flex">
+                                <app-feather-icons class="d-flex" [icon]="'calendar'"></app-feather-icons>
+                                <span class="font-weight-bold color-primary ml-1">Today's Schedule</span>
+                            </div>
+                            <span (click)="routePage('schedule')" class="text-right cursor" style="font-size: 10px">
+                        <a>View Details</a></span>
+                        </div>
+                        <div class="row d-flex justify-content-center align-items-center" *ngIf="scheduleData.length == 0">
+                            <div class="col-12 mt-4">
+                                <button class="nodataList border-0">No Schedule Available!</button>
+                            </div>
+                        </div>
+                        <div class="row px-4 div-height" *ngIf="scheduleData.length != 0">
+                            <div class="col-12 cursor card dashboard-hover1 dashboard-card px-0" *ngFor="let item of scheduleData; let j = index">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <h5 class="color-primary align-self-center mb-0">{{item.class_name}}</h5>
+                                        </div>
+                                        <div class="col-7">
+                                            <h6 class="mb-0 fs-12">{{item.start_time + ' - ' + item.end_time}}</h6>
+                                        </div>
+                                        <div class="col-5 text-right">
+                                            <i style="font-size: 1.4rem" class="fa fa-video-camera text-green ml-4" aria-hidden="true"></i>
+                                            <i style="font-size: 1.4rem" class="fa fa-info-circle text-green ml-4" aria-hidden="true"></i>
+                                            <i title="New Announcement" *ngIf="item.announcement_type != '1'" (click)="redirectToAnnouncement(item, $event, 'announcement')" style="font-size: 1.4rem" class="ml-4 fa fa-bullhorn text-green" aria-hidden="true">
+                                                <span class="upload-count">{{item.new_comments ? item.new_comments : 0}}</span>
+                                            </i>
+                                            <i title="New Inbox Message" (click)="auth.getRoleId() == '5' ? redirectToAnnouncement(item, $event, 'inbox') : classDetailsService(item, 'inbox', $event)"
+                                            *ngIf="auth.getRoleId() != '2'" style="font-size: 1.4rem" class="fa fa-commenting-o text-green ml-4" aria-hidden="true">
+                                                <span class="upload-count">{{item.newMessage ? item.newMessage : 0}}</span>
+                                            </i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <div class="card" style="background: #f7f6f8;border-radius: 16px">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex">
+                                <app-feather-icons class="d-flex" [icon]="'book'"></app-feather-icons>
+                                <span class="font-weight-bold color-primary ml-1">My Classes</span>
+                            </div>
+                            <span (click)="routePage('class')" class="text-right cursor" style="font-size: 10px">
+                            <a>View All</a></span>
+                        </div>
+                        <div class="row mt-4">
+                            <button *ngFor="let data of buttonName" (click)="updateClassData(data.id)" [ngClass]="{'active': data.active}"
+                                    class="dashboard-button {{data.className}}">{{data.name}}<span class="badge {{data.badge_class}} ml-1">{{data.count}}</span></button>
+                        </div>
+                        <div class="row d-flex justify-content-center align-items-center" *ngIf="filteredClassData.length == 0">
+                            <div class="col-12 mt-4">
+                                <button class="nodataList border-0">No {{selectedButtonForClass == '2' ? 'In-Progress' : selectedButtonForClass == '4' ? 'Upcoming' : 'Completed'}} Class Available!</button>
+                            </div>
+                        </div>
+                        <div class="row px-2 mt-4" *ngIf="filteredClassData.length != 0">
+                            <div class="col-12 cursor card dashboard-hover dashboard-card px-0" *ngFor="let item of filteredClassData; let j = index">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <h5 class="color-primary align-self-center mb-0">{{item.class_name}}</h5>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h6 class="mb-0 fs-12">{{item.subject_name}}</h6>
+                                            <p *ngIf="item.start_date == '0000-00-00'&& item.end_date == '0000-00-00'"><span class="font-weight-bold">Start: </span> <br/>
+                                                <span class="font-weight-bold">End: </span>
+                                            </p>
+                                            <p *ngIf="item.start_date != '0000-00-00'&& item.end_date != '0000-00-00'"><span class="font-weight-bold">Start: </span> <span class="t-name font-weight-bold">{{item.start_date|date:'MM/dd/yyyy'}}<span *ngIf="item.start_time != ''">, {{item.start_time}}</span></span> <br/>
+                                                <span class="font-weight-bold">End: </span> <span class="t-name font-weight-bold">{{item.end_date|date:'MM/dd/yyyy'}}<span *ngIf="item.end_time != ''">, {{item.end_time}}</span></span>
+                                            </p>
+                                        </div>
+                                        <div class="col-md-6 d-flex" style="justify-content: flex-end">
+                                            <div class="row">
+                                                <div class="col-12 mt-2 d-flex flex-wrap justify-content-end">
+                                                    <span class="badge ml-2 mb-1 p-2" style="background-color: #73b5a8; color: white;" *ngFor="let items of item.availabilityDate">{{dayFromInt(items.slotday) + ': '}}{{items.slotstarttime + ' - ' + items.slotendtime}}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 my-3">
+                <div class="card" style="background: #f7f6f8;border-radius: 16px">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex">
+                                <app-feather-icons class="d-flex" [icon]="'percent'"></app-feather-icons>
+                                <span class="font-weight-bold color-primary ml-1">Recent Scores</span>
+                            </div>
+                            <!-- <span class="text-right cursor" style="font-size: 10px">
+                                <a>View All</a></span> -->
+                        </div>
+                        <div class="row d-flex justify-content-center align-items-center" *ngIf="recentScore.length == 0">
+                            <div class="col-12">
+                                <button class="nodataList border-0">No Recent Score released!</button>
+                            </div>
+                        </div>
+                        <div class="row px-2 mt-4" *ngIf="recentScore.length != 0">
+                            <div class="col-12 card px-0" *ngFor="let item of recentScore; let j = index">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center justify-content-between">
+                                        <div class="d-inline-flex align-items-center">
+                                            <app-feather-icons class="d-flex circle_design" *ngIf="item.type == '1'" [icon]="'layers'"></app-feather-icons>
+                                            <app-feather-icons class="d-flex circle_design" *ngIf="item.type == '2'" [icon]="'layers'"></app-feather-icons>
+                                            <h5 class="color-primary align-self-center ml-2 mb-0">{{item.class_name}}</h5>
+                                        </div>
+                                        <span style="color: #00A8FF" class="circle_design fs-12">{{item.score}}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="card" style="background: #f7f6f8;border-radius: 16px">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center justify-content-between pb-3">
+                            <div class="d-flex">
+                                <app-feather-icons class="d-flex" [icon]="'rotate-cw'"></app-feather-icons>
+                                <span class="font-weight-bold color-primary ml-1">Recent Tasks</span>
+                            </div>
+                            <!-- <span class="text-right cursor" style="font-size: 10px">
+                                <a>View All</a></span> -->
+                        </div>
+                        <div class="row d-flex justify-content-center align-items-center" *ngIf="recentTask.length == 0">
+                            <div class="col-12">
+                                <button class="nodataList border-0">No Recent Task Available!</button>
+                            </div>
+                        </div>
+                        <div class="row px-3 div-height" *ngIf="recentTask.length != 0">
+                            <div class="col-12 cursor card dashboard-hover dashboard-card px-0" *ngFor="let item of recentTask; let j = index">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h5 class="color-primary align-self-center mb-0">{{item.name}}</h5>
+                                        <div>
+                                            <span *ngIf="item.type == '1'" class="badge badge-info fs-10 ml-1">Assignment</span>
+                                            <span *ngIf="item.type == '2'" class="badge fs-10 badge-success ml-1">Assesment</span>
+                                            <span *ngIf="item.type == '3'" class="badge fs-10 badge-warning ml-1">Resource</span>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h6 class="mb-0 fs-12">{{item.class_name}}</h6>
+                                        <h6 *ngIf="item.daysCount != 0" class="fs-12 mb-0">OverDue In: <span style="color: #81ba00" class="fs-12 font-weight-bold">{{item.daysCount}}</span></h6>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <div class="card" style="background: #f7f6f8;border-radius: 16px">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center justify-content-between pb-3">
+                            <div class="d-flex">
+                                <app-feather-icons class="d-flex" [icon]="'bell'"></app-feather-icons>
+                                <span class="font-weight-bold color-primary ml-1">Recent Update</span>
+                            </div>
+                            <!-- <span class="text-right cursor" style="font-size: 10px">
+                                <a>View All</a></span> -->
+                        </div>
+                        <div class="row d-flex justify-content-center align-items-center" *ngIf="scheduleData.length == 0">
+                            <div class="col-12">
+                                <button class="nodataList border-0">No Recent Updates!</button>
+                            </div>
+                        </div>
+                        <div class="row px-3 div-height1" *ngIf="scheduleData.length != 0">
+                            <div class="col-12 cursor card dashboard-card dashboard-hover1 px-0" *ngFor="let item of scheduleData; let j = index">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-3 d-flex align-items-center justify-content-center">
+                                           <img class="msg-img" [src]="'assets/images/dashboard/default.png'" alt="Default Image">
+                                       </div>
+                                       <div class="col-9 ps-0 align-self-center">
+                                           <p class="m-0 color-primary">Study Well for the exam...</p>
+                                           <small class="d-flex align-items-center justify-content-between text-secondary"><span>Sridhar</span><span>Dec 23, 2024 | 12:00 AM</span></small>
+                                       </div>
+                                   </div>
+                                </div>
+                                <!-- <div class="card-body">
+                                    <h5 class="color-primary align-self-center mb-0">{{item.class_name}}</h5>
+                                    <h6 class="mb-0 fs-12">{{item.start_time + ' - ' + item.end_time}}</h6>
+                                    <div class="cursor mt-2 card dashboard-card px-0">
+                                        <div class="left-msg msg my-3 mx-2">
+                                            <img class="msg-img" [src]="'assets/images/dashboard/default.png'" alt="Default Image">
+                                            <div class="msg-bubble">
+                                                <div class="msg-info">
+                                                    <div class="msg-info-name">Sridhar</div>
+                                                    <div class="msg-info-time">Dec 23, 2024 | 12:00 AM</div>
+                                                </div>
+        
+                                                <div class="msg-text">
+                                                    Study Well for the exam
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div> -->
+                            </div>
+                            <div class="col-12 cursor card dashboard-card1 dashboard-hover1 px-0" *ngFor="let item of scheduleData; let j = index">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-3 d-flex align-items-center justify-content-center">
+                                           <i class="fa fa fa-bullhorn color-primary" style="font-size: 35px; color: #8d6eeb;"></i>
+                                       </div>
+                                       <div class="col-9 ps-0 align-self-center">
+                                           <p class="m-0" style="color: #8d6eeb;">Study Well for the exam...</p>
+                                           <small class="d-flex align-items-center justify-content-between text-secondary"><span>Sridhar</span><span>Dec 23, 2024 | 12:00 AM</span></small>
+                                       </div>
+                                   </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <div class="card" style="background: #f7f6f8;border-radius: 16px">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center justify-content-between pb-3">
+                            <div class="d-flex">
+                                <app-feather-icons class="d-flex" [icon]="'alert-circle'"></app-feather-icons>
+                                <span class="font-weight-bold color-primary ml-1">Overdue Tasks</span>
+                            </div>
+                            <!-- <span class="text-right cursor" style="font-size: 10px">
+                                <a>View All</a></span> -->
+                        </div>
+                        <div class="row d-flex justify-content-center align-items-center" *ngIf="overdueTask.length == 0">
+                            <div class="col-12">
+                                <button class="nodataList border-0">No Overdue Task!</button>
+                            </div>
+                        </div>
+                        <div class="row px-3 div-height" *ngIf="overdueTask.length != 0">
+                            <div class="col-12 cursor card dashboard-hover dashboard-card px-0" *ngFor="let item of overdueTask; let j = index">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h5 class="color-primary align-self-center mb-0">{{item.name}}</h5>
+                                        <div>
+                                            <span *ngIf="item.type == '1'" class="badge badge-info fs-10 ml-1">Assignment</span>
+                                            <span *ngIf="item.type == '2'" class="badge fs-10 badge-success ml-1">Assesment</span>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h6 class="mb-0 fs-12">{{item.class_name}}</h6>
+                                        <h6 class="fs-12 mb-0">OverDue For: <span class="errormessage font-weight-bold fs-12">{{item.daysCount}}</span></h6>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

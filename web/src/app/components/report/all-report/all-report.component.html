@@ -1,0 +1,50 @@
+<section class="pt-1">
+    <div class="row mt-3">
+        <div class="col-12 d-flex">
+            <ul class="nav nav-tabs mb-0 color-primary col-12">
+                <li class="nav-item cursor" *ngIf="showAllTab">
+                    <a (click)="reportTab('reports')" aria-current="page" class="nav-link {{tabShow == 'reports' ? 'active' : ''}}"><b>Reports</b></a>
+                </li>
+                <li class="nav-item cursor" *ngIf="classOrScheduleReport">
+                    <a (click)="reportTab('reports')" aria-current="page" class="nav-link {{tabShow == 'reports' ? 'active' : ''}}"><b>Class Reports</b></a>
+                </li>
+                <li class="nav-item cursor">
+                    <a (click)="reportTab('viewAnalytics')" aria-current="page" class="nav-link {{tabShow == 'viewAnalytics' ? 'active' : ''}}"><b>View Analytics</b></a>
+                </li>
+                <li class="nav-item cursor" *ngIf="showAllTab">
+                    <a (click)="reportTab('itemized')" aria-current="page" class="nav-link {{tabShow == 'itemized' ? 'active' : ''}}"><b>Itemized Reports</b></a>
+                </li>
+            </ul>
+
+            <button (click)="backToClass()" class="btn btn-outline-primary pull-right button-absolute col-2"><i class="fa fa-long-arrow-left mr-1"></i>Back To Class</button>
+        </div>
+    </div>
+</section>
+
+<section *ngIf="tabShow == 'reports' && reportDetails?.viewType != '2'">
+    <div class="row">
+        <div class="col-12">
+<!--            <app-missed-work-report *ngIf="!classOrScheduleReport" class="card p-3" [classShow]="true" [showContent]="selectContent" [studentView]="false"-->
+<!--                                    [timeView]="false" [contentNameValue]="contentNameValue">-->
+<!--            </app-missed-work-report>-->
+
+            <app-missed-work-report
+                    [classShow]="true" [showContent]="classOrScheduleReport ? 'other' : selectContent" [studentView]="false"
+                    [timeView]="classOrScheduleReport" [calledForm]="classOrScheduleReport ? 'class' : ''" [contentNameValue]="contentNameValue">
+            </app-missed-work-report>
+        </div>
+    </div>
+</section>
+<section *ngIf="tabShow == 'itemized' && reportDetails?.viewType != '2'">
+    <div class="row">
+        <div class="col-12">
+            <app-items-report class="card p-3" [showContent]="'other'" [studentView]="false" [timeView]="true">
+            </app-items-report>
+        </div>
+    </div>
+</section>
+<section *ngIf="tabShow == 'viewAnalytics' && (reportDetails?.content_format == '3' || classOrScheduleReport)">
+    <div class="col-12 card p-3">
+        <app-sat-report></app-sat-report>
+    </div>
+</section>

@@ -1,0 +1,67 @@
+<section>
+  <div class="container-fluid card">
+    <div class="card-header my-2">
+      <h5 class="text-capitalize">{{type == 'add' ? 'Add' : 'Update'}} FAQ</h5>
+      <label class="text-muted">All fields marked with <span class="text-danger">*</span> are required</label>
+    </div>
+    <div class="card-body">
+      <form [formGroup]="faqForm">
+        <div class="form-group row mt-1">
+          <label class="col-sm-2 col-form-label"><span class="mr-1 text-danger">*</span>Course Name</label>
+          <div class="col-sm-10">
+            <ng-select appendTo="body" formControlName="course_id"
+                      [items]="courseListData"
+                       bindLabel="course_name"
+                       bindValue="course_id"
+                       placeholder="Select course"
+                       typeToSearchText=""
+                       [clearable]="false">
+            </ng-select>
+          </div>
+        </div>
+        <div class="form-group row mt-2">
+          <label  class="col-sm-2 col-form-label"><span style="visibility: hidden;" class="mr-1">*</span>Question</label>
+          <div class="col-sm-10">
+            <div class="main-content">
+              <app-tiny-mice  [height]="200" [editorPatchValue]="type == 'add' ? false : questionEditor"
+              (emitEditorValue)="editorQuestionValue($event)"
+              [hideMatEditor]="true"></app-tiny-mice>
+<!--              <ck-editor name="editor1" formControlName="question" skin="moono-lisa" language="en" [fullPage]="true"></ck-editor>-->
+              <em *ngIf="!faqForm.get('question').valid && (faqForm.get('question').dirty || faqForm.get('question').touched)" class="error">Question is required</em>
+            </div>
+          </div>
+        </div>
+        <div class="form-group row mt-2">
+          <label  class="col-sm-2 col-form-label"><span style="visibility: hidden;" class="mr-1">*</span>Answer</label>
+          <div class="col-sm-10">
+            <div class="main-content">
+              <app-tiny-mice  [height]="200" [editorPatchValue]="type == 'add' ? false : answerEditor"
+              (emitEditorValue)="editorAnswerValue($event)"
+              [hideMatEditor]="true"></app-tiny-mice>
+<!--              <ck-editor name="editor1" formControlName="answer" skin="moono-lisa" language="en" [fullPage]="true"></ck-editor>-->
+              <em *ngIf="!faqForm.get('answer').valid && (faqForm.get('answer').dirty || faqForm.get('answer').touched)" class="error">Answer is required</em>
+            </div>
+          </div>
+        </div>
+        <div class="form-group row mt-2">
+          <label class="col-sm-2 col-form-label"><span class="mr-1 text-danger">*</span>Status</label>
+          <div class="col-sm-10">
+            <div class="main-content">
+              <select class="form-control" formControlName="status">
+                <option value="A">Active</option>
+                <option value="I">Suspended</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="card-footer">
+      <div class="form-group row">
+        <div class="col-12">
+          <button class="float-right btn btn-primary" (click)="addFaqDetails()">{{type == 'add' ? 'Add' : 'Update'}} FAQ</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

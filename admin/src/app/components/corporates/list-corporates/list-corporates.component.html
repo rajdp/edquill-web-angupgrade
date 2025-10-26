@@ -1,0 +1,94 @@
+<!-- Container-fluid starts-->
+
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-header">
+            <h5>Corporates Details</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-12">
+                    <div class="btn-popup pull-right">
+                        <a class="btn btn-primary" [routerLink]="'/corporates/create-corporates/add'">Add Corporates</a>
+                </div>
+            </div>
+            </div>
+            <div id="batchDelete" class="category-table custom-datatable transcation-datatable user-image">
+                <div class="table-responsive">
+                    <ng2-smart-table  [settings]="settings"   [source]="listData" (custom)="onCustomAction($event)"></ng2-smart-table>
+                </div>
+            </div>
+    </div>
+</div>
+</div>
+
+<ng-template #content let-c="close" let-d="dismiss">
+    <div class="modal-header">
+        <h4 class="modal-title col-12 text-center"><b>Reset Password Using E-Mail</b></h4>
+    </div>
+    <div class="modal-body">
+        <!-- Container-fluid starts-->
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-sm-12">
+                    <h5 class="text-center mt-3">Are you sure want to reset password for {{resetPassword.first_name}}</h5>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-outline-primary" (click)="close()">Cancel</button>
+        <button type="button" class="btn btn-primary" (click)="change(1)">Confirm</button>
+    </div>
+</ng-template>
+<ng-template #contentnow let-c="close" let-d="dismiss">
+    <div class="modal-header">
+        <h4 class="modal-title col-12 text-center"><b>Reset Password Now</b></h4>
+    </div>
+    <div class="modal-body">
+        <!-- Container-fluid starts-->
+        <div class="container-fluid">
+            <form [formGroup]="corporatePassword">
+                <div class="row form-group auth-form">
+                    <input required="" readonly class="form-control" type="text" placeholder="Email" formControlName="email">
+                    <em class="error" *ngIf="!corporatePassword.get('email').valid && (corporatePassword.get('email').dirty || corporatePassword.get('email').touched)">Email is required</em>
+                </div>
+                <div class="row form-group auth-form">
+                    <div class="input-group">
+                        <input required="" type="text" formControlName="password"
+                               class="form-control" placeholder="Password" aria-label="Recipient's username" aria-describedby="basic-addon1" [type]="conps ? 'password' : 'text'">
+                        <div class="input-group-append">
+                                     <span class="input-group-text" id="basic-addon3">
+                                            <i [class]="conps ? 'fa fa-eye-slash' : 'fa fa-eye'" style="color: #7F3486" aria-hidden="true" (click)="conps = !conps"></i>
+                                     </span>
+                        </div>
+                    </div>
+                    <em class="error" *ngIf="corporatePassword.get('password').hasError('required') && (corporatePassword.get('password').dirty || corporatePassword.get('password').touched)">Password is required</em>
+                    <em *ngIf="corporatePassword.get('password').hasError('minlength')" class="error help-block">Minimum 5 characters required</em>
+                </div>
+                <div class="row form-group auth-form">
+                    <div class="input-group">
+                        <input required="" type="text" formControlName="confirmpassword"
+                               class="form-control" placeholder="Confirm Password" aria-label="Recipient's username" aria-describedby="basic-addon1" [type]="conps1 ? 'password' : 'text'">
+                        <div class="input-group-append">
+                           <span class="input-group-text" id="basic-addon2">
+                               <i [class]="conps1 ? 'fa fa-eye-slash' : 'fa fa-eye'" style="color: #7F3486" aria-hidden="true" (click)="conps1 = !conps1"></i>
+                           </span>
+                        </div>
+                    </div>
+                    <em class="error" *ngIf="corporatePassword.get('confirmpassword').hasError('required') && (corporatePassword.get('confirmpassword').dirty || corporatePassword.get('confirmpassword').touched)">Confirm Password is required</em>
+                    <div *ngIf="checkPasswords()">
+                        <em class="error help-block">
+                            Enter same password as above
+                        </em>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-outline-primary" (click)="cancel()">Cancel</button>
+        <button type="button" class="btn btn-primary" (click)="change(2)">Confirm</button>
+    </div>
+</ng-template>
+<!-- Container-fluid Ends-->

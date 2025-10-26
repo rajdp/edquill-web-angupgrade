@@ -1,0 +1,442 @@
+<section>
+  <div class="container-fluid card px-0">
+    <div class="card-header my-2" style="border-bottom: 1px solid #e7e7e7; padding: 24px">
+      <h5 class="text-capitalize mb-2"> {{type == 'add' ? 'Add' : 'Update'}} Course Details</h5>
+      <label class="mb-0">All fields marked with <span class="text-danger">*</span>  are required</label>
+    </div>
+    <div class="card-body">
+      <form [formGroup]="CourseDetails">
+
+        <div class="form-group row mt-2">
+          <div class="col-md-6 d-flex flex-row align-items-center">
+            <label class="px-0 col-form-label mr-4"><span class="text-danger mr-1">*</span>Does this course have schedules</label>
+            <div style="width: fit-content" class="tri-state-toggle">
+
+              <button [ngClass]="{'active' : selectedToogleStatus == 'Yes'}" class="tri-state-toggle-button"
+                      (click)="confirmScheduleChange('Yes')">Yes</button>
+
+              <button [ngClass]="{'active' : selectedToogleStatus == '-'}" class="tri-state-toggle-button"
+                      (click)="confirmScheduleChange('-')">-</button>
+
+              <button [ngClass]="{'active' : selectedToogleStatus == 'No'}" class="tri-state-toggle-button"
+                      (click)="confirmScheduleChange('No')">No</button>
+
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="selectedToogleStatus != '-'">
+          <div class="form-group row mt-2">
+            <label for="inputCourse" class="col-sm-2 col-form-label"><span class="text-danger mr-1">*</span>Course Name</label>
+            <div class="col-sm-10">
+              <input class="form-control" id="inputCourse" placeholder="Course Name" formControlName="course_name">
+            </div>
+          </div>
+          <div class="form-group row mt-1">
+            <label  class="col-sm-2 col-form-label"><span class="text-danger mr-1">*</span>Category</label>
+            <div class="col-sm-10">
+              <ng-select
+                [items]="categoryListData"
+                bindLabel="category_name"
+                bindValue="category_id"
+                formControlName="category_id"
+                placeholder="Select Category"
+                typeToSearchText=""
+                (change)="categoryChanged($event)"
+                [multiple]="true">
+              </ng-select>
+              <em *ngIf="!CourseDetails.get('category_id').valid && (CourseDetails.get('category_id').dirty || CourseDetails.get('category_id').touched)"
+                  class="error">Category is required</em>
+            </div>
+          </div>
+
+          <div class="form-group row mt-1">
+            <label  class="col-sm-2 col-form-label"><span class="text-danger mr-1">*</span>Subject</label>
+            <div class="col-sm-10">
+              <ng-select
+                [items]="subjectListData"
+                bindLabel="subject_name"
+                bindValue="subject_id"
+                formControlName="subject_id"
+                placeholder="Select Subject"
+                typeToSearchText=""
+                [clearable]="false">
+              </ng-select>
+              <em *ngIf="!CourseDetails.get('subject_id').valid && (CourseDetails.get('subject_id').dirty || CourseDetails.get('subject_id').touched)"
+                  class="error">Subject is required</em>
+            </div>
+          </div>
+
+          <div class="form-group row mt-1">
+            <label  class="col-sm-2 col-form-label"><span class="text-danger mr-1" style="visibility: hidden">*</span>Grade</label>
+            <div class="col-sm-10">
+              <ng-select
+                [items]="gradeListData"
+                bindLabel="grade_name"
+                bindValue="grade_id"
+                formControlName="grade_id"
+                placeholder="Select Grade"
+                typeToSearchText=""
+                [multiple]="true"
+              [clearable]="false">
+              </ng-select>
+            </div>
+          </div>
+
+          <div class="form-group row mt-2">
+            <label  class="col-sm-2 col-form-label"><span class="text-danger mr-1">*</span>Short Description</label>
+            <div class="col-sm-10">
+              <div class="main-content">
+                <app-tiny-mice [height]="300" [hideMatEditor]="true" [editorPatchValue]="type == 'add' ? false : emittedEditorValue?.short_description"
+                               (emitEditorValue)="editorValue($event, 'short_description')"></app-tiny-mice>
+                <em *ngIf="!CourseDetails.get('short_description').valid && (CourseDetails.get('short_description').dirty || CourseDetails.get('short_description').touched)"
+                    class="error">Short Description is required</em>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group row mt-2">
+            <label class="col-sm-2 col-form-label"><span style="visibility: hidden;" class="mr-1">*</span>Description</label>
+            <div class="col-sm-10">
+              <div class="main-content">
+                <app-tiny-mice [height]="300" [hideMatEditor]="true" [editorPatchValue]="type == 'add' ? false : emittedEditorValue?.description"
+                               (emitEditorValue)="editorValue($event, 'description')"></app-tiny-mice>
+                <em *ngIf="!CourseDetails.get('description').valid && (CourseDetails.get('description').dirty || CourseDetails.get('description').touched)"
+                    class="error">Description is required</em>
+              </div>
+            </div>
+          </div>
+          <div class="form-group row mt-2">
+            <label  class="col-sm-2 col-form-label"><span style="visibility: hidden;" class="mr-1">*</span>Overview content</label>
+            <div class="col-sm-10">
+              <div class="main-content">
+                <app-tiny-mice [height]="300" [hideMatEditor]="true" [editorPatchValue]="type == 'add' ? false : emittedEditorValue?.overview_content"
+                               (emitEditorValue)="editorValue($event, 'overview_content')"></app-tiny-mice>
+              </div>
+            </div>
+          </div>
+          <div class="form-group row mt-2">
+            <label  class="col-sm-2 col-form-label"><span style="visibility: hidden;" class="mr-1">*</span>Course Content</label>
+            <div class="col-sm-10">
+              <div class="main-content">
+                <app-tiny-mice [height]="300" [hideMatEditor]="true" [editorPatchValue]="type == 'add' ? false : emittedEditorValue?.course_content"
+                               (emitEditorValue)="editorValue($event, 'course_content')"></app-tiny-mice>
+              </div>
+            </div>
+          </div>
+          <div class="form-group row mt-2">
+            <label  class="col-sm-2 col-form-label"><span style="visibility: hidden;" class="mr-1">*</span>Course Pre Requisites</label>
+            <div class="col-sm-10">
+              <div class="main-content">
+                <app-tiny-mice [height]="300" [hideMatEditor]="true" [editorPatchValue]="type == 'add' ? false : emittedEditorValue?.prerequisites"
+                               (emitEditorValue)="editorValue($event, 'prerequisites')"></app-tiny-mice>
+              </div>
+            </div>
+          </div>
+          <div class="form-group row mt-2">
+            <label  class="col-sm-2 col-form-label"><span style="visibility: hidden;" class="mr-1">*</span>Other Details</label>
+            <div class="col-sm-10">
+              <div class="main-content">
+                <app-tiny-mice [height]="300" [hideMatEditor]="true" [editorPatchValue]="type == 'add' ? false : emittedEditorValue?.other_details"
+                               (emitEditorValue)="editorValue($event, 'other_details')"></app-tiny-mice>
+              </div>
+            </div>
+          </div>
+          <div class="form-group row mt-2">
+            <label  class="col-sm-2 col-form-label"><span style="visibility: hidden;" class="mr-1">*</span>Lesson</label>
+            <div class="col-sm-10">
+              <div class="main-content">
+                <app-tiny-mice [height]="300" [hideMatEditor]="true" [editorPatchValue]="type == 'add' ? false : emittedEditorValue?.lessons"
+                               (emitEditorValue)="editorValue($event, 'lessons')"></app-tiny-mice>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group row mt-2">
+            <label for="author" class="col-sm-2 col-form-label"><span style="visibility: hidden;" class="mr-1">*</span>Author</label>
+            <div class="col-sm-10">
+              <input class="form-control" id="author" placeholder="Author" formControlName="author">
+            </div>
+          </div>
+
+          <div class="form-group row mt-2">
+            <label class="col-sm-2 col-form-label"><span class="text-danger mr-1">*</span>Cover Image</label>
+            <div class="col-sm-10">
+              <input #myInput (change)="encodeImageFileAsURL($event)" accept=".png, .jpg, .jpeg,.webp" class="custom-upload-input col-md-12 px-0" type="file" >
+              <span class="color-grey mb-0 font-weight-bold" style="font-size: 12px">Recommended Size 1MB</span>
+            </div>
+          </div>
+
+          <div class="form-group col-12 d-flex" *ngIf="imagePath != ''">
+            <label style="visibility: hidden"  class="col-sm-2 col-form-label"><span class="text-danger mr-1">*</span>Cover Image</label>
+            <div class="col-xl-10 col-md-10 px-0">
+              <i (click)="deleteImg()" class="fa fa-times-circle close-icon" title="close"></i>
+              <div class="files-list fit-img2">
+                <img alt="profile Image" [src]="sanitizer.bypassSecurityTrustResourceUrl(webhost  + '/' + imagePath)" class="w-30">
+              </div>
+            </div>
+          </div>
+          <div class="form-group row mt-2">
+            <label class="col-sm-2 col-form-label"><span class="text-danger mr-1">*</span>Validity Start Date</label>
+            <div class="col-4">
+              <div class="w-100 d-flex align-items-baseline">
+                <input class="form-control" formControlName="startDate" placeholder="Start Date"
+                      name="dp" angular-mydatepicker #dp="angular-mydatepicker" autocomplete="off"
+                      [options]="myDpOptions" (dateChanged)="onDateChanged($event, 'endDate')"  (click)="dp.toggleCalendar()">
+                <div class="input-group-append">
+                  <button style="padding: 6px 18px" type="button" class="btn btn-primary" (click)="dp.toggleCalendar()">
+                    <i class="fa fa-calendar-o"></i></button>
+                </div>
+              </div>
+              <em *ngIf="!CourseDetails.get('startDate').valid && (CourseDetails.get('startDate').dirty || CourseDetails.get('startDate').touched)"
+                  class="error">Start Date is required</em>
+            </div>
+
+            <label class="col-sm-2 col-form-label"><span style="visibility: hidden" class="mr-1">*</span>Validity End Date</label>
+            <div class="d-flex align-items-baseline col-4">
+              <input class="form-control" formControlName="endDate" placeholder="End Date"
+                     name="dp1" angular-mydatepicker #dp1="angular-mydatepicker" autocomplete="off"
+                     [options]="myDpOptions1" (click)="dp1.toggleCalendar()">
+              <div class="input-group-append">
+                <button style="padding: 6px 18px" type="button" class="btn btn-primary" (click)="dp1.toggleCalendar()">
+                  <i class="fa fa-calendar-o"></i></button>
+              </div>
+              <em *ngIf="!CourseDetails.get('endDate').valid && (CourseDetails.get('endDate').dirty || CourseDetails.get('endDate').touched)"
+                  class="error">End Date is required</em>
+            </div>
+          </div>
+
+          <div class="form-group row">
+            <label class="col-xl-2 col-md-2"><span class="text-danger">*</span>
+              Display Order</label>
+            <div class="col-xl-10 col-md-10">
+              <input maxlength="4" (keypress)="numberValidate($event)" class="form-control" formControlName="display_order"
+                     placeholder="Enter Display Order Number" type="text">
+              <em *ngIf="!CourseDetails.get('display_order').valid && (CourseDetails.get('display_order').dirty || CourseDetails.get('display_order').touched)" class="error">Display Order Number is required</em>
+              <em class="error">{{showErrorMessage()}}</em>
+            </div>
+          </div>
+
+          <div class="form-group row mt-2">
+            <label class="col-sm-2 col-form-label"><span class="mr-1 text-danger">*</span>Status</label>
+            <div class="col-sm-10">
+              <div class="main-content">
+                <select class="form-control" formControlName="status">
+                  <option *ngFor="let data of courseStatus" [value]="data.id">{{data.value}}</option>
+                </select>
+              </div>
+              <em *ngIf="!CourseDetails.get('status').valid && (CourseDetails.get('status').dirty || CourseDetails.get('status').touched)"
+                  class="error">Status is required</em>
+            </div>
+          </div>
+<!--          <div class="form-group row">-->
+<!--            <label class="col-sm-2 col-form-label" for="validationCustom5"><span style="visibility: hidden">*</span>-->
+<!--              Redirect Url</label>-->
+<!--            <div class="col-sm-10">-->
+<!--              <input class="form-control" formControlName="redirect_url" id="validationCustom5"-->
+<!--                     placeholder="Enter Redirect Url" type="text">-->
+<!--            </div>-->
+<!--          </div>-->
+
+<!--          <div class="form-group row">-->
+<!--            <label class="col-xl-2 col-md-2"><span style="visibility: hidden">*</span>-->
+<!--              Button Name</label>-->
+<!--            <div class="col-xl-10 col-md-10">-->
+<!--              <input maxlength="20" class="form-control" formControlName="button_name"-->
+<!--                     placeholder="Enter Button Name" type="text">-->
+<!--            </div>-->
+<!--          </div>-->
+
+          <div class="form-group row mt-2 mb-0">
+            <label style="visibility:hidden" class="col-sm-2 col-form-label"><span>*</span>Status</label>
+            <div class="col-10">
+              <div class="row">
+                <div class="col-3 col-md-3 d-flex align-items-center">
+                  <input id="certifiedCourse" type="checkbox" formControlName="certified_course" class="mr-2 cursor">
+                  <label class="cursor mb-0" for="certifiedCourse">Certified Course</label>
+                </div>
+                <div class="col-3 col-md-3 d-flex align-items-center">
+                  <input id="popular" type="checkbox" formControlName="is_popular" class="mr-2 cursor">
+                  <label class="cursor mb-0" for="popular">Popular</label>
+                </div>
+                <div class="col-3 col-md-3 d-flex align-items-center">
+                  <input id="exclusive" type="checkbox" formControlName="is_exclusive" class="mr-2 cursor">
+                  <label class="cursor mb-0" for="exclusive">One-on-One</label>
+                </div>
+                <div class="col-3 col-md-3 d-flex align-items-center">
+                  <input id="webinar" type="checkbox" formControlName="is_webinar_event" class="mr-2 cursor">
+                  <label class="cursor mb-0" for="webinar">Webinar Event</label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div *ngIf="selectedToogleStatus == 'No'">
+
+            <div class="form-group row mt-2">
+              <label class="col-sm-2 col-form-label"><span style="visibility: hidden" class="mr-1">*</span>Registration Start Date</label>
+              <div class="d-flex align-items-baseline col-4">
+                <input class="form-control" formControlName="registartionStartDate" placeholder="Start Date"
+                       name="dp1" angular-mydatepicker #dp3="angular-mydatepicker" autocomplete="off"
+                       [options]="myDpOptions2" (dateChanged)="onDateChanged($event, 'registartionEndDate')" (click)="dp3.toggleCalendar()">
+                <div class="input-group-append">
+                  <button style="padding: 6px 18px" type="button" class="btn btn-primary" (click)="dp3.toggleCalendar()">
+                    <i class="fa fa-calendar-o"></i></button>
+                </div>
+              </div>
+
+              <label class="col-sm-2 col-form-label"><span style="visibility: hidden" class="mr-1">*</span>Registration End Date</label>
+              <div class="d-flex align-items-baseline col-4">
+                <input class="form-control" formControlName="registartionEndDate" placeholder="End Date"
+                       name="dp1" angular-mydatepicker #dp4="angular-mydatepicker" autocomplete="off"
+                       [options]="myDpOptions3" (click)="dp4.toggleCalendar()">
+                <div class="input-group-append">
+                  <button style="padding: 6px 18px" [disabled]="validatorService.disableEndDateCondition('registartionStartDate', 'registartionEndDate', CourseDetails)"
+                          type="button" class="btn btn-primary" (click)="dp4.toggleCalendar()">
+                    <i class="fa fa-calendar-o"></i></button>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group row mt-2">
+              <label class="col-sm-2 col-form-label"><span style="visibility: hidden" class="text-danger mr-1">*</span>Course Start Date</label>
+              <div class="d-flex align-items-baseline col-4">
+                <input class="form-control" formControlName="courseStartDate" placeholder="Start Date"
+                       name="dp1" angular-mydatepicker #dp5="angular-mydatepicker" autocomplete="off"
+                       [options]="myDpOptions4" (click)="dp5.toggleCalendar()" (dateChanged)="onDateChanged($event, 'courseEndDate')" >
+                <div class="input-group-append">
+                  <button style="padding: 6px 18px" type="button" class="btn btn-primary" (click)="dp5.toggleCalendar()">
+                    <i class="fa fa-calendar-o"></i></button>
+                </div>
+              </div>
+
+              <label class="col-sm-2 col-form-label"><span style="visibility: hidden" class="text-danger mr-1">*</span>Course End Date</label>
+              <div class="d-flex align-items-baseline col-4">
+                <input class="form-control" formControlName="courseEndDate" placeholder="End Date"
+                       name="dp1" angular-mydatepicker #dp6="angular-mydatepicker" autocomplete="off"
+                       [options]="myDpOptions5" (click)="dp6.toggleCalendar()">
+                <div class="input-group-append">
+                  <button style="padding: 6px 18px" [disabled]="validatorService.disableEndDateCondition('courseStartDate', 'courseEndDate', CourseDetails)"
+                        type="button" class="btn btn-primary" (click)="dp6.toggleCalendar()">
+                    <i class="fa fa-calendar-o"></i></button>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group row mt-2"><label class="col-sm-2 col-form-label"><span class="mr-1 text-danger">*</span>Course Type</label>
+              <div class="col-sm-4">
+                <div class="main-content">
+                  <select class="form-control" formControlName="course_type">
+                    <option value="" selected disabled hidden>Select Course Type</option>
+                    <option value="O">Online</option>
+                    <option value="I">In-Person</option>
+                  </select>
+                  <em *ngIf="!CourseDetails.get('course_type').valid && (CourseDetails.get('course_type').dirty || CourseDetails.get('course_type').touched)"
+                      class="error">Course Type is required</em>
+                </div>
+              </div>
+              <label for="inputSlot" class="col-sm-2 col-form-label"><span style="visibility: hidden" class="mr-1">*</span>Slots Available</label>
+              <div class="col-sm-4">
+                <input class="form-control" id="inputSlot" placeholder="Slots Available" formControlName="slot_available" (keypress)="numberValidation($event)">
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group row mt-2">
+            <label class="col-sm-2 col-form-label"><span style="visibility: hidden" class="mr-1">*</span>Purchase Contact Info</label>
+            <div class="col-sm-10">
+              <input formControlName="contact_info" class="w-100 form-control" placeholder="Enter Purchase Contact Info" >
+            </div>
+          </div>
+
+          <div class="form-group row mt-2">
+            <label for="fees" class="col-sm-2 col-form-label"><span class="mr-1 text-danger">*</span>Is Paid Course</label>
+            <div class="col-10 col-form-label">
+              <div class="row">
+                <div class="col-1 col-md-1">
+                  <input (change)="checkbox('paid_fee_yes', 'paid_fee_no')" id="paid_fee_yes" type="checkbox" formControlName="paid_fee_yes" class="mr-2 cursor">
+                  <label class="cursor mb-0" for="paid_fee_yes">Yes</label>
+                </div>
+                <div class="col-1 col-md-1">
+                  <input (change)="checkbox('paid_fee_no', 'paid_fee_yes')" id="paid_fee_no" type="checkbox" formControlName="paid_fee_no" class="mr-2 cursor">
+                  <label class="cursor mb-0" for="paid_fee_no">No</label>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="form-group row mt-2" *ngIf="CourseDetails.controls.paid_fee_yes.value && selectedToogleStatus == 'Yes'">
+            <label for="fees" class="col-sm-2 col-form-label"><span style="visibility: hidden;" class="mr-1">*</span>Fees</label>
+            <div class="col-sm-10">
+              <input class="form-control" id="fees" placeholder="Fees" formControlName="fees">
+            </div>
+          </div>
+
+          <div *ngIf="CourseDetails.controls.paid_fee_yes.value && selectedToogleStatus == 'No'">
+
+            <div class="form-group row mt-2">
+              <label for="inputCourse" class="col-sm-2 col-form-label"><span class="mr-1 text-danger">*</span>Amount</label>
+              <div class="col-sm-10">
+                <div class="input-group">
+                  <div class="input-group-append">
+                    <button style="padding: 6px 18px" type="button" class="btn btn-primary">
+                      $
+                    </button>
+                  </div>
+                  <input maxlength="6" class="form-control" id="inputAmount" placeholder="Amount" formControlName="fees" (input)="calculateAmount()" (keypress)="numberValidation($event)">
+
+                </div>
+                <em *ngIf="!CourseDetails.get('fees').valid && (CourseDetails.get('fees').dirty || CourseDetails.get('fees').touched)"
+                    class="error">Amount is required</em>
+              </div>
+            </div>
+            <div class="form-group row mt-2">
+              <label for="inputCourse" class="col-sm-2 col-form-label"><span class="mr-1 text-danger">*</span>Discount Amount</label>
+              <div class="col-sm-10">
+                <div class="input-group">
+                  <div class="input-group-append">
+                    <button style="padding: 6px 18px" type="button" class="btn btn-primary">
+                      $
+                    </button>
+                  </div>
+                  <input maxlength="6" class="form-control" id="inputDiscount" placeholder="Discount Amount" formControlName="discount" (input)="calculateAmount()" (keypress)="numberValidation($event)">
+                </div>
+                <em *ngIf="!CourseDetails.get('discount').valid && (CourseDetails.get('discount').dirty || CourseDetails.get('discount').touched)"
+                    class="error">Discount Amount is required</em>
+              </div>
+            </div>
+            <div class="form-group row mt-2">
+              <label for="inputCourse" class="col-sm-2 col-form-label"><span class="mr-1 text-danger">*</span>Actual Amount</label>
+              <div class="col-sm-10 input-group">
+                <div class="input-group-append">
+                  <button style="padding: 6px 18px" type="button" class="btn btn-primary">
+                    $
+                  </button>
+                </div>
+                <input class="form-control" placeholder="Actual Amount" formControlName="actual_amount" readonly>
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="card-footer" *ngIf="selectedToogleStatus != '-'">
+      <button class="button float-right btn btn-primary mb-2" (click)="addOrEditCourseDetails()">{{type == 'add' ? 'Add' : 'Update'}} Course</button>
+      <a class="float-right btn cancel mb-2 mr-2" routerLink="/course/category/list">Close</a>
+    </div>
+  </div>
+</section>
+
+<ng-template #scheduleConfirmation let-c="close" let-d="dismiss">
+  <div class="modal-header">
+    <h4 class="modal-title"><b>Schedule Change</b></h4>
+  </div>
+  <div class="modal-body">
+    <h5 class="color-primary">
+      All classes associated with this course schedule will be removed. Would you like to proceed?
+    </h5>
+  </div>
+  <div class="modal-footer">
+    <button class="btn cancel" (click)="close()">No</button>
+    <button class="btn btn-primary" (click)="close();updateScheduleType(this.selectedToogleStatus == 'Yes' ? 'No' : 'Yes')">Yes</button>
+  </div>
+</ng-template>

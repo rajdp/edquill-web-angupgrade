@@ -1,0 +1,338 @@
+<div class="container-fluid">
+    <div [hidden]="previewPdf == false" class="row">
+        <div *ngIf="functionCalled" class="col-12 card">
+            <h3 class="pt-3">{{detailData?.name}} <span><button (click)="previewback()" *ngIf="previewType == 'repository' || previewType == 'home'" class="btn btn-primary float-right">back</button>
+            </span></h3>
+        </div>
+        <div class="col-md-12">
+            <div class="row">
+                <div *ngIf="previewType == 'student-preview' && functionCalled" class="col-md-{{questionEmpty ? 12 : deleteAnnatation ?  12 : 8}}" id="pdf-page">
+                    <app-annotation (annotate)="getAreaInfo($event)"
+                                    [userType]="'student'"
+                                    (deleteAnnotation)="getDeleteAction($event)"
+                                    [getAnnotate]="areaInfo"
+                                    [getDragQues]="dragQuestionsList"
+                                    [pdfPath]="pdfTemplate"
+                                    [toolAlignCenter]="questionEmpty"
+                                    [toolHide]="false"></app-annotation>
+                </div>
+                <div *ngIf="previewType != 'student-preview' && functionCalled"
+                     class="col-md-{{questionEmpty ? 12 : 8}}"
+                     id="pdf-page">
+                    <app-annotation [getAnnotate]="areaInfo"
+                                    [getDragQues]="dragQuestionsList"
+                                    [pdfPath]="pdfTemplate"
+                                    [toolHide]="true"
+                                    [userType]="'teacher'"></app-annotation>
+                </div>
+                <div [hidden]="questionEmpty != false || deleteAnnatation" class="col-md-4 scrollPanel pr-0">
+                    <div class="row col-md-12 px-0">
+                        <div *ngFor="let sec of totalsub; let i = index" class="col-md-12">
+                            <div class="col-md-12 py-3 px-0" *ngIf="this.totalsub.length != 1 || sec.heading != ''">
+                                <input type="text" class="input-custom-modal div-disable" [value]="sec.heading">
+                            </div>
+                            <div *ngFor="let list of sec.section; let j = index" class="col-md-12 card mx-0 px-4">
+                                <div class="card-header ant-card-small">
+                                    <div class="row">
+                                        <div class="col-md-8 px-0">
+                                            <span class="pull-left question-no col-md-3 mr-2" id="dropId">{{list.sub_question_no}}</span>
+                                            <img [hidden]="list.auto_grade == '0'" alt="" class="ml-2" src="assets/images/pdf-icons/auto-grade.png" title="auto graded">
+                                            <img [hidden]="list.match_case == '0'" alt="" class="ml-2 mt-2 border" src="assets/images/pdf-icons/match-case.png" title="match case">
+                                            <img *ngIf="list.question_type_id == '30'" alt="" class="ml-2" src="assets/images/pdf-icons/math-icon.png" title="math question">
+                                        </div>
+                                        <div class="col-md-4 px-0">
+                                        </div>
+                                        <div *ngIf="list.question != ''"  class="col-md-12 mt-3">
+                                            <div class="col-md-12 overflow-auto px-0" style="max-height: 30rem">
+                                                <label>Question: </label>
+                                                <span [innerHTML]="list.question | sanitizeHtml" class="div-disable" id="{{j}}+ 'show'"></span>
+                                            </div>
+                                        </div>
+                                        <div [hidden]="previewType == 'student-preview'" class="col-12 px-0">
+                                            <div *ngIf="list.question_type_id == '1'" class="col-md-12 mt-3 mb-2 px-0">
+                                                <span *ngFor="let items of list.array" [ngClass]="{'selectColor' : items === list.answer.toLowerCase()}" class="multichoice-option" style="line-height: 4">{{items}}</span>
+                                            </div>
+                                            <div *ngIf="list.question_type_id == '3'" class="col-md-12 mt-3 px-0 mb-2">
+                                                <div class="row">
+                                                    <input [checked]="list.answer == 'true'" class="ml-4" style="pointer-events: none" type="radio"><h4 class="ml-2">True</h4><input [checked]="list.answer == 'false'" class="ml-4" style="pointer-events: none" type="radio"><h4 class="ml-2">False</h4>
+                                                </div>
+                                            </div>
+                                            <div *ngIf="list.question_type_id == '9'" class="col-md-12 mt-3 px-0 mb-2">
+                                                <select class="form-control">
+                                                    <option *ngFor="let chc of list.array" [selected]="chc.choice == list.answer" disabled>{{chc.choice}}</option>
+                                                </select>
+                                            </div>
+                                            <div *ngIf="list.question_type_id == '10'" class="col-md-12 mt-3 px-0 mb-2">
+                                                <input [value]="list.answer" class="form-control div-disable" type="text">
+                                            </div>
+                                            <div *ngIf="list.question_type_id == '20'" class="col-md-12 mt-3 px-0 mb-2">
+                                                <label>Essay</label>
+                                                <textarea class="form-control div-disable" cols="30" rows="2">Number of lines: {{list.answer}}</textarea>
+                                            </div>
+                                            <div *ngIf="list.question_type_id == '30'" class="col-md-12 mt-3 mb-2 overflow-auto">
+                                                <label>Answer:</label>
+                                                <h4 [innerHTML]="list.answer | sanitizeHtml"></h4>
+                                            </div>
+                                            <div *ngIf="list.question_type_id == '40'" class="col-md-12 mt-3 px-0 mb-2">
+                                                <button (click)="graphDetail(list.answer)" class="btn btn-primary">view graph</button>
+                                            </div>
+                                            <div *ngIf="list.question_type_id == '54'" class="col-md-12 mt-3 px-0 mb-2">
+                                                <div *ngFor="let opt of list.answer">
+                                                    <input [title]="opt.value" [value]="opt.value" class="form-control mb-2" readonly type="text">
+                                                </div>
+                                            </div>
+                                            <div *ngIf="list.answer_explanation != ''" class="col-md-12 mt-3 px-0">
+                                                <div class="col-md-12 overflow-auto px-0" style="max-height: 30rem;overflow-y: auto;">
+                                                    <button (click)="openExplanationPopup(list.answer_explanation)" class="btn-outline-primary btn-sm">view explanation</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row" *ngIf="previewPdf == false && showPdf == 'text_resources'">
+       <div class="col-12 card mb-1">
+           <h3 class="pt-3">{{detailData?.name}} <span>
+               <button *ngIf="backToResources== null" [routerLink]="'/repository/content-home'" class="btn btn-primary float-right">back</button>
+           </span></h3>
+       </div>
+        <div class="col-12 card mt-4 p-3" innerHtml="{{content}}">
+        </div>
+    </div>
+    <div *ngIf="previewPdf == false && (showPdf == 'text_assessments' || showPdf == 'text_assignments')" class="row">
+        <div class="col-12 card mb-2 mt-2">
+            <h3 class="pt-3">{{detailData?.name}} <span>
+                <button *ngIf="backToResources== null" [routerLink]="'/repository/content-home'" class="btn btn-primary float-right">back</button>
+            </span></h3>
+        </div>
+        <div class="col-12 mb-2 mt-2">
+            <h4 class="letter">Questions & Answer</h4>
+        </div>
+        <div class="col-12 mt-2">
+            <div *ngFor="let list of questions; let i = index" class="col-12 card">
+                <div class="card-body pb-4">
+                    <div class="d-flex flex-row align-items-center">
+                        <div class="my-3 question-no">
+                            <h5 class="mb-0">{{i+1}}</h5>
+                        </div>
+                        <div class="ml-3">
+                            <span *ngIf="list.question_type_id != 24" class="col-12" [innerHTML]="list.question | sanitizeHtml"></span>
+                        </div>
+                    </div>
+                    <div class="col-12 mt-3" *ngIf="list.question_type_id == 1 || list.question_type_id == 2">
+                        <div *ngFor="let item of list.answer; let j=index" [ngClass]="{'question-page-selected' : item.correctActive === j}" class="mb-2 multiSelectCard d-flex" style="padding: 12px 16px">
+                            <span [ngClass]="{'selectColor' : item.correctActive === j}" class="multichoice-option1 mr-2">{{((j+1) + 9).toString(36).toLowerCase()}}</span>
+                            <span class="ml-3 mt-2" [innerHTML]="list.options[j].options  | sanitizeHtml"></span>
+                        </div>
+                    </div>
+                    <div class="col-12 mt-5" *ngIf="list.question_type_id == 5 || list.question_type_id == 7">
+                        <table class="table table-bordered text-center div-disable">
+                            <thead>
+                            <tr>
+                                <th>Questions</th>
+                                <th *ngFor="let item of list.answer; let j=index" [innerHTML]="item | sanitizeHtml"></th>
+                            </tr>
+                            </thead>
+                            <tbody *ngIf="list.question_type_id == 5">
+                            <tr  *ngFor="let item of list.heading_option; let j=index">
+                                <td [innerHTML]="list.options[j].options | sanitizeHtml"></td>
+                                <td *ngFor="let answer of list.answer; let k=index">
+                                    <input [checked]="item.correctActive === k" class="radio_animated" name="choose{{j}}" type="radio">
+                                </td>
+                            </tr>
+                            </tbody>
+                            <tbody *ngIf="list.question_type_id == 7">
+                            <tr  *ngFor="let item of list.options; let j=index">
+                                <td [innerHTML]="item.options | sanitizeHtml"></td>
+                                <td *ngFor="let chk of list.answer; let k=index">
+                                    <input id="checkMulti{{i}}{{j}}{{k}}" type="checkbox">
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="col-8 mt-5" *ngIf="list.question_type_id == 9">
+                        <div *ngFor="let item of list.answer; let j = index" class="mb-3 d-flex">
+                            <div class="question-no-small">
+                                <h6 class="mb-0">{{j+1}}</h6>
+                            </div>
+                            <select class="form-control ml-3">
+                                <option
+                                        *ngFor="let option of item.option1"
+                                        [innerHTML]="option.listOption | sanitizeHtml"
+                                        [selected]="option.selected == 'true'" disabled>
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-8 mt-5" *ngIf="list.question_type_id == 10">
+                        <div *ngFor="let item of list.answer; let j = index" class="mb-3 d-flex">
+                            <div class="question-no-small">
+                                <h6 class="mb-0">{{j+1}}</h6>
+                            </div>
+                            <span class="form-control ml-3" [innerHTML]="item.value  | sanitizeHtml"></span>
+                        </div>
+                    </div>
+                    <div class="col-12 mt-3" *ngIf="list.question_type_id == 20 || list.question_type_id == 21 || list.question_type_id == 22">
+                        <span [innerHTML]="list.answer[0].correctAnswer | sanitizeHtml"></span>
+                    </div>
+                    <div class="col-12 mt-3" *ngIf="list.question_type_id == 28">
+                        <span [innerHTML]="list.options | sanitizeHtml"></span>
+                    </div>
+                    <div class="col-12 mt-3" *ngIf="list.question_type_id == 24">
+                        <div *ngFor="let item of list.subQuestions; let j = index" class="mb-3 mt-5">
+                            <div class="question-no-small mt-3" style="background-color: #bc46c7">
+                                <h6 class="mb-0" style="color: white">{{j+1}}</h6>
+                            </div>
+                            <span class="form-control col-12 mt-3" [innerHTML]="item.question | sanitizeHtml"></span>
+                            <div *ngIf="item.question_type_id == 1 || item.question_type_id == 2" class="mt-4">
+                                <div *ngFor="let answer of item.answer; let k=index" [ngClass]="{'question-page-selected' : answer.correctActive === k}" class="mb-2 multiSelectCard d-flex" style="padding: 12px 16px">
+                                    <span [ngClass]="{'selectColor' : answer.correctActive === k}" class="multichoice-option1 mr-2">{{((k+1) + 9).toString(36).toLowerCase()}}</span>
+                                    <span class="ml-3 mt-2" [innerHTML]="item.options[k].options  | sanitizeHtml"></span>
+                                </div>
+                            </div>
+                            <div class="col-12" *ngIf="item.question_type_id == 5 || item.question_type_id == 7">
+                                <table class="table table-bordered text-center col-12 mt-3">
+                                    <thead>
+                                    <tr>
+                                        <th>Questions</th>
+                                        <th *ngFor="let answer of item.answer; let k=index" [innerHTML]="answer | sanitizeHtml"></th>
+                                    </tr>
+                                    </thead>
+                                    <tbody *ngIf="item.question_type_id == 5">
+                                    <tr  *ngFor="let answer of item.heading_option; let k=index">
+                                        <td [innerHTML]="item.options[k].options | sanitizeHtml"></td>
+                                        <td *ngFor="let term of item.answer; let l=index">
+                                            <input [checked]="answer.correctActive === l" class="radio_animated" name="choose{{k}}" type="radio">
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                    <tbody *ngIf="item.question_type_id == 7">
+                                    <tr  *ngFor="let answer of item.options; let k=index">
+                                        <td [innerHTML]="answer.options | sanitizeHtml"></td>
+                                        <td *ngFor="let chk of item.answer; let l=index">
+                                            <input id="checkMultiPassage{{i}}{{j}}{{k}}{{l}}" type="checkbox">
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="col-7 mt-3" *ngIf="item.question_type_id == 10">
+                                <div *ngFor="let ans of item.answer; let k = index" class="mb-3 d-flex justify-content-center">
+                                    <div class="question-no-small">
+                                        <h6 class="mb-0">{{k+1}}</h6>
+                                    </div>
+                                    <span class="form-control ml-3" [innerHTML]="ans.value  | sanitizeHtml"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<ng-template #multiChoiceDetail let-c="close" let-d="dismiss">
+    <div class="modal-header">
+        <h4 *ngIf="this.quesId == '1'" class="modal-title letter">Multi choice Standard</h4>
+        <h4 *ngIf="this.quesId == '2'" class="modal-title letter">Multi Selection</h4>
+    </div>
+    <div class="modal-body">
+        <div class="container-fluid">
+            <div class="col-12">
+                <div *ngFor="let list of answerIndex; let i=index" [ngClass]="{'question-page-selected' : list.active === i}" class="mb-4 multiSelectCard" style="padding: 16px">
+                    <span [ngClass]="{'selectColor' : list.active === i}" class="multichoice-option1 mr-2">{{((i+1) + 9).toString(36).toLowerCase()}}</span>
+                    <span class="mt-2">{{list.options}}</span>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer d-flex justify-content-right mt-2">
+            <button (click)="close()" class="btn btn-primary" type="button">Ok</button>
+        </div>
+    </div>
+</ng-template>
+<ng-template #matchTableDetail let-c="close" let-d="dismiss">
+    <div class="modal-header">
+        <h4 *ngIf="this.quesId == '5'" class="modal-title letter">Match Table Standard</h4>
+        <h4 *ngIf="this.quesId == '7'" class="modal-title letter">Match Table Labels</h4>
+    </div>
+    <div class="modal-body">
+        <div class="col-12">
+            <table class="table table-bordered text-center">
+                <thead>
+                <tr>
+                    <th>Questions</th>
+                    <th *ngFor="let list of fullData.answer; let i=index">
+                        {{list.correctAnswer}}</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr  *ngFor="let list of fullData.options; let j=index">
+                    <td>{{list.options}}</td>
+                    <td *ngFor="let item of fullData.heading_option; let i=index">
+                        <input *ngIf="this.quesId == '5'" [checked]="item.correctActive === j" class="radio_animated" name="choose{{j}}" type="radio">
+                        <input *ngIf="this.quesId == '7'" [checked]="item.correctAnswer === j" type="checkbox">
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="modal-footer d-flex justify-content-right mt-2">
+            <button (click)="close()" class="btn btn-primary" type="button">Ok</button>
+        </div>
+    </div>
+</ng-template>
+<ng-template #dropDownDetail let-c="close" let-d="dismiss">
+    <div class="modal-header">
+        <h4 *ngIf="this.quesId == '9'" class="modal-title letter">Text Entry</h4>
+    </div>
+    <div class="modal-body">
+        <div class="col-12">
+            <span>{{fullData.answer}}</span>
+        </div>
+        <div class="modal-footer d-flex justify-content-right mt-2">
+            <button (click)="close()" class="btn btn-primary" type="button">Ok</button>
+        </div>
+    </div>
+</ng-template>
+<ng-template #viewGraph let-c="close" let-d="dismiss">
+    <div class="modal-body">
+        <div class="row mt-3">
+            <div class="col-sm-11">
+                <h5 class="text-center"><b>Graph</b></h5>
+            </div>
+            <div class="col-sm-1">
+                <i (click)="close()" class="fa fa-close cursor"></i>
+            </div>
+            <div class="col-12 d-flex flex-column">
+                <app-graph-component [editMode]="false"
+                                     [editPatchValue]="graphShow"
+                                     [graphId]="'previewGraph'"
+                                     [questionType]="'40'"></app-graph-component>
+            </div>
+        </div>
+        <button (click)="close()" class="btn btn-primary pull-right mt-4" type="button">Ok</button>
+    </div>
+</ng-template>
+<ng-template #viewExplain let-c="close" let-d="dismiss">
+    <div class="modal-header d-flex justify-content-end">
+        <i (click)="close()" class="fa fa-close cursor"></i>
+    </div>
+    <div class="modal-body">
+        <!-- Container-fluid starts-->
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-12">
+                    <p [innerHTML]="ExplanationPopupValue | sanitizeHtml"></p>
+                </div>
+            </div>
+            <!-- Container-fluid Ends-->
+        </div>
+    </div>
+</ng-template>

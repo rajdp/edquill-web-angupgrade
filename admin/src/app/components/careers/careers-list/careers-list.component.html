@@ -1,0 +1,152 @@
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="row d-flex justify-content-between">
+                        <div class="col-4 text-center">
+                            <select (change)="filterCareer($event)" class="form-control col-6">
+                                <option value="All">All</option>
+                                <option value="Active">Active</option>
+                                <option value="Inactive">Inactive</option>
+                            </select>
+                        </div>
+                        <div class="col-4 text-center">
+                            <h5 class="text-center">Current Job Openings</h5>
+                        </div>
+                        <div class="col-4 text-right">
+                            <button type="button"  class="btn btn-outline-primary btn-sm pull-right" (click)="addJobDetails('add', '')">Add Job</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row d-flex justify-content-center" *ngIf="careerData == ''">
+                        <div class="col-6">
+                            <button  class="nodataList" >No Job Available!</button>
+                        </div>
+                    </div>
+                    <div class="row" *ngIf="careerData != ''">
+                        <div class="col-6" *ngFor="let list of careerData; let i = index">
+                            <div class="row d-flex justify-content-center">
+                                <div class="col-11 border border-secondary rounded p-3 mt-4">
+                                    <i class="fa fa-edit pull-right letter" aria-hidden="true" style="cursor:pointer" title="Edit" (click)="addJobDetails('edit', list)"></i>
+                                    <h4 class="cursor" title="Title">{{list.title}} &nbsp;<span (click)="viewMore(list, 'details')" *ngIf="list.no_of_applicants != '0'" class="badge badge-secondary" title="Applied Job Count">{{list.no_of_applicants}}</span></h4>
+                                    <p class="cursor"><strong title="Department">{{list.department}}</strong>&nbsp; &nbsp;<span title="Address1" class="cursor" *ngIf="list.address1 != ''">{{list.address1}}</span>&nbsp; &nbsp;
+                                        <span title="Address2" class="cursor" *ngIf="list.address2 != ''">{{list.address2}}</span><br>
+                                    <span title="Basic Qualification" class="cursor" [innerText]="list.basic_qualification"></span>&nbsp;
+                                    </p>
+                                    <div class="w-100 text-center">
+                                        <button type="button"  class="btn btn-outline-primary btn-sm" (click)="viewMore(list, 'view')">View More</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<ng-template #addJob let-c="close" let-d="dismiss">
+    <div class="modal-header">
+        <h3>Add Job</h3>
+        <i class="fa fa-close pull-right" aria-hidden="true" style="cursor:pointer" (click)="close()"></i>
+    </div>
+    <div class="modal-body">
+        <!-- Container-fluid starts-->
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-12">
+                    <form [formGroup]="careersform" class="needs-validation user-add">
+                        <div class="form-group row">
+                            <label for="validationCustom1" class="col-xl-3 col-md-4"><span>*</span>
+                                Title</label>
+                            <div class="col-xl-8 col-md-7">
+                                <input class="form-control " formControlName="title" id="validationCustom1"
+                                       type="text" placeholder="Title" autocomplete="off" required>
+                                <em class="error" *ngIf="!careersform.get('title').valid && (careersform.get('title').dirty || careersform.get('title').touched)">Title is required</em>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="validationCustom2" class="col-xl-3 col-md-4"><span style="visibility: hidden">*</span>
+                                Department</label>
+                            <div class="col-xl-8 col-md-7">
+                                <input class="form-control " formControlName="department" id="validationCustom2"
+                                       type="text" placeholder="Department" autocomplete="off">
+<!--                                <em class="error" *ngIf="!careersform.get('name').valid && (careersform.get('name').dirty || careersform.get('name').touched)">Name is required</em>-->
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="validationCustom3" class="col-xl-3 col-md-4"><span style="visibility: hidden">*</span>
+                                Basic Qualification</label>
+                            <div class="col-xl-8 col-md-7">
+                                <textarea class="form-control" rows="3" formControlName="basic_qualification" id="validationCustom3"
+                                          type="text" placeholder="Basic Qualification" autocomplete="off"></textarea>
+<!--                                <em class="error" *ngIf="!careersform.get('name').valid && (careersform.get('name').dirty || careersform.get('name').touched)">Name is required</em>-->
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="validationCustom4" class="col-xl-3 col-md-4"><span style="visibility: hidden">*</span>
+                                Preferred Qualification</label>
+                            <div class="col-xl-8 col-md-7">
+                                <textarea class="form-control" rows="3" formControlName="prefered_qualification" id="validationCustom4" placeholder="Preferred Qualification" autocomplete="off"></textarea>
+<!--                                <em class="error" *ngIf="!careersform.get('name').valid && (careersform.get('name').dirty || careersform.get('name').touched)">Name is required</em>-->
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="validationCustom5" class="col-xl-3 col-md-4"><span style="visibility: hidden">*</span>
+                                Description</label>
+                            <div class="col-xl-8 col-md-7">
+                                <textarea class="form-control " rows="3" formControlName="description" id="validationCustom5"
+                                          placeholder="Description" autocomplete="off"></textarea>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="validationCustom6" class="col-xl-3 col-md-4"><span style="visibility: hidden">*</span>
+                                Address1</label>
+                            <div class="col-xl-8 col-md-7">
+                                <textarea class="form-control" rows="3" formControlName="address1" id="validationCustom6"
+                                           placeholder="Address1" autocomplete="off"></textarea>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="validationCustom7" class="col-xl-3 col-md-4"><span style="visibility: hidden">*</span>
+                                Address2</label>
+                            <div class="col-xl-8 col-md-7">
+                                <textarea class="form-control " rows="3" formControlName="address2" id="validationCustom7"
+                                           placeholder="Address2" autocomplete="off"></textarea>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="validationCustom8" class="col-xl-3 col-md-4"><span>*</span>
+                                Status</label>
+                            <div class="col-xl-8 col-md-7">
+                                <select class="form-control" formControlName="status" id="validationCustom8">
+                                    <option disabled value="">&#45;&#45;Select&#45;&#45;</option>
+                                    <option value="1">Active</option>
+                                    <option value="2">In-Active</option>
+                                </select>
+                                <em class="error" *ngIf="!careersform.get('status').valid && (careersform.get('status').dirty || careersform.get('status').touched)">Status is required</em>
+                            </div>
+                        </div>
+
+<!--                        <div class="form-group row">-->
+<!--                            <div class="col-md-6">-->
+<!--                                <label class="col-12 col-md-6 col-xl-6"><span>*</span>-->
+<!--                                    Upload Files</label>-->
+<!--                                <input accept=".pdf" style="display: none" type="file" #attachments (change)="encodePdfFileAsURL($event, 1)" #hiddenfileinput>-->
+<!--                                <button class="btn btn-primary mt-2 ml-2" type="file" aria-describedby="inputGroupFileAddon01"-->
+<!--                                        (click)="hiddenfileinput.click()"><i class="fa fa-upload"></i> Upload PDF</button>-->
+<!--                            </div>-->
+<!--                        </div>-->
+                    </form>
+                </div>
+                <div class="col-12 text-center">
+                    <button type="button" *ngIf="type == 'add'" (click)="setJobList('add')"  class="btn btn-primary">Save</button>
+                    <button type="button" *ngIf="type == 'edit'" (click)="setJobList('edit')"  class="btn btn-primary">Update</button>
+                </div>
+            </div>
+        </div>
+        <!-- Container-fluid Ends-->
+    </div>
+</ng-template>

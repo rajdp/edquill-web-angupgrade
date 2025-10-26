@@ -1,0 +1,753 @@
+<script src="sat-report.component.ts"></script>
+<div class="container-fluid pt-2">
+    <div class="row">
+        <div class="col-12">
+            <ul class="nav nav-tabs mb-0 color-primary col-12" *ngIf="showContentTypeTab">
+                <li [ngStyle]="{'display': commonContentList[data.test_type.toLowerCase()].length != 0 ? 'block' : 'none'}"
+                     class="nav-item cursor" *ngFor="let data of testTypeListData; let i = index">
+                    <a (click)="callViewAnalytic(data)" aria-current="page"
+                       class="nav-link {{tabShow == data.test_type.toLowerCase() ? 'active' : ''}}"><b>{{data.test_type}}</b>
+                        <span class="report-count">{{commonContentList[data.test_type.toLowerCase()].length}}</span>
+                    </a>
+                </li>
+            </ul>
+            <button *ngIf="auth.getRoleId() == '5' || (auth.getRoleId() != '5' && reportCalledFrom != 'schedule'
+                && reportCalledFrom != 'classDetails' && reportCalledFrom != 'list' && showContentTypeTab)"
+                    (click)="backToClass()" class="btn btn-outline-primary pull-right button-absolute">
+                <i class="fa fa-long-arrow-left mr-1"></i>Back
+            </button>
+        </div>
+    </div>
+    <div class="card mt-1">
+        <div class="card-body py-3" style="z-index: unset !important;">
+            <div class="row">
+                <div class="col-4">
+                    <label class="font-weight-bold mb-1">Class Name</label>
+                    <h5 class="color-primary">{{studentData.class_name}}</h5>
+                </div>
+                <div class="col-4">
+                    <label class="font-weight-bold mb-1">Content Name</label>
+                    <ng-multiselect-dropdown #multiSelect1
+                                             [placeholder]="'Select Content'"
+                                             [settings]="settings1"
+                                             [data]="contentList"
+                                             [disabled]="false"
+                                             [(ngModel)]="contentSelected"
+                                             (onSelect)="onContentSelectionChange($event, 'single')"
+                                             (onDeSelect)="onContentSelectionChange($event, 'single')"
+                                             (onSelectAll)="onContentSelectionChange($event, 'all')"
+                                             (onDeSelectAll)="onContentSelectionChange($event, 'all')">
+                    </ng-multiselect-dropdown>
+                </div>
+                <div class="col-4" *ngIf="auth.getRoleId() != '5' && studentList.length != 0">
+                    <label class="font-weight-bold mb-1">Student Name</label>
+                    <ng-multiselect-dropdown #multiSelect2
+                                             [placeholder]="'Select Student'"
+                                             [settings]="settings2"
+                                             [data]="studentList"
+                                             [(ngModel)]="studentSelected"
+                                             (onSelect)="onStudentChange($event, 'single')"
+                                             (onDeSelect)="onStudentChange($event, 'single')"
+                                             (onSelectAll)="onStudentChange($event, 'all')"
+                                             (onDeSelectAll)="onStudentChange($event, 'all')">
+                    </ng-multiselect-dropdown>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mt-2" *ngIf="totalReport.length == 0">
+        <div class="card-body p-3">
+            <div class="row">
+                <div class="col-12 d-flex justify-content-center">
+                    <img alt="No Report Available" style="width: 30%" src="assets/images/no_report_available.png">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mt-2" *ngIf="totalReport.length != 0">
+        <div class="card-body p-3">
+            <div class="row">
+                <div class="col-12">
+                    <h4 class="font-weight-bold">Summary</h4>
+                    <ng-container *ngTemplateOutlet="summaryAndTotalContentReport, context : { $implicit:
+                        {data: summaryRecordListData}}"></ng-container>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-3 px-3" *ngIf="dataloaded && totalReport.length != 0">
+        <div class="card col-12">
+            <div class="card-body py-3 px-0">
+                <div class="col-12 mt-2 px-0">
+                    <h4 class="font-weight-bold">Topics Analysis</h4>
+                    <h6 class="mb-0">Note: Click on the bar charts to view details</h6>
+                    <ul class="nav nav-tabs mt-2 mb-0 color-primary col-12" *ngIf="tabShow != 'content' && commonSubjectList.length != 0">
+                        <li class="nav-item cursor" *ngFor="let subject of commonSubjectList">
+                            <a (click)="tabSelected(subject, 'topic')" aria-current="page" [ngClass]="{'active': selectedTopicSubject == subject}"
+                               class="nav-link"><b>{{subject}}</b></a>
+                        </li>
+                    </ul>
+                    <div id="chart">
+                        <apx-chart
+                                [series]="chartOptions.series"
+                                [chart]="chartOptions.chart"
+                                [stroke]="chartOptions.stroke"
+                                [dataLabels]="chartOptions.dataLabels"
+                                [plotOptions]="chartOptions.plotOptions"
+                                [xaxis]="chartOptions.xaxis"
+                                [colors]="chartOptions.colors"
+                                [fill]="chartOptions.fill"
+                                [yaxis]="chartOptions.yaxis"
+                                [legend]="chartOptions.legend"
+                                [tooltip]="chartOptions.toolTip"
+                        ></apx-chart>
+                    </div>
+                </div>
+            </div>
+            <div id="{{selectedContent?.question_topic + selectedContent?.question_topic_id}}" class="row mt-3">
+                <div class="col-12" [ngbCollapse]="!showTable">
+                    <ng-container *ngTemplateOutlet="tableDetails">
+                    </ng-container>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-3 px-3" *ngIf="dataloaded && totalReport.length != 0">
+        <div class="card col-12">
+            <div class="card-body py-3 px-0">
+                <div class="row">
+                    <div class="col-12 mt-2">
+                        <h4 class="font-weight-bold">Sub Topics Analysis</h4>
+                        <h6 class="mb-0">Note: Click on the bar charts to view details</h6>
+                        <ul class="mt-2 nav nav-tabs mb-0 color-primary col-12" *ngIf="tabShow != 'content' && commonSubjectList.length != 0">
+                            <li class="nav-item cursor" *ngFor="let subject of commonSubjectList">
+                                <a (click)="tabSelected(subject, 'subTopic')" aria-current="page" [ngClass]="{'active': selectedSubTopicSubject == subject}"
+                                   class="nav-link"><b>{{subject}}</b></a>
+                            </li>
+                        </ul>
+                        <div id="chart1">
+                            <apx-chart
+                                    [series]="chartOptions1.series"
+                                    [chart]="chartOptions1.chart"
+                                    [stroke]="chartOptions1.stroke"
+                                    [dataLabels]="chartOptions1.dataLabels"
+                                    [plotOptions]="chartOptions1.plotOptions"
+                                    [xaxis]="chartOptions1.xaxis"
+                                    [colors]="chartOptions1.colors"
+                                    [fill]="chartOptions1.fill"
+                                    [yaxis]="chartOptions1.yaxis"
+                                    [legend]="chartOptions1.legend"
+                                    [tooltip]="chartOptions1.toolTip"
+                            ></apx-chart>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="{{selectedContent?.sub_topic + selectedContent?.question_sub_topic_id}}" class="row mt-3">
+                    <div class="col-12" [ngbCollapse]="!showTable1">
+                        <ng-container *ngTemplateOutlet="tableDetails">
+                        </ng-container>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-3 px-3" *ngIf="dataloaded && totalReport.length != 0">
+        <div class="card col-12 mt-2">
+            <div class="card-body py-3 px-0">
+                <div class="row">
+                    <div class="col-6">
+                        <h4 class="font-weight-bold">Time Analysis</h4>
+                    </div>
+                    <div class="col-6">
+                        <p class="mb-0 text-right">
+                        <span style="font-size: 12px; color: #313131"><i style="font-size: 14px; color: #2082cc"
+                                                                         class="fa fa-square p-1"></i>Actual Time Taken</span>
+                            <span class="mx-1" style="font-size: 12px; color: #313131"><i
+                                    style="font-size: 14px; color: #00E396" class="fa fa-square p-1"></i>Predicted Solving Time</span>
+                        </p>
+                    </div>
+                    <div class="col-12">
+                        <ul class="nav nav-tabs mb-0 color-primary col-12 mt-2" *ngIf="tabShow != 'content' && commonSubjectList.length != 0">
+                            <li class="nav-item cursor" *ngFor="let subject of commonSubjectList">
+                                <a (click)="tabSelected(subject, 'timeAnalysis')" aria-current="page" [ngClass]="{'active': selectedTimeAnalysisSubject == subject}"
+                                   class="nav-link"><b>{{subject}}</b></a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="col-4 mt-2" *ngIf="tabShow != 'content' && selectedTimeModule.length != 0">
+                        <label class="font-weight-bold mb-1">Module Name</label>
+                        <ng-multiselect-dropdown #multiSelect1
+                                                 [placeholder]="'Select Module Name'"
+                                                 [settings]="questionAnalysisModuleSetting"
+                                                 [data]="selectedTimeModule"
+                                                 [(ngModel)]="timeAnalysisModuleSelected"
+                                                 (onSelect)="buildSubTopicOrTimeOrErrorAnalysisChartOptions('timeAnalysis', 'changed')"
+                                                 (onDeSelect)="timeAnalysisModuleSelected = [];"
+                        >
+                        </ng-multiselect-dropdown>
+                    </div>
+
+                    <div class="col-12 d-flex justify-content-center" *ngIf="tabShow != 'content' && timeAnalysisModuleSelected.length == 0">
+                        <img alt="No Report Available" style="width: 30%" src="assets/images/no_report_available.png">
+                    </div>
+
+                    <div class="col-12 mt-2" *ngIf="(tabShow != 'content' && timeAnalysisModuleSelected.length != 0) ||
+                        tabShow == 'content'">
+                        <div id="chart3">
+                            <apx-chart
+                                    [series]="chartOptions2.series"
+                                    [chart]="chartOptions2.chart"
+                                    [xaxis]="chartOptions2.xaxis"
+                                    [stroke]="chartOptions2.stroke"
+                                    [colors]="chartOptions2.colors"
+                                    [dataLabels]="chartOptions2.dataLabels"
+                                    [legend]="chartOptions2.legend"
+                                    [markers]="chartOptions2.markers"
+                                    [grid]="chartOptions2.grid"
+                                    [yaxis]="chartOptions2.yaxis"
+                                    [title]="chartOptions2.title"
+                                    [tooltip]="chartOptions2.toolTip"
+                            ></apx-chart>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-3 px-3" *ngIf="totalReport.length != 0">
+        <div class="card col-12">
+            <div class="card-body py-3 px-0">
+                <div class="row">
+                    <div class="col-6">
+                        <h4 class="font-weight-bold">Error Analysis</h4>
+                        <h6 class="mb-0">Note: Click on the bar charts to view details</h6>
+                    </div>
+
+                    <div class="col-6">
+                        <p class="mb-0 text-right">
+                        <span style="font-size: 12px"><i style="font-size: 14px; color: #ff0000"
+                                                         class="fa fa-square p-1"></i> High (≥ 90%) </span>
+                            <span class="mr-1" style="font-size: 12px"><i style="font-size: 14px; color: #ffc107"
+                                                                          class="fa fa-square p-1"></i> Mid-High (80–89%)</span>
+                            <span class="mr-1" style="font-size: 12px"><i style="font-size: 14px; color: #28A745"
+                                                                          class="fa fa-square p-1"></i> Moderate (50–79%)</span>
+                            <span class="mr-1" style="font-size: 12px"><i style="font-size: 14px; color: #007bff"
+                                                                          class="fa fa-square p-1"></i> Low (< 50%)</span>
+                        </p>
+                    </div>
+
+                    <div class="col-12 mt-2">
+                        <ul class="nav nav-tabs mb-0 color-primary col-12" *ngIf="tabShow != 'content' && commonSubjectList.length != 0">
+                            <li class="nav-item cursor" *ngFor="let subject of commonSubjectList">
+                                <a (click)="tabSelected(subject, 'errorAnalysis')" aria-current="page" [ngClass]="{'active': selectedErrorAnalysisSubject == subject}"
+                                   class="nav-link"><b>{{subject}}</b></a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="col-4 mt-2" *ngIf="tabShow != 'content' && selectedErrorModule.length != 0">
+                        <label class="font-weight-bold mb-1">Module Name</label>
+                        <ng-multiselect-dropdown #multiSelect1
+                                                 [placeholder]="'Select Module Name'"
+                                                 [settings]="questionAnalysisModuleSetting"
+                                                 [data]="selectedErrorModule"
+                                                 [(ngModel)]="errorAnalysisModuleSelected"
+                                                 (onSelect)="buildSubTopicOrTimeOrErrorAnalysisChartOptions('errorAnalysis', 'changed')"
+                                                 (onDeSelect)="errorAnalysisModuleSelected = []"
+                        >
+                        </ng-multiselect-dropdown>
+                    </div>
+
+                    <div class="col-12 d-flex justify-content-center" *ngIf="tabShow != 'content' && errorAnalysisModuleSelected.length == 0">
+                        <img alt="No Report Available" style="width: 30%" src="assets/images/no_report_available.png">
+                    </div>
+
+                    <div class="col-12" *ngIf="(tabShow != 'content' && errorAnalysisModuleSelected.length != 0) ||
+                        tabShow == 'content'">
+                        <div id="chart4">
+
+                            <apx-chart
+                                    [series]="chartOptions3.series"
+                                    [chart]="chartOptions3.chart"
+                                    [dataLabels]="chartOptions3.dataLabels"
+                                    [plotOptions]="chartOptions3.plotOptions"
+                                    [yaxis]="chartOptions3.yaxis"
+                                    [xaxis]="chartOptions3.xaxis"
+                                    [legend]="chartOptions3.legend"
+                                    [colors]="chartOptions3.colors"
+                                    [grid]="chartOptions3.grid"
+                            ></apx-chart>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="error_analysis_{{selectedContent?.sub_topic + selectedContent?.question_sub_topic_id}}"
+                     class="row mt-3">
+                    <div class="col-12" [ngbCollapse]="!showTable2">
+                        <ng-container *ngTemplateOutlet="tableDetails">
+                        </ng-container>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-3 px-3" *ngIf="totalReport.length != 0 && auth.getRoleId() != '5' && questionAnalysisSubjectList.length != 0">
+
+        <div class="card col-12">
+            <div class="card-body px-0 py-3">
+                <div class="row">
+                    <h4 class="font-weight-bold col-12">Question By Question Analysis</h4>
+
+                    <div class="col-12 mt-3" *ngIf="tabShow != 'content'">
+                        <ul class="nav nav-tabs mb-0 color-primary col-12">
+                            <li class="nav-item cursor" *ngFor="let subject of questionAnalysisSubjectList">
+                                <a (click)="tabSelected(subject, 'questionAnalysis')" aria-current="page" [ngClass]="{'active': selectedQuestionAnalysisSubject == subject}"
+                                   class="nav-link"><b>{{subject}}</b></a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="col-{{tabShow != 'content' && selectedQuestionModule.length != 0 ? '4' : '5'}} mt-2">
+                        <label class="font-weight-bold mb-1">Content Name</label>
+                        <ng-multiselect-dropdown #multiSelect1
+                                                 [placeholder]="'Select Content Name'"
+                                                 [settings]="questionAnalysisSetting"
+                                                 [data]="contentList"
+                                                 [(ngModel)]="questionAnalysisContentSelected"
+                                                 (onSelect)="onContentSelectionChange($event, 'single', 'questionAnalysis')"
+                                                 (onDeSelect)="onContentSelectionChange($event, 'single','questionAnalysis')"
+                                                 (onSelectAll)="onContentSelectionChange($event, 'all', 'questionAnalysis')"
+                                                 (onDeSelectAll)="onContentSelectionChange($event, 'all', 'questionAnalysis')">
+                        </ng-multiselect-dropdown>
+                    </div>
+
+                    <div class="col-4 mt-2" *ngIf="tabShow != 'content' && selectedQuestionModule.length != 0">
+                        <label class="font-weight-bold mb-1">Module Name</label>
+                        <ng-multiselect-dropdown #multiSelect1
+                                                 [placeholder]="'Select Module Name'"
+                                                 [settings]="questionAnalysisModuleSetting"
+                                                 [data]="selectedQuestionModule"
+                                                 [(ngModel)]="questionAnalysisModuleSelected"
+                                                 (onSelect)="formQuestionAnalysisData('changed')"
+                                                 (onDeSelect)="formQuestionAnalysisData('changed')"
+                        >
+                        </ng-multiselect-dropdown>
+                    </div>
+
+                    <div class="col-4 mt-2" *ngIf="questionAnalysisStudentList.length != 0">
+                        <label class="font-weight-bold mb-1">Student Name</label>
+                        <ng-multiselect-dropdown #multiSelect2
+                                                 [placeholder]="'Select Student'"
+                                                 [settings]="settings3"
+                                                 [data]="questionAnalysisStudentList"
+                                                 [(ngModel)]="questionAnalysisStudentSelected"
+                                                 (onSelect)="onStudentChange($event, 'single', 'questionAnalysis')"
+                                                 (onDeSelect)="onStudentChange($event, 'single', 'questionAnalysis')"
+                                                 (onSelectAll)="onStudentChange($event, 'all', 'questionAnalysis')"
+                                                 (onDeSelectAll)="onStudentChange($event, 'all', 'questionAnalysis')">
+                        </ng-multiselect-dropdown>
+                    </div>
+
+                    <div class="col-12 mt-2">
+                        <ng-container *ngTemplateOutlet="questionAnalysis">
+                        </ng-container>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-3 px-3">
+        <div class="card col-12">
+            <div class="card-body py-3 px-0">
+                <div class="row">
+                    <div class="col-6">
+                        <h4 class="font-weight-bold">Mastery Score</h4>
+                    </div>
+
+                    <div class="col-6">
+                        <p class="mb-0 text-right">
+                        <span class="mr-1" style="font-size: 12px"><i style="font-size: 14px; color: #007bff"
+                                                                      class="fa fa-square p-1"></i>- Master</span>
+                            <span class="mr-1" style="font-size: 12px"><i style="font-size: 14px; color: #28A745"
+                                                                          class="fa fa-square p-1"></i>- Advanced</span>
+                            <span class="mr-1" style="font-size: 12px"><i style="font-size: 14px; color: #ffc107"
+                                                                          class="fa fa-square p-1"></i>- Expert</span>
+                            <span style="font-size: 12px"><i style="font-size: 14px; color: #ff0000"
+                                                             class="fa fa-square p-1"></i>- NoVoice</span>
+                        </p>
+                    </div>
+
+                    <div class="col-12 mt-2" *ngIf="tabShow != 'content' && masterySubjectList.length != 0">
+                        <ul class="nav nav-tabs mb-0 color-primary col-12">
+                            <li class="nav-item cursor" *ngFor="let subject of masterySubjectList">
+                                <a (click)="tabSelected(subject, 'mastery')" aria-current="page" [ngClass]="{'active': selectedMasterySubject == subject}"
+                                   class="nav-link"><b>{{subject}}</b></a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="col-5 mt-2">
+                        <label class="font-weight-bold mb-1">Content Name</label>
+                        <ng-multiselect-dropdown #multiSelect1
+                                                 [placeholder]="'Select Content Name'"
+                                                 [settings]="settings1"
+                                                 [data]="contentList"
+                                                 [disabled]="false"
+                                                 [(ngModel)]="masteryContentSelected"
+                                                 (onSelect)="onContentSelectionChange($event, 'single', 'mastery')"
+                                                 (onDeSelect)="onContentSelectionChange($event, 'single','mastery')"
+                                                 (onSelectAll)="onContentSelectionChange($event, 'all', 'mastery')"
+                                                 (onDeSelectAll)="onContentSelectionChange($event, 'all', 'mastery')">
+                        </ng-multiselect-dropdown>
+                    </div>
+                    <div class="col-4 mt-2" *ngIf="auth.getRoleId() != '5' && masteryStudentList.length != 0">
+                        <label class="font-weight-bold mb-1">Student Name</label>
+                        <ng-multiselect-dropdown #multiSelect2
+                                                 [placeholder]="'Select Student'"
+                                                 [settings]="settings3"
+                                                 [data]="masteryStudentList"
+                                                 [(ngModel)]="masteryStudentSelected"
+                                                 (onSelect)="onStudentChange($event, 'single', 'mastery')"
+                                                 (onDeSelect)="onStudentChange($event, 'single', 'mastery')"
+                                                 (onSelectAll)="onStudentChange($event, 'all', 'mastery')"
+                                                 (onDeSelectAll)="onStudentChange($event, 'all', 'mastery')">
+                        </ng-multiselect-dropdown>
+                    </div>
+                    <div class="col-12 mt-3">
+                        <div class="row my-4 justify-content-center list-card" *ngIf="masteryData.length == 0">
+                            <div class="col-4">
+                                <button style="background: #FFFFFF; cursor: default" class="nodataList">No Data Available!
+                                </button>
+                            </div>
+                        </div>
+                        <div class="row" *ngIf="masteryData.length != 0">
+                            <div class="col-12" *ngFor="let mastery of masteryData; let i = index">
+                                <h5 class="font-weight-bold"
+                                    style="font-size: 14px">{{mastery.question_sub_topic_name}}</h5>
+                                <div [ngClass]="{'progress-novoice-border' : progressbar.percentage == 0 && progressbar.student_content_id != '0'}"
+                                     class="progress cursor my-2 {{parseInt(progressbar.percentage) == 0 ? 'justify-content-center' : ''}}"
+                                     *ngFor="let progressbar of mastery.data" style="height: 20px">
+                                    <div (click)="showMasterData(progressbar, i)"
+                                         *ngIf="parseInt(progressbar.percentage) != 0" class="progress-bar"
+                                         role="progressbar"
+                                         [style.width.%]="progressbar.percentage"
+                                         [ngClass]="{'progress-master': progressbar.percentage >= 90,'progress-advanced': progressbar.percentage > 80 && progressbar.percentage < 90,
+                                        'progress-expert': progressbar.percentage > 50 && progressbar.percentage <= 80,'progress-novoice': progressbar.percentage < 50}"
+                                         [attr.aria-valuenow]="mastery.percentage" aria-valuemin="0" aria-valuemax="100">
+                                        <span style="font-weight: 600">{{progressbar.content_name}}<span class="ml-1" *ngIf="tabShow != 'content'">- {{progressbar?.module_name}}</span></span>
+                                    </div>
+                                    <span style="font-weight: 600"
+                                          *ngIf="parseInt(progressbar.percentage) == 0">{{progressbar.content_name}}<span class="ml-1" *ngIf="tabShow != 'content'">- {{progressbar?.module_name}}</span></span>
+                                    <span style="font-weight: 600" *ngIf="progressbar.student_content_id != '0'"
+                                          class="ml-2">{{progressbar.percentage}}%</span>
+                                    <span style="font-weight: 600" *ngIf="progressbar.student_content_id == '0'"
+                                          class="ml-2"> - N/A</span>
+                                </div>
+                                <div *ngIf="mastery.showStudentData"
+                                     id="master_analysis_{{selectedContent?.sub_topic + selectedContent?.question_sub_topic_id}}"
+                                     class="row">
+                                    <div class="col-12">
+                                        <div class="card">
+                                            <div class="resource-link-card">
+                                                <div class="col-12" [ngbCollapse]="!showTable3">
+                                                    <ng-container *ngTemplateOutlet="tableDetails">
+                                                    </ng-container>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="card mt-2" *ngIf="overallSummary.length != 0">
+        <div class="card-body p-3">
+            <div class="row">
+                <div class="col-12">
+                    <h4 class="font-weight-bold">Overall Summary</h4>
+                    <ng-container
+                            *ngTemplateOutlet="summaryAndTotalContentReport, context : { $implicit: {data: overallSummary}}"></ng-container>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<ng-template #showQuestion>
+    <div class="modal-header align-items-center">
+        <h5 class="contenttext text-center mb-0">{{selectedContent?.content_name}}</h5>
+        <i (click)="close()" class="fa fa-close cursor"></i>
+    </div>
+    <div #modalBody class="modal-body px-3 py-2 position-relative" style="overflow-y: auto; max-height: 75vh; background-color: #f7f7f9">
+        <app-question-report
+                [questionArray]="questionArray"
+                [showFullQuestion]="showAllQuestion"
+                [topicId]="showAllQuestion ? [] : selectedContent?.question_topic_id"
+                [subTopicId]="showAllQuestion ? '' : selectedContent.question_sub_topic_id"
+                [student_content_id]="selectedContent?.student_content_id"
+                [selectedQuestion]="selectedQuestion"
+                [selectedType]="showAllQuestion ? '' : showTable ? 'topic' : 'subTopic'"
+                [showAll]="nameOrContentSelected ? nameOrContentSelected : selectedContent.showAll"
+        ></app-question-report>
+
+        <i [ngClass]="{'show-scroll': showScroll}" (click)="windowScrollUp()" title="Scroll To Top"
+           class="cursor color-primary fa fa-3x fa-chevron-circle-up scroll-to-top" aria-hidden="true"></i>
+    </div>
+    <div class="modal-footer">
+        <div class="col-12 px-0">
+            <button class="btn cancel pull-right" (click)="modalRef.close()">Close</button>
+        </div>
+    </div>
+</ng-template>
+
+<ng-template #questionAnalysis>
+    <div class="row">
+        <div class="col-md-12 col-12 sticky-table my-3">
+            <div class="row align-items-center justify-content-between mb-2">
+                <h4 class="col-12 mb-0">
+                    <span class="color-primary font-weight-bold">{{questionAnalysisContentSelected[0]?.content_name}}</span>
+                </h4>
+            </div>
+            <div class="tableFixHead mt-2" *ngIf="questionAnalysisListData.length != 0">
+                <table class="table table-bordered table-striped table-hover mb-0" style="min-width: max-content;">
+                    <thead style="background: #cdd9f6">
+                    <th style="width: 120px" class="text-center sticky-col">Question</th>
+                    <th style="width: 60px" class="text-center"
+                        *ngFor="let student of questionAnalysisListData[1]?.questionData; let i = index">
+                        <span class="{{questionAnalysisListData.length < 2 ? 'cursor' : ''}}"
+                              (click)="questionSelectedFromTable(student.question_no, 'questionAnalysis')">{{student.question_no}}</span>
+                    </th>
+                    </thead>
+                    <tbody>
+                    <tr [ngClass]="first ? 'tableFixedRow' : ''"
+                        *ngFor="let student of questionAnalysisListData; let first = first">
+                        <td style="width: 120px" class="text-center sticky-col">
+                            <span (click)="openContent(student, 'questionAnalysis')" *ngIf="!first"
+                                  class="color-primary cursor">{{student?.student_name ?? '-'}}</span>
+                            <span *ngIf="first && showTable3"
+                                  class="font-weight-bold font-16">Total Correct Answer</span>
+                            <span *ngIf="first && !showTable3"
+                                  class="font-weight-bold font-16">{{student?.student_name ?? '-'}}</span>
+                        </td>
+                        <td style="width: 60px" class="text-center"
+                            *ngFor="let data of student?.questionData; let i = index">
+                            <i (click)="showAllQuestion = false;studentsAnswerList(data, data.question_no, 'questionAnalysis')"
+                               *ngIf="data.is_correct == 'true'" style="font-size: 18px"
+                               class="fa fa-check-circle color-green cursor"></i>
+                            <i (click)="showAllQuestion = false;studentsAnswerList(data, data.question_no, 'questionAnalysis')"
+                               *ngIf="data.is_correct == 'false'" style="font-size: 18px"
+                               class="fa fa-times-circle color-red cursor"></i>
+                            <span class="font-weight-bold mb-0 font-16" *ngIf="first && !showTable3"
+                                  [ngClass]="calculatePercentage(data.total_in_correct_answer, data.total_questions) <= '25' ? '' : calculatePercentage(data.total_in_correct_answer, data.total_questions) <= '50' ? 'text-yellow' : 'text-red'">
+                                {{data.total_in_correct_answer}}/{{data.total_questions}}
+                            </span>
+                            <span class="font-weight-bold mb-0 font-16" *ngIf="first && showTable3"
+                                  [ngClass]="calculatePercentage(data.total_correct_answer, data.total_questions) <= '50' ? 'text-red' : calculatePercentage(data.total_correct_answer, data.total_questions) <= '80' ? 'text-yellow' : calculatePercentage(data.total_correct_answer, data.total_questions) <= '90' ? 'text-green' : 'text-blue'">
+                                {{data.total_correct_answer}}/{{data.total_questions}}
+                            </span>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="row d-flex justify-content-center list-card mt-5" *ngIf="questionAnalysisListData.length == 0">
+                <div class="col-4">
+                    <button class="nodataList">No Data Available!</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</ng-template>
+
+<ng-template #tableDetails>
+    <div class="row">
+        <div class="col-md-12 col-12 sticky-table my-3">
+            <div class="row align-items-center justify-content-between mb-2">
+                <h4 class="col-8 mb-0">
+                    <span class="font-weight-bold"
+                          *ngIf="!selectedContent?.showAll">{{selectedContent?.question_topic_id ? selectedContent?.question_topic : selectedContent?.sub_topic}}</span>
+                    <span class="mx-1" *ngIf="!selectedContent?.showAll">-</span>
+                    <span class="color-primary font-weight-bold">{{selectedContent?.content_name}}</span>
+                </h4>
+                <h6 title="Show All Questions" style="color: black"
+                    class="col-4 font-weight-bold d-flex align-items-center justify-content-end mb-0">
+                    <input [checked]="selectedContent?.showAll" (change)="showAllSelected($event)" id="showAll"
+                           class="cursor" type="checkbox">
+                    <label for="showAll" class="pl-2 cursor mb-0">Show All</label>
+                </h6>
+            </div>
+            <div class="tableFixHead mt-2">
+                <table class="table table-bordered table-striped table-hover mb-0" style="min-width: max-content;">
+                    <thead style="background: #cdd9f6">
+                    <th style="width: 120px" class="text-center sticky-col">Question</th>
+                    <th style="width: 60px" class="text-center"
+                        *ngFor="let student of studentQuestionListData[1]?.questionData; let i = index">
+                        <span class="{{studentQuestionListData.length <= 2 ? 'cursor' : ''}}"
+                              (click)="questionSelectedFromTable(student.question_no)">{{student.question_no}}</span>
+                    </th>
+                    </thead>
+                    <tbody>
+                    <tr [ngClass]="first ? 'tableFixedRow' : ''"
+                        *ngFor="let student of studentQuestionListData; let first = first">
+                        <td style="width: 120px" class="text-center sticky-col">
+                            <span (click)="openContent(student, 'graph')" *ngIf="!first"
+                                  class="color-primary cursor">{{student?.student_name ?? '-'}}</span>
+                            <span *ngIf="first && showTable3"
+                                  class="font-weight-bold font-16">Total Correct Answer</span>
+                            <span *ngIf="first && !showTable3"
+                                  class="font-weight-bold font-16">{{student?.student_name ?? '-'}}</span>
+                        </td>
+                        <td style="width: 60px" class="text-center"
+                            *ngFor="let data of student?.questionData; let i = index">
+                            <i (click)="showAllQuestion = false;studentsAnswerList(data, data.question_no)"
+                               *ngIf="data.is_correct == 'true'" style="font-size: 18px"
+                               class="fa fa-check-circle color-green cursor"></i>
+                            <i (click)="showAllQuestion = false;studentsAnswerList(data, data.question_no)"
+                               *ngIf="data.is_correct == 'false'" style="font-size: 18px"
+                               class="fa fa-times-circle color-red cursor"></i>
+                            <span class="font-weight-bold mb-0 font-16" *ngIf="first && !showTable3"
+                                  [ngClass]="calculatePercentage(data.total_in_correct_answer, data.total_questions) <= '25' ? '' : calculatePercentage(data.total_in_correct_answer, data.total_questions) <= '50' ? 'text-yellow' : 'text-red'">
+                                {{data.total_in_correct_answer}}/{{data.total_questions}}
+                            </span>
+                            <span class="font-weight-bold mb-0 font-16" *ngIf="first && showTable3"
+                                  [ngClass]="calculatePercentage(data.total_correct_answer, data.total_questions) <= '50' ? 'text-red' : calculatePercentage(data.total_correct_answer, data.total_questions) <= '80' ? 'text-yellow' : calculatePercentage(data.total_correct_answer, data.total_questions) <= '90' ? 'text-green' : 'text-blue'">
+                                {{data.total_correct_answer}}/{{data.total_questions}}
+                            </span>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</ng-template>
+
+<ng-template #summaryAndTotalContentReport let-context>
+    <div class="tableFixHead mt-2">
+        <table class="table table-bordered table-striped table-hover mb-0">
+            <thead style="background: #cdd9f6">
+            <th class="text-center sticky-col align-middle">Content Name</th>
+            <th *ngIf="auth.getRoleId() != '5'" class="text-center sticky-col align-middle">Student Name</th>
+            <th class="text-center sticky-col align-middle">Test Date</th>
+            <th class="text-center sticky-col align-middle">Correct Answers</th>
+            <th class="text-center sticky-col align-middle">Incorrect Answers</th>
+            <th *ngIf="tabShow == 'content'" class="text-center sticky-col align-middle">Overall Score</th>
+            <th *ngIf="tabShow != 'content'" class="text-center sticky-col align-middle">Raw Score</th>
+            <th *ngIf="tabShow != 'content'" class="text-center sticky-col align-middle">Math Score</th>
+            <th *ngIf="tabShow != 'content'" class="text-center sticky-col align-middle">R&W Score</th>
+            <th *ngIf="tabShow != 'content'" class="text-center sticky-col align-middle">Calculated Score</th>
+            </thead>
+            <tbody>
+            <ng-container *ngFor="let report of context?.data; let i = index">
+                <tr>
+                    <td class="text-center sticky-col">
+                        <span (click)="tabShow === 'content' ? openContent(report) : openAccordian(i, context?.data)" class="color-primary cursor">{{report.content_name ?? '-'}}</span>
+                    </td>
+                    <td *ngIf="auth.getRoleId() != '5'" class="text-center">
+                        <span>{{report.student_name ?? '-'}}</span>
+                    </td>
+                    <td class="text-center">
+                        <span>{{report.content_start_date ? (report.content_start_date | customDateFormat) : '-'}}</span>
+                    </td>
+                    <td class="text-center">
+                        <span>{{report.correct_answer ?? '-'}}</span>
+                    </td>
+                    <td class="text-center">
+                        <span>{{report.incorrect_answer ?? '-'}}</span>
+                    </td>
+                    <!-- Overall Percentage -->
+                    <td class="text-center">
+                        <ng-container *ngTemplateOutlet="percentageTemplate; context: { value: report.percentage }"></ng-container>
+                    </td>
+
+                    <td class="text-center" *ngIf="tabShow != 'content'">
+                        <span class="font-weight-bold color-primary">{{report.math_score ?? '-'}}</span>
+                        <span *ngIf="report.Math_Percentage != ''" class="ml-1">(<ng-container *ngTemplateOutlet="percentageTemplate; context: { value: report.Math_Percentage }"></ng-container>)
+                        </span>
+                    </td>
+                    <td class="text-center" *ngIf="tabShow != 'content'">
+                        <span class="font-weight-bold color-primary">{{report.rw_score ?? '-'}}</span>
+                        <span *ngIf="report.RW_Percentage != ''" class="ml-1">(<ng-container *ngTemplateOutlet="percentageTemplate; context: { value: report.RW_Percentage }"></ng-container>)
+                        </span>
+                    </td>
+                    <td class="text-center" *ngIf="tabShow != 'content'">
+                        <span class="font-weight-bold color-primary">{{report.score ?? '-'}}</span>
+                    </td>
+                </tr>
+                <tr [ngbCollapse]="!report.showAccordian">
+                    <td colspan="12">
+                        <div style="background: #FFFFFF !important;" class="p-3 border rounded">
+                            <table class="table table-bordered table-striped table-hover mb-0">
+                                <thead style="background: #cdd9f6">
+                                    <th class="text-center sticky-col">Module Name</th>
+                                    <th class="text-center sticky-col">Subject Name</th>
+                                    <th class="text-center sticky-col">Test Date</th>
+                                    <th class="text-center sticky-col">Correct Answers</th>
+                                    <th class="text-center sticky-col">Incorrect Answers</th>
+                                    <th class="text-center sticky-col">Raw Score</th>
+<!--                                    <th class="text-center sticky-col">Calculated Score</th>-->
+                                </thead>
+                                <tbody>
+                                    <tr *ngFor="let module of report?.modules; let i = index">
+                                        <td class="text-center sticky-col">
+                                            <span (click)="openContent(module)" class="color-primary cursor">{{module?.module_name ?? '-'}}</span>
+                                        </td>
+                                        <td class="text-center">
+                                            <span>{{module?.subject_name ?? '-'}}</span>
+                                        </td>
+                                        <td class="text-center">
+                                            <span>{{module?.content_start_date ? (module?.content_start_date | customDateFormat) : '-'}}</span>
+                                        </td>
+                                        <td class="text-center">
+                                            <span>{{module?.correct_answer ?? '-'}}</span>
+                                        </td>
+                                        <td class="text-center">
+                                            <span>{{module?.incorrect_answer ?? '-'}}</span>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="font-weight-bold" style="color: #007bff" *ngIf="module?.percentage >= 90">{{module?.percentage + '%'}}</span>
+                                            <span style="color: #28A745" *ngIf="module?.percentage >= 80 && module?.percentage < 90"
+                                              class="font-weight-bold">{{module.percentage + '%'}}</span>
+                                            <span style="color: #ffc107" *ngIf="module?.percentage > 50 && module?.percentage < 80"
+                                              class="font-weight-bold">{{module?.percentage + '%'}}</span>
+                                            <span class="font-weight-bold" style="color: #ff0000"
+                                              *ngIf="module?.percentage < 50">{{module?.percentage + '%'}}</span>
+                                        </td>
+<!--                                        <td class="text-center">-->
+<!--                                            <span class="font-weight-bold color-primary">{{module?.score ?? '-'}}</span>-->
+<!--                                        </td>-->
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </td>
+                </tr>
+            </ng-container>
+            </tbody>
+        </table>
+    </div>
+</ng-template>
+
+<ng-template #percentageTemplate let-value="value">
+    <span *ngIf="value >= 90" class="font-weight-bold" style="color: #007bff">{{ value + '%' }}</span>
+    <span *ngIf="value >= 80 && value < 90" class="font-weight-bold" style="color: #28A745">{{ value + '%' }}</span>
+    <span *ngIf="value > 50 && value < 80" class="font-weight-bold" style="color: #ffc107">{{ value + '%' }}</span>
+    <span *ngIf="value <= 50" class="font-weight-bold" style="color: #ff0000">{{ value + '%' }}</span>
+</ng-template>

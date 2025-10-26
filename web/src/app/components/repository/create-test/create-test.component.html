@@ -1,0 +1,236 @@
+<script src="create-test.component.ts"></script>
+<div id="pre-loader" *ngIf="showLoader">
+    <img src="assets/images/pre-loader/loader-01.svg" alt="">
+</div>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <h4 class="text-uppercase font-weight-bold">{{contentTestType | titlecase}} Test</h4>
+            <label class="customLabel text-muted">All fields marked with <span class="text-danger">*</span> are required</label>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="card tab2-card">
+                <div class="card-body tab2-card p-3">
+                    <form [formGroup]="testForm" class="needs-validation user-add">
+                        <div class="col-md-12 d-flex px-0">
+                            <div class="col-sm-12 col-md-4 px-0">
+                                <div class="image-container-left">
+                                    <img src="assets/images/ristaschool/assessment.png" alt="">
+                                    <div class="profileUrl">
+                                        <input style="display: none" type="file" class="custom-upload-input" (change)="encodeImageFileAsURL($event)" #addAssignment #myInput accept=".png, .jpeg, .jpg">
+                                        <button type="button" class="btn btn-light btn-circle border-rista" title="upload Image" (click)="addAssignment.click()"> <i class="fa fa-upload fa-2x mb-3" aria-hidden="true"></i> </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-sm-12 col-md-8 pr-0">
+                                <div class="row">
+                                    <div class="col-md-4 form-group">
+                                        <input class="form-control" formControlName="created"
+                                               type="text" autocomplete="off" placeholder="Created" required readonly>
+                                    </div>
+                                    <div class="col-md-8 form-group">
+                                        <input class="form-control" formControlName="resourceName"
+                                            autocomplete="off" required type="text">
+                                        <label class="customLabel">Resource Name</label>
+                                        <em class="error" *ngIf="!testForm.get('resourceName').valid && (testForm.get('resourceName').dirty || testForm.get('resourceName').touched)">Resource Name is required</em>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4 form-group">
+                                        <ng-select class="custom" [items]="gradeData"
+                                                   bindLabel="grade_name"
+                                                   bindValue="grade_id"
+                                                   formControlName="grade"
+                                                   placeholder="Select Grade"
+                                                   typeToSearchText=""
+                                                   multiple="true"
+                                        >
+                                        </ng-select>
+                                        <em class="error" *ngIf="!testForm.get('grade').valid && (testForm.get('grade').dirty || testForm.get('grade').touched)">Grade is required</em>
+                                    </div>
+                                    <div class="col-md-4 form-group">
+                                        <ng-select class="custom" [items]="subjectData"
+                                                   bindLabel="subject_name"
+                                                   bindValue="subject_id"
+                                                   formControlName="subject"
+                                                   placeholder="Select Subject"
+                                                   typeToSearchText=""
+                                                   multiple="true"
+                                        >
+                                        </ng-select>
+                                        <em class="error" *ngIf="!testForm.get('subject').valid && (testForm.get('subject').dirty || testForm.get('subject').touched)">Subject is required</em>
+                                    </div>
+                                    <div class="col-md-4 form-group">
+                                        <input class="form-control" formControlName="contentDuration" (keypress)="numberPattern($event)"
+                                            autocomplete="off" type="text" readonly required>
+                                        <em class="error" *ngIf="!testForm.get('contentDuration').valid && (testForm.get('contentDuration').dirty || testForm.get('contentDuration').touched)">Content Duration is required</em>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="form-group col-md-12">
+                                        <textarea class="form-control" name="" id="" autocomplete="off" placeholder="Enter Description" formControlName="description" style="width: 100%; height: 100px"></textarea>
+                                        <em class="error" *ngIf="!testForm.get('description').valid && (testForm.get('description').dirty || testForm.get('description').touched)">Description is required</em>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4 form-group">
+                                        <ng-select class="custom" [items]="testTypeListData"
+                                                   bindLabel="test_type"
+                                                   bindValue="test_type_id"
+                                                   formControlName="test_type"
+                                                   placeholder="Select Test Type"
+                                                   typeToSearchText=""
+                                                   (change)="testTypeChanged($event)"
+                                        >
+                                        </ng-select>
+                                        <em class="error" *ngIf="!testForm.get('test_type').valid && (testForm.get('test_type').dirty || testForm.get('test_type').touched)">
+                                            Test Type is required</em>
+                                    </div>
+                                    <div class="col-md-4 form-group">
+                                        <select class="form-control" formControlName="contentType">
+                                            <option value="" selected disabled>Please Select</option>
+                                            <option value="2">Assignment</option>
+                                            <option value="3">Assessment</option>
+                                        </select>
+                                        <em class="error" *ngIf="!testForm.get('contentType').valid && (testForm.get('contentType').dirty || testForm.get('contentType').touched)">
+                                            Content Type is required</em>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 pt-4 pb-3 px-0">
+                            <div class="resource-link-card">
+                                <div class="col-12">
+                                    <h4 class="mb-3">Content</h4>
+                                    <div formArrayName="contentArray" *ngFor="let content of testForm.get('contentArray')['controls']; let i = index; let first = first; let last = last">
+                                        <div [formGroupName]= "i" *ngIf="contentTestType == 'add' || (contentTestType == 'edit' && content.get('status').value != 0)">
+                                            <div class="row">
+                                                <div class="w-18 form-group mb-1 align-self-end">
+                                                    <label class="font-weight-bold mb-1">Subject Name<span class="text-danger ml-1">*</span></label>
+                                                    <select class="form-control" formControlName="subjectName">
+                                                        <option value="" selected disabled>Please Select</option>
+                                                        <option [value]="data.id" *ngFor="let data of subjectListForModule">{{data.name}}</option>
+                                                    </select>
+                                                </div>
+                                                <div class="w-15 form-group mb-1 align-self-end">
+                                                    <label class="font-weight-bold mb-1">Module Name <span class="text-danger">*</span></label>
+                                                    <input type="text" class="form-control" formControlName="moduleName" autocomplete="off" required>
+                                                    <label class="custom-content-Label">Module Name</label>
+                                                </div>
+                                                <div class="w-37 form-group mb-1 align-self-end">
+                                                    <label class="font-weight-bold mb-1">Content Name<span class="text-danger ml-1">*</span></label>
+                                                    <div class="row align-items-center">
+                                                        <div class="{{content.get('contentName').value ? 'col-11 pr-0' : 'col-12'}}">
+                                                            <ng-select class="custom" formControlName="contentName"
+                                                                       [title]="showContentName(i)"
+                                                                       typeToSearchText="" (change)="findDuplicateValue()"
+                                                                       placeholder="Select Content">
+                                                                <ng-option *ngFor="let item of contentListData;" [value]="item.content_id">
+                                                                    <div [title]="item.name">{{item.name}} - {{item.question_count}}(Qns)</div>
+                                                                </ng-option>
+                                                            </ng-select>
+                                                        </div>
+                                                        <div class="ml-1">
+                                                            <i (click)="previewContent(content.get('contentName').value)" *ngIf="content.get('contentName').value" style="font-size: 16px" class="fa fa-eye cursor color-primary ml-1"></i>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="w-15 form-group mb-1 align-self-end">
+                                                    <label class="font-weight-bold mb-1">Duration (Min)<span class="text-danger ml-1">*</span></label>
+                                                    <input class="form-control" formControlName="contentDuration" (keypress)="numberPattern($event)" (keyup)="calculateDuration()"
+                                                           autocomplete="off" required type="text">
+                                                    <label class="custom-content-Label">Duration</label>
+                                                </div>
+                                                <div class="w-15 form-group mb-1">
+                                                    <span class="d-flex align-items-end">
+                                                        <span>
+                                                            <label class="font-weight-bold mb-1">Interval<span class="text-danger ml-1">*</span></label>
+                                                            <input class="form-control" formControlName="timeInterval" (keypress)="numberPattern($event)"
+                                                               placeholder="Interval *" autocomplete="off" required type="text" (keyup)="calculateDuration()">
+                                                        </span>
+                                                        <span class="h-100" *ngIf="(testForm.get('test_type').value == '2' && testForm.get('contentArray')['controls'].length < 4) ||
+                                                            testForm.get('test_type').value == '3'">
+                                                            <i class="fa fa-plus-circle fa-2x text-success pl-2 pt-1 cursor" title="Add Content" (click)="addContent()" *ngIf="i == 0"></i>
+                                                            <i class="fa fa-minus-circle fa-2x text-danger pl-2 pt-1 cursor" title="Delete Content" (click)="removeContent(i)" *ngIf="i != 0"></i>
+                                                        </span>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="w-20 form-group">
+                                                    <em class="error" *ngIf="!content.get('subjectName').valid && (content.get('subjectName').dirty || content.get('subjectName').touched)">Subject Name is required</em>
+                                                </div>
+                                                <div class="w-20 form-group">
+                                                    <em class="error" *ngIf="!content.get('moduleName').valid && (content.get('moduleName').dirty || content.get('moduleName').touched)">Module Name is required</em>
+<!--                                                    <em class="error" *ngIf="content.get('moduleName').valid && checkDuplicateValue('moduleName', content)">Module Name already exist</em>-->
+                                                </div>
+                                                <div class="w-20 form-group">
+                                                    <em class="error" *ngIf="!content.get('contentName').valid && (content.get('contentName').dirty || content.get('contentName').touched)">Content Name is required</em>
+                                                    <em class="error" *ngIf="content.get('contentName').valid && checkDuplicateValue('contentName', content)">Content is already selected</em>
+                                                </div>
+                                                <div class="w-20 form-group">
+                                                    <em class="error" *ngIf="!content.get('contentDuration').valid && (content.get('contentDuration').dirty || content.get('contentDuration').touched)">Duration (Min) is required</em>
+                                                </div>
+                                                <div class="w-20 form-group">
+                                                    <em class="error" *ngIf="!content.get('timeInterval').valid && (content.get('timeInterval').dirty || content.get('timeInterval').touched)">Interval Between Content is required</em>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                    <div class="row">
+                        <div class="col-md-12 px-3">
+                            <button class="btn btn-outline-primary pull-right" (click)="saveAndExit()">{{contentTestType == 'add' ? 'Submit' : 'Update'}}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<ng-template #assignContentToClass let-c="close" let-d="dismiss">
+    <div class="modal-header">
+        <h5 class="contenttext text-center mb-0">Assign Content</h5>
+    </div>
+    <div class="modal-body">
+        <div class="row">
+            <div class="col-md-12">
+                <h5>
+                    <span>Do you want to assign this content to the Class {{contentCreatedForm != 'class' ? 'or Content Folder' : ''}}</span>?</h5>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn cancel" (click)="dontAssign()">No</button>
+        <button class="btn btn-primary" type="submit" (click)="assignContent()"
+        >Yes</button>
+    </div>
+</ng-template>
+
+<ng-template #assignTemplate let-c="close" let-d="dismiss">
+    <app-confirm-content-assign
+            [classData]="classDetails"
+            [contentDetails]="assignData"
+            (closePopUp)="closeAssignPopUp()"
+    >
+    </app-confirm-content-assign>
+</ng-template>
+
+<ng-template #viewContent>
+    <div class="modal-header align-items-center">
+        <h4 class="modal-title">Preview</h4>
+        <i class="fa fa-close cursor" (click)="closePopUp()"></i>
+    </div>
+    <div class="modal-body" style="background: #f8f8f9;">
+        <app-preview (closePopUp)="closePopUp()" [calledBy]="'popUp'" [contentData]="contentData"></app-preview>
+    </div>
+</ng-template>

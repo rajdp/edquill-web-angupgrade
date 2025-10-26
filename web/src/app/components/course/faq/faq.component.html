@@ -1,0 +1,54 @@
+<div class="row mt-3">
+    <div class="col-xl-12 mb-30">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="px-0">Course FAQ</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-4">
+                        <label style="font-weight: 600">Select Course</label>
+                        <ng-select
+                                [items]="courseListData"
+                                bindLabel="course_name"
+                                bindValue="course_id"
+                                placeholder="Select Course"
+                                typeToSearchText=""
+                                [clearable]="false"
+                                [(ngModel)]="courseFaqSelected"
+                                (change)="getFaqListData($event)">
+                        </ng-select>
+                    </div>
+
+                    <div class="col-8 d-flex align-items-end justify-content-end" *ngIf="courseFaqSelected">
+                        <button class="btn btn-primary pull-right" routerLink="/course/faq/add">Add Course FAQ</button>
+                    </div>
+                </div>
+                <div class="row d-flex align-items-center justify-content-center my-5" *ngIf="faqListDetails.length == 0">
+                    <div class="col-6 p-5 text-center">
+                        <img class="w-50" src="assets/images/nodatafound.jpg" alt="No Data Found" title="No Data Found"/>
+                        <p><strong>No Data Found</strong></p>
+                    </div>
+                </div>
+                <div class="row" *ngIf="faqListDetails.length != 0">
+                    <div class="col-12 my-3" *ngFor="let faq of faqListDetails; let i = index;">
+                        <div class="card p-3">
+                            <div class="car-body">
+                                <div class="row">
+                                    <div class="col-10 col-lg-11">
+                                        <h4 class="d-flex">{{i+1}}. <span [innerHTML]="faq.title"></span></h4>
+                                        <p [innerHTML]="faq.answer"></p>
+                                    </div>
+                                    <div class="col-2 col-lg-1 text-center px-0">
+                                        <p><i class="fa fa-solid fa-2x fa-edit cursor text-right" aria-hidden="true" (click)="editFaqDetails(faq)" style="color:#00bfff;" title="Edit"></i></p>
+                                        <p><span [ngClass]="faq.status == 'A' ? 'text-success' : 'text-danger'">{{faq.status == 'A' ? 'Active' : 'Suspended'}}</span></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

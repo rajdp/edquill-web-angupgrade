@@ -1,0 +1,615 @@
+/* You can add global styles to this file, and also import other style files */
+
+/* ========================================
+   ENTERPRISE UI - DESIGN SYSTEM IMPORTS
+   ======================================== */
+@import '@angular/material/prebuilt-themes/indigo-pink.css';
+
+/* Design Tokens Variables - Aligned with EdQuill Theme */
+:root {
+  /* Primary Font Family */
+  --font-primary: 'Lato', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-secondary: 'Nunito', sans-serif;
+  
+  /* Colors - Purple Theme */
+  --color-primary: #8F008A;
+  --color-primary-light: #A16EE7;
+  --color-primary-dark: #7F3486;
+  --color-secondary: #13c9ca;
+  --color-success: #81ba00;
+  --color-warning: #ffbc58;
+  --color-error: #db524b;
+  --color-info: #00a8ff;
+  
+  /* Neutral Shades */
+  --neutral-50: #f8f9fa;
+  --neutral-100: #f1f3f5;
+  --neutral-200: #e9ecef;
+  --neutral-300: #dee2e6;
+  --neutral-400: #ced4da;
+  --neutral-500: #adb5bd;
+  --neutral-600: #6c757d;
+  --neutral-700: #495057;
+  --neutral-800: #343a40;
+  --neutral-900: #212529;
+  
+  /* Spacing - Optimized for max screen usage */
+  --spacing-1: 0.25rem;
+  --spacing-2: 0.5rem;
+  --spacing-3: 0.625rem;  /* Slightly reduced from 0.75rem */
+  --spacing-4: 0.875rem;  /* Reduced from 1rem for tighter layouts */
+  --spacing-6: 1.25rem;   /* Reduced from 1.5rem */
+  --spacing-8: 1.75rem;   /* Reduced from 2rem */
+  
+  /* Border Radius */
+  --radius-sm: 0.125rem;
+  --radius-base: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  
+  /* Shadows - Subtle */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+  --shadow-base: 0 1px 3px 0 rgba(0, 0, 0, 0.08), 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 3px 5px -1px rgba(0, 0, 0, 0.09), 0 2px 4px -1px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 8px 12px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+  --shadow-focus: 0 0 0 3px rgba(143, 0, 138, 0.2);  /* Purple focus ring */
+  
+  /* Transitions */
+  --transition-fast: 150ms;
+  --transition-base: 250ms;
+  --transition-slow: 350ms;
+}
+
+/* ========================================
+   GLOBAL FONT & LAYOUT OPTIMIZATION
+   ======================================== */
+
+/* Apply Lato font globally - NO !important */
+body,
+html {
+  font-family: var(--font-primary);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-primary);
+  font-weight: 600;
+}
+
+/* Space optimization - Use opt-in class instead of global override */
+.enterprise-layout {
+  .container-fluid {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+  
+  .card:not(.widget-cards):not(.o-hidden) {
+    margin-bottom: 0.875rem;
+  }
+  
+  .card-body:not(.bg-primary):not(.bg-secondary):not(.bg-warning):not(.bg-success):not(.bg-danger) {
+    padding: 1rem;
+  }
+  
+  .row:not(.static-top-widget) {
+    margin-left: -8px;
+    margin-right: -8px;
+  }
+  
+  .row:not(.static-top-widget) > [class*="col-"] {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+}
+
+/* Protect dashboard widgets and charts */
+.widget-cards,
+.o-hidden,
+.static-top-widget,
+apx-chart,
+.apexcharts-canvas,
+#chart {
+  .card-body {
+    padding: inherit;
+  }
+  .row {
+    margin-left: inherit;
+    margin-right: inherit;
+  }
+}
+
+@media print {
+  app-root > * { display: none; }
+  app-root app-create-assessment { display: block; }
+}
+
+//app-annotation{
+//  p{
+//    font-size: 16px !important;
+//  }
+//}
+.tooltip{
+  opacity:1!important;
+}
+#zmmtg-root {
+  display: none !important;
+}
+div#transition-popper{
+  //z-index: 999 !important;
+}
+#meetingSDKElement {
+  top: 59px !important;
+  left: 0 !important;
+  right: 0;
+  margin-left: auto;
+  margin-right: auto;
+  width: 244px; /* width of speaker and ribbon view */
+}
+.customZindex{
+  z-index: 11 !important;
+}
+
+.ng-select.ng-select-multiple .ng-select-container .ng-value-container .ng-placeholder{
+  z-index: 0 !important;
+}
+.input-group > .input-group-append > .btn, .input-group > .input-group-append > .input-group-text, .input-group > .input-group-prepend:not(:first-child) > .btn, .input-group > .input-group-prepend:not(:first-child) > .input-group-text, .input-group > .input-group-prepend:first-child > .btn:not(:first-child), .input-group > .input-group-prepend:first-child > .input-group-text:not(:first-child){
+  z-index: 0 !important;
+}
+
+.inbox-dropdown .multiselect-dropdown .dropdown-list {
+  position: absolute !important;
+  top: auto !important;
+  bottom: 100% !important;
+  margin-top: 0 !important;
+  margin-bottom: 6px !important;
+}
+
+.inbox-count {
+  border: 1px solid;
+  border-radius: 50%;
+  padding: 1px 4px;
+  font-size: 12px;
+}
+
+.btn-outline-primary:hover .inbox-count{
+  color: #FFFFFF;
+}
+
+.notes_style {
+  font-size: 13px;
+  font-style: italic;
+  color: #757070;
+}
+
+.ngx-datatable.bootstrap .datatable-header .datatable-header-cell {
+  border-bottom: 0 !important;
+}
+
+.ngx-datatable.bootstrap .datatable-header .datatable-header-cell .datatable-header-cell-label {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+/* ========================================
+   ENTERPRISE UI - FORM STYLING
+   ======================================== */
+
+/* Enhanced Form Controls */
+.form-control,
+.ng-select .ng-select-container,
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="tel"],
+textarea,
+select {
+  height: 2.5rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--neutral-900);
+  background-color: #fff;
+  border: 1px solid var(--neutral-400);
+  border-radius: var(--radius-md);
+  transition: border-color var(--transition-fast) ease-in-out,
+              box-shadow var(--transition-fast) ease-in-out;
+  
+  &:focus {
+    color: var(--neutral-900);
+    background-color: #fff;
+    border-color: var(--color-primary);
+    outline: 0;
+    box-shadow: var(--shadow-focus);
+  }
+  
+  &:disabled,
+  &[readonly] {
+    background-color: var(--neutral-100);
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+  
+  &.is-invalid,
+  &.ng-invalid.ng-touched {
+    border-color: var(--color-error);
+    
+    &:focus {
+      border-color: var(--color-error);
+      box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.25);
+    }
+  }
+  
+  &.is-valid,
+  &.ng-valid.ng-touched {
+    border-color: var(--color-success);
+  }
+}
+
+textarea.form-control {
+  height: auto;
+  min-height: 5rem;
+}
+
+/* Form Labels */
+.form-group label,
+.form-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--neutral-700);
+  margin-bottom: var(--spacing-2);
+  
+  span.text-danger,
+  .required-indicator {
+    color: var(--color-error);
+    margin-left: var(--spacing-1);
+  }
+}
+
+/* Enhanced Error Messages */
+em.error,
+.error-message,
+.invalid-feedback {
+  display: block;
+  margin-top: var(--spacing-1);
+  font-size: 0.75rem;
+  color: var(--color-error);
+  font-style: normal;
+  
+  &::before {
+    content: "⚠ ";
+    margin-right: var(--spacing-1);
+  }
+}
+
+/* Help Text */
+.form-text,
+.help-text {
+  display: block;
+  margin-top: var(--spacing-1);
+  font-size: 0.75rem;
+  color: var(--neutral-600);
+  font-style: italic;
+}
+
+/* ng-select Enhancements */
+.ng-select {
+  .ng-select-container {
+    min-height: 2.5rem;
+    border-radius: var(--radius-md);
+    
+    &:hover {
+      box-shadow: var(--shadow-sm);
+    }
+  }
+  
+  &.ng-select-focused .ng-select-container {
+    border-color: var(--color-primary);
+    box-shadow: var(--shadow-focus);
+  }
+  
+  .ng-placeholder {
+    color: var(--neutral-500);
+  }
+}
+
+/* ========================================
+   ENTERPRISE UI - CARD STYLING
+   ======================================== */
+
+.card {
+  border: 1px solid var(--neutral-200);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  background-color: #fff;
+  
+  &.elevated {
+    box-shadow: var(--shadow-md);
+  }
+  
+  &.elevated-lg {
+    box-shadow: var(--shadow-lg);
+  }
+}
+
+.card-header {
+  background-color: var(--neutral-50);
+  border-bottom: 1px solid var(--neutral-200);
+  padding: var(--spacing-4) var(--spacing-6);
+  
+  h5, .card-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--neutral-900);
+    margin-bottom: 0;
+  }
+  
+  label, .subtitle {
+    font-size: 0.875rem;
+    color: var(--neutral-600);
+    margin-top: var(--spacing-1);
+    margin-bottom: 0;
+  }
+}
+
+.card-body {
+  padding: var(--spacing-6);
+}
+
+/* ========================================
+   ENTERPRISE UI - FORM SECTIONS
+   ======================================== */
+
+.form-section {
+  background: #fff;
+  border: 1px solid var(--neutral-200);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-6);
+  margin-bottom: var(--spacing-6);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition-base) ease;
+  
+  &:hover {
+    box-shadow: var(--shadow-md);
+  }
+  
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-4);
+    padding-bottom: var(--spacing-3);
+    border-bottom: 2px solid var(--neutral-200);
+    
+    h3, .section-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--neutral-900);
+      margin: 0;
+      
+      &::before {
+        content: "";
+        display: inline-block;
+        width: 4px;
+        height: 1.125rem;
+        background-color: var(--color-primary);
+        margin-right: var(--spacing-3);
+        border-radius: var(--radius-base);
+      }
+    }
+    
+    .section-subtitle {
+      font-size: 0.875rem;
+      color: var(--neutral-600);
+      margin-top: var(--spacing-1);
+    }
+  }
+  
+  .section-body {
+    .form-group {
+      margin-bottom: var(--spacing-4);
+    }
+  }
+}
+
+/* ========================================
+   ENTERPRISE UI - BUTTONS
+   ======================================== */
+
+.btn {
+  font-weight: 500;
+  border-radius: var(--radius-md);
+  padding: 0.625rem 1.25rem;
+  font-size: 0.9375rem;
+  transition: all var(--transition-fast) ease-in-out;
+  border-width: 1px;
+  
+  &:focus,
+  &.focus {
+    box-shadow: var(--shadow-focus);
+  }
+  
+  &.btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+  }
+  
+  &.btn-lg {
+    padding: 0.75rem 1.5rem;
+    font-size: 1.125rem;
+  }
+}
+
+.btn-primary {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  
+  &:hover {
+    background-color: var(--color-primary-dark);
+    border-color: var(--color-primary-dark);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+/* ========================================
+   ENTERPRISE UI - UTILITY CLASSES
+   ======================================== */
+
+/* Spacing Utilities */
+.mt-1 { margin-top: var(--spacing-1) !important; }
+.mt-2 { margin-top: var(--spacing-2) !important; }
+.mt-3 { margin-top: var(--spacing-3) !important; }
+.mt-4 { margin-top: var(--spacing-4) !important; }
+.mt-6 { margin-top: var(--spacing-6) !important; }
+.mt-8 { margin-top: var(--spacing-8) !important; }
+
+.mb-1 { margin-bottom: var(--spacing-1) !important; }
+.mb-2 { margin-bottom: var(--spacing-2) !important; }
+.mb-3 { margin-bottom: var(--spacing-3) !important; }
+.mb-4 { margin-bottom: var(--spacing-4) !important; }
+.mb-6 { margin-bottom: var(--spacing-6) !important; }
+.mb-8 { margin-bottom: var(--spacing-8) !important; }
+
+.p-2 { padding: var(--spacing-2) !important; }
+.p-3 { padding: var(--spacing-3) !important; }
+.p-4 { padding: var(--spacing-4) !important; }
+.p-6 { padding: var(--spacing-6) !important; }
+
+.px-2 { padding-left: var(--spacing-2) !important; padding-right: var(--spacing-2) !important; }
+.px-3 { padding-left: var(--spacing-3) !important; padding-right: var(--spacing-3) !important; }
+.px-4 { padding-left: var(--spacing-4) !important; padding-right: var(--spacing-4) !important; }
+
+.py-2 { padding-top: var(--spacing-2) !important; padding-bottom: var(--spacing-2) !important; }
+.py-3 { padding-top: var(--spacing-3) !important; padding-bottom: var(--spacing-3) !important; }
+.py-4 { padding-top: var(--spacing-4) !important; padding-bottom: var(--spacing-4) !important; }
+
+/* Text Utilities */
+.text-primary { color: var(--color-primary) !important; }
+.text-secondary { color: var(--neutral-600) !important; }
+.text-success { color: var(--color-success) !important; }
+.text-warning { color: var(--color-warning) !important; }
+.text-error { color: var(--color-error) !important; }
+.text-muted { color: var(--neutral-500) !important; }
+
+.font-weight-light { font-weight: 300 !important; }
+.font-weight-normal { font-weight: 400 !important; }
+.font-weight-medium { font-weight: 500 !important; }
+.font-weight-semibold { font-weight: 600 !important; }
+.font-weight-bold { font-weight: 700 !important; }
+
+/* Background Utilities */
+.bg-light { background-color: var(--neutral-50) !important; }
+.bg-white { background-color: #fff !important; }
+.bg-primary { background-color: var(--color-primary) !important; }
+.bg-success { background-color: var(--color-success) !important; }
+
+/* Border Utilities */
+.border { border: 1px solid var(--neutral-200) !important; }
+.border-top { border-top: 1px solid var(--neutral-200) !important; }
+.border-bottom { border-bottom: 1px solid var(--neutral-200) !important; }
+.rounded { border-radius: var(--radius-md) !important; }
+.rounded-lg { border-radius: var(--radius-lg) !important; }
+
+/* Shadow Utilities */
+.shadow-sm { box-shadow: var(--shadow-sm) !important; }
+.shadow { box-shadow: var(--shadow-base) !important; }
+.shadow-md { box-shadow: var(--shadow-md) !important; }
+.shadow-lg { box-shadow: var(--shadow-lg) !important; }
+
+/* ========================================
+   ENTERPRISE UI - RESPONSIVE GRID
+   ======================================== */
+
+.form-row-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--spacing-4);
+  
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.form-grid-full {
+  grid-column: 1 / -1;
+}
+
+/* ========================================
+   ENTERPRISE UI - ANIMATIONS
+   ======================================== */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn var(--transition-base) ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.slide-in {
+  animation: slideIn var(--transition-base) ease-out;
+}
+
+/* ========================================
+   ENTERPRISE UI - ACCESSIBILITY
+   ======================================== */
+
+/* Focus Visible for Keyboard Navigation */
+*:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Skip to Content Link */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: var(--color-primary);
+  color: white;
+  padding: 8px;
+  text-decoration: none;
+  z-index: 100;
+  
+  &:focus {
+    top: 0;
+  }
+}
+
+/* Screen Reader Only */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+

@@ -1,0 +1,64 @@
+.folder {
+  margin-bottom: 2rem;
+}
+
+.folder .accordion-header {
+  border: 1px solid #e5e1e5;
+  background: #ECEBEF;
+  margin-bottom: 0;
+}
+
+.accordion-header .btn {
+  color: black;
+  padding: 14px !important;
+}
+
+.accordion-header .btn h4 {
+  color: black;
+  font-size: 14px;
+}
+
+.accordion-body {
+  background: white;
+  //border: 1px solid #e5e1e5;
+  border: 0;
+  padding: 0;
+}
+
+.classRoom {
+  background: #ffffff !important;
+  .btn {
+    color: black;
+    padding: 10px !important;
+    padding-right: 14px !important;
+  }
+}
+
+.accordion-header .btn .fa {
+  font-size: 14px;
+}
+
+.assign {
+  font-style: italic;
+  text-decoration: underline;
+  text-transform: none;
+  font-size: 12px;
+  letter-spacing: normal;
+  text-underline-position: under;
+}
+
+.btn {
+  text-transform: none;
+}
+
+.main_assign {
+  border: 1px solid #8f008a;
+  padding: 0.5rem;
+  font-size: 24px;
+}
+
+.cancel:hover {
+  i {
+    color: #ffffff !important;
+  }
+}

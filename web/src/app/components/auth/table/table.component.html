@@ -1,0 +1,53 @@
+<div class="col-md-12 col-12 table-responsive px-0">
+    <table class="table table-bordered table-striped table-hover mb-3">
+        <thead style="background: #cdd9f6">
+            <th class="{{header.HeaderClass}}" *ngFor="let header of commonTableData[TableType].Header">{{header.Name}}</th>
+        </thead>
+        <tbody>
+        <tr class="searchInput">
+            <td *ngFor="let header of commonTableData[TableType].Header">
+                <input (input)="filterFunction(commonTableData[TableType].Header)" [(ngModel)]="header.SearchValue" *ngIf="header.Name != 'Actions'" class="form-control table-input" [placeholder]="header.Name">
+            </td>
+        </tr>
+        <tr *ngIf="arrayList.length == 0">
+            <td colspan="12" class="text-center">
+                <span class="color-primary">No Data Available!</span>
+            </td>
+        </tr>
+        <tr *ngFor="let row of paginatedItems;">
+            <td class="{{column.Class}} table-spacing" *ngFor="let column of commonTableData[TableType].Header">
+                <span (click)="emitValue(column.EmitValue, row)" [title]="column.Name == 'Contact Number' && TableType == 'Student' ? row[column.ApiKey] : ''"
+                      *ngIf="column.ApiKey != 'Actions' && column.ApiKey != 'description'">{{column.Name == 'Contact Number' && TableType == 'Student' ?
+                    showMobileNumber(row[column.ApiKey]) : row[column.ApiKey]}}</span>
+                <span [title]="row[column.ApiKey]" *ngIf="column.ApiKey == 'description'">
+                    {{showDescription(row[column.ApiKey])}}</span>
+                <p class="d-flex align-items-center" *ngIf="column.ApiKey == 'Actions'">
+                    <span *ngFor="let action of commonTableData[TableType].Action">
+                        <i (click)="emitValue(action.EmitValue, row)" *ngIf="action.IconType == 'font'" class="cursor {{action.IconSrc}} {{action.Class}}" [title]="action.Title"></i>
+                        <img (click)="emitValue(action.EmitValue, row)" *ngIf="action.IconType == 'img'" [src]="action.IconSrc" alt="" [title]="action.Title" class="cursor {{action.Class}}">
+                    </span>
+                </p>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    <nav *ngIf="arrayList.length != 0" class="mb-2">
+        <ul class="pagination justify-content-end">
+            <li class="page-item" [class.disabled]="currentPage === 1">
+                <a class="page-link cursor" (click)="firstPage()">«</a>
+            </li>
+            <li class="page-item" [class.disabled]="currentPage === 1">
+                <a class="page-link cursor" (click)="previousPage()"><</a>
+            </li>
+            <li class="page-item" *ngFor="let page of pages" [class.active]="currentPage === page">
+                <a class="page-link cursor" (click)="setCurrentPage(page)">{{ page }}</a>
+            </li>
+            <li class="page-item" [class.disabled]="currentPage === totalPages">
+                <a class="page-link cursor" (click)="nextPage()">></a>
+            </li>
+            <li class="page-item" [class.disabled]="currentPage === totalPages">
+                <a class="page-link cursor" (click)="lastPage()">»</a>
+            </li>
+        </ul>
+    </nav>
+</div>

@@ -1,0 +1,211 @@
+<!-- Container-fluid starts-->
+<ng-template #content let-c="close" let-d="dismiss">
+    <div class="modal-header">
+        <h4 class="modal-title" id="modal-basic-title">Change Password</h4>
+        <!--<button type="button" class="close" aria-label="Close" (click)="d('Cross click')">-->
+            <!--<span aria-hidden="true">&times;</span>-->
+        <!--</button>-->
+    </div>
+    <div class="modal-body">
+        <!-- Container-fluid starts-->
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-sm-12">
+
+                            <form [formGroup]="accountForm" class="needs-validation user-add" novalida>
+
+                                <div class="form-group row">
+                                    <label for="validationCustom0" class="col-md-12 mb-2"><span>*</span>
+                                        Password</label>
+                                    <div class="col-md-12">
+                                        <input class="form-control " formControlName="password" id="validationCustom0"
+                                               type="password" required="">
+                                        <em class="error" *ngIf="!accountForm.get('password').valid && (accountForm.get('password').dirty || accountForm.get('password').touched)">Password is required</em>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="validationCustom1" class="col-md-12 mb-2"><span>*</span>
+                                        Confirm Password</label>
+                                    <div class="col-md-12">
+                                        <input class="form-control" formControlName="confirmPassword" id="validationCustom1"
+                                               type="password" required="">
+                                        <em class="error" *ngIf="!accountForm.get('confirmPassword').valid && (accountForm.get('confirmPassword').dirty || accountForm.get('confirmPassword').touched)">Confirm Password is required</em>
+                                    </div>
+                                </div>
+                            </form>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Container-fluid Ends-->
+
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-outline-dark" (click)="changePassword()">Submit</button>
+    </div>
+</ng-template>
+
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-xl-3 col-md-6 xl-50">
+            <div class="card o-hidden widget-cards">
+                <div class="bg-warning card-body">
+                    <div class="media static-top-widget row">
+                        <div class="icons-widgets col-4">
+                            <div class="align-self-center text-center">
+<!--                                <app-feather-icons [icon]="'navigation'" class="font-warning"></app-feather-icons>-->
+<!--                                <img src="">-->
+                                <img src="assets/images/school1.png" alt=""  style="width: 100%"  title="">
+                            </div>
+                        </div>
+                        <div class="media-body col-8"><span class="m-0">School</span>
+                            <h3 class="mb-0"><span class="counter">{{overallList?.schools}}</span><small> This Month</small></h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 xl-50">
+            <div class="card o-hidden  widget-cards">
+                <div class="bg-secondary card-body">
+                    <div class="media static-top-widget row">
+                        <div class="icons-widgets col-4">
+                            <div class="align-self-center text-center">
+<!--                                <app-feather-icons [icon]="'box'" class="font-secondary"></app-feather-icons>-->
+                                <img src="assets/images/teacher1.png" alt=""  style="width: 100%"  title="">
+
+                            </div>
+                        </div>
+                        <div class="media-body col-8"><span class="m-0">Teachers</span>
+<!--                            <h3 class="mb-0">$ <span class="counter" [CountTo]="9856" [from]="0"-->
+<!--                                    [duration]="2">9856</span><small> This Month</small></h3>-->
+                            <h3 class="mb-0"><span class="counter">{{overallList?.teachers}}</span><small> This Month</small></h3>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 xl-50">
+            <div class="card o-hidden widget-cards">
+                <div class="bg-primary card-body">
+                    <div class="media static-top-widget row">
+                        <div class="icons-widgets col-4">
+                            <div class="align-self-center text-center">
+<!--                                <app-feather-icons [icon]="'message-square'" class="font-primary"></app-feather-icons>-->
+                                <img src="assets/images/student1.png" alt=""  style="width: 100%"  title="">
+
+                            </div>
+                        </div>
+                        <div class="media-body col-8"><span class="m-0">Students</span>
+                            <h3 class="mb-0"><span class="counter">{{overallList?.students}}</span><small> This Month</small></h3>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 xl-50">
+            <div class="card o-hidden widget-cards">
+                <div class="bg-danger card-body">
+                    <div class="media static-top-widget row">
+                        <div class="icons-widgets col-4">
+                            <div class="align-self-center text-center">
+                                <img src="assets/images/content1.png" alt=""  style="width: 100%"  title="">
+
+                            </div>
+                        </div>
+                        <div class="media-body col-8"><span class="m-0">Content Creator</span>
+                            <h3 class="mb-0"><span class="counter">{{overallList?.contentcreator}}</span><small> This Month</small></h3>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-12 xl-100">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Growth Chart</h5>
+                </div>
+                <div class="card-body">
+<!--                    <div class="market-chart">-->
+                        <div id="chart">
+                            <apx-chart
+                                    [series]="chartOptions?.series"
+                                    [chart]="chartOptions?.chart"
+                                    [dataLabels]="chartOptions?.dataLabels"
+                                    [plotOptions]="chartOptions?.plotOptions"
+                                    [yaxis]="chartOptions?.yaxis"
+                                    [legend]="chartOptions?.legend"
+                                    [fill]="chartOptions?.fill"
+                                    [stroke]="chartOptions?.stroke"
+                                    [tooltip]="chartOptions?.tooltip"
+                                    [xaxis]="chartOptions?.xaxis"
+                            ></apx-chart>
+                        </div>
+<!--                    </div>-->
+
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-12 xl-100">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Institution-wise Data</h5>
+                </div>
+                <div class="card-body">
+                    <div class="user-status table-responsive latest-order-table">
+                        <table class="table table-bordernone">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Institution ID</th>
+                                    <th scope="col">Institution Name</th>
+                                    <th scope="col">Teachers</th>
+                                    <th scope="col">Students</th>
+                                    <th scope="col">Content creator</th>
+                                    <th scope="col">Created Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr *ngFor="let list of orderList">
+                                    <td style="padding-left: 3%">{{list.school_id}}</td>
+                                    <td style="padding-left: 2%">{{list.name | titlecase}}</td>
+                                    <td style="padding-left: 3%">{{list.teachers}}</td>
+                                    <td style="padding-left: 3%">{{list.students}}</td>
+                                    <td style="padding-left: 3%">{{list.content_creator}}</td>
+                                    <td style="padding-left: 2%">{{list.created_date | date : 'MM-dd-yyyy'}}</td>
+
+                                </tr>
+                            </tbody>
+                        </table>
+                        <a href="javascript:void(0)" class="btn btn-primary" (click)="navigateinsitute()">View all Institutions</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Content</h5>
+                </div>
+                <div class="card-body">
+                <div id="chart1">
+                    <apx-chart
+                            [series]="chartOptions1?.series"
+                            [chart]="chartOptions1?.chart"
+                            [xaxis]="chartOptions1?.xaxis"
+                            [dataLabels]="chartOptions1?.dataLabels"
+                            [grid]="chartOptions1?.grid"
+                            [stroke]="chartOptions1?.stroke"
+                            [title]="chartOptions1?.title"
+                    ></apx-chart>
+                </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Container-fluid Ends-->

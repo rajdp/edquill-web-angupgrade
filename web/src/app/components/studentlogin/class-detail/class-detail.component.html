@@ -1,0 +1,639 @@
+<script src="class-detail.component.ts"></script>
+<div class="container-fluid">
+    <div class="row d-flex justify-content-center list-card mt-5" *ngIf="choosedData.length == 0">
+        <div class="col-4">
+            <button class="nodataList">No Data Available!</button>
+        </div>
+    </div>
+    <section class="row list-card" *ngIf="choosedData.length != 0">
+
+        <div class="col-md-12">
+            <div class="card" *ngFor="let list of choosedData; let i = index">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-2">
+                            <figure *ngIf="list.profile_url == ''">
+                                <img src="assets/images/ristaschool/Mask Group 35.png" class="w-100" style="height: 135px" alt="">
+                            </figure>
+                            <figure *ngIf="list.profile_url != ''">
+                                <img [src]="sanitizer.bypassSecurityTrustResourceUrl(webhost + '/' + list.profile_url)" class="w-100" alt="">
+                            </figure>
+                        </div>
+                        <div class="col-md-5">
+                            <h4 class="t-period"><span class="font-weight-bold">{{list?.class_name}} </span>
+                            </h4>
+                            <p><span class="font-weight-bold">Subject: </span> <span class="t-name font-weight-bold">{{list.subject_name}}</span></p>
+                            <p *ngIf="list.start_date == '0000-00-00'&& list.end_date == '0000-00-00'"><span class="font-weight-bold">Start: </span>  &nbsp; &nbsp;
+                                <span class="font-weight-bold">End: </span>
+                            </p>
+                            <p *ngIf="list.start_date != '0000-00-00'&& list.end_date != '0000-00-00'"><span class="font-weight-bold">Start: </span> <span class="t-name font-weight-bold">{{list.start_date|date:'MM/dd/yyyy'}} {{list.start_time}}</span> &nbsp; &nbsp;
+                                <span class="font-weight-bold">End: </span> <span class="t-name font-weight-bold">{{list.end_date|date:'MM/dd/yyyy'}} {{list.end_time}}</span>
+                            </p>
+                            <div class="d-inline-flex align-items-center">
+                                <h4 class="mb-0"><span class="badge badge-secondary" *ngIf="list.status == '1'">Not Started</span>
+                                    <span class="badge badge-warning" *ngIf="list.status == '2'">In-Progress</span>
+                                    <span class="badge badge-danger" *ngIf="list.status == '3'">Completed</span>
+                                </h4>
+                            </div>
+                        </div>
+                        <div class="col-md-5">
+                            <div class="row h-100 d-flex align-items-end flex-column">
+                                <!-- <div class="col-md-12"> -->
+                                    <!-- <div class="ml-2 dropdown pull-right">
+                                        <button class="btn btn-primary {{env.deviceType() ? 'border-radius-5' : ''}}">{{contentFilterType == '1' ? 'New' :
+                                            contentFilterType == '2' ? 'In Progress' : contentFilterType == '0' ? 'All' : 'Completed'}}<i class="fa fa-sort-desc float-right ml-2" aria-hidden="true"></i></button>
+                                        <div class="dropdown-content" style="right: 3%">
+                                            <a class="dropdown-item dropdown-link" (click)="classList('0')">All</a>
+                                            <a class="dropdown-item dropdown-link" (click)="classList('1')">New</a>
+                                            <a class="dropdown-item dropdown-link" (click)="classList('2')">In Progress</a>
+                                            <a class="dropdown-item dropdown-link" (click)="classList('3')">Completed</a>
+                                        </div>
+                                    </div> -->
+
+                                    <!-- <div class="dropdown pull-right">
+                                        <button *ngIf="list.notes != ''" type="button" class="btn btn-outline-primary mr-2 {{env.deviceType() ? 'border-radius-5' : ''}}"
+                                                (click)="showNotes(list.notes);tabShow = 'notes'">
+                                            <i class="fa fa-file-text mr-2"></i>Announcements</button>
+                                        <button class="btn btn-outline-primary mr-2 {{env.deviceType() ? 'border-radius-5' : ''}}" (click)="tabShow = 'inbox'">
+                                            <i class="fa fa-inbox mr-2" aria-hidden="true"></i>Inbox</button>
+                                        <button class="btn btn-outline-primary {{env.deviceType() ? 'border-radius-5' : ''}}" (click)="tabShow = 'curriculum'">
+                                            <i class="fa fa-book mr-2" aria-hidden="true"></i>Curriculum</button>
+                                    </div> -->
+                                <!-- </div> -->
+                                <div class="col-md-12 d-flex align-items-end justify-content-end">
+                                    <button *ngIf="list?.video_link && list?.video_link?.length != '0'" type="button" class="btn btn-outline-primary ml-2 {{env.deviceType() ? 'border-radius-5' : ''}}" (click)="otherlink(list.video_link);tabShow = 'otherlinks'">
+                                        <i class="fa fa-external-link mr-2"></i>Other Links</button>
+                                    <button (click)="navigateToSATReport()" type="button" class="btn btn-outline-primary mr-2">
+                                        <i class="fa fa-bar-chart mr-2" aria-hidden="true"></i>View Report
+                                    </button>
+                                    <!-- <button *ngIf="videoSource.length != 0" type="button" class="btn btn-outline-primary mr-2 {{env.deviceType() ? 'border-radius-5' : ''}}" (click)="tabShow = 'recordings'">
+                                        <i class="fa fa-microphone mr-2"></i>Recordings</button> -->
+                                    <a *ngIf="list.class_type == '1' && list.schedule_id != ''">
+                                        <button (click)="openZoomDialog(list);" class="btn btn-primary {{env.deviceType() ? 'border-radius-5' : ''}}" type="button">
+                                            <i class="fa fa-video-camera mr-2"></i>Enter Online Class</button>
+                                    </a>
+                                    <!-- <span class="ml-2 expand-icon" *ngIf="topicListData.length != 0" (click)="isCollapsed = !isCollapsed;" [attr.aria-expanded]="!isCollapsed"
+                                          aria-controls="collapseCard">
+                                        <i [title]="!isCollapsed ? 'Collapse' : 'Expand'" title="Collapse" class="fa {{!isCollapsed ? 'fa-compress' : 'fa-arrows-alt'}}"
+                                           style="font-size: 24px; cursor: pointer; color: #91048c;" aria-hidden="true"></i>
+                                    </span> -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section>
+        <div class="row">
+            <div class="col-12">
+                <div class="tab-view">
+                    <button class="btn tab-button mr-2" [ngClass]="tabShow == 'curriculum' ? 'active' : ''" (click)="tabShow = 'curriculum'"><i class="fa fa-book mr-2" aria-hidden="true"></i>Curriculum</button>
+                    <button class="btn tab-button mr-2" [ngClass]="tabShow == 'notes' ? 'active' : ''" (click)="showNotes(choosedData[0].notes);tabShow = 'notes'"><i class="fa fa-file-text mr-2"></i>Announcements</button>
+                    <button class="btn tab-button mr-2" [ngClass]="tabShow == 'inbox' ? 'active' : ''" (click)="tabShow = 'inbox'"><i class="fa fa-inbox mr-2" aria-hidden="true"></i>Inbox</button>
+                    <button class="btn tab-button" [ngClass]="tabShow == 'recordings' ? 'active' : ''" (click)="tabShow = 'recordings'"><i class="fa fa-microphone mr-2"></i>Recordings</button>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section class="row" *ngIf="tabShow == 'inbox'">
+        <div class="col-12 mt-3">
+            <app-inbox-chat [to_id]="choosedData[0]?.teacher_id ?? []" [choosedData]="choosedData" [arrayList]="messageList"></app-inbox-chat>
+        </div>
+    </section>
+
+    <section class="row list-card" *ngIf="tabShow == 'curriculum'">
+        <div class="col-12  d-flex align-items-center justify-content-end">
+            <span class="ml-2 expand-icon" *ngIf="topicListData.length != 0" (click)="isCollapsed = !isCollapsed;" [attr.aria-expanded]="!isCollapsed"
+                aria-controls="collapseCard">
+                <i [title]="!isCollapsed ? 'Collapse' : 'Expand'" title="Collapse" class="fa {{!isCollapsed ? 'fa-compress' : 'fa-arrows-alt'}}"
+                    style="font-size: 24px; cursor: pointer; color: #91048c;" aria-hidden="true"></i>
+            </span>
+            <div class="ml-2 dropdown pull-right">
+                <button class="btn btn-primary {{env.deviceType() ? 'border-radius-5' : ''}}">{{contentFilterType == '1' ? 'New' :
+                    contentFilterType == '2' ? 'In Progress' : contentFilterType == '0' ? 'All' : 'Completed'}}<i class="fa fa-sort-desc float-right ml-2" aria-hidden="true"></i></button>
+                <div class="dropdown-content" style="right: 3%">
+                    <a class="dropdown-item dropdown-link" (click)="classList('0')">All</a>
+                    <a class="dropdown-item dropdown-link" (click)="classList('1')">New</a>
+                    <a class="dropdown-item dropdown-link" (click)="classList('2')">In Progress</a>
+                    <a class="dropdown-item dropdown-link" (click)="classList('3')">Completed</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-12 mt-3 custom-accordion" *ngIf="topicListData.length != 0">
+            <div ngbAccordion [closeOthers]="true" *ngFor="let item of topicListData; let topicIndex = index">
+                <div class="mb-2 topics_accordion_item" ngbAccordionItem="{{topicIndex}}" #accordion="ngbAccordionItem" [collapsed]="isCollapsed">
+                    <div ngbAccordionHeader>
+                        <button style="cursor: default" class="header_button col-12">
+                            <h4 ngbAccordionToggle class="px-0 viewTopicName d-flex justify-content-between cursor">
+                                {{item.topic | titlecase}}<span
+                                    *ngIf="item.start_date != '0000-00-00' && item.start_date != '' && item.start_date != null"
+                                    class="viewTopicName ml-2">-</span>
+                                <div class="px-0 ml-2"
+                                     *ngIf="item.start_date != '0000-00-00' && item.start_date != '' && item.start_date != null">
+                                    <span *ngIf="item.start_date != '0000-00-00' && item.start_date != ''"
+                                          class="font-weight-bold viewTopicName">({{item.start_date|customDateFormat}}</span>
+                                    <span
+                                            *ngIf="item.start_date != '0000-00-00' && item.end_date != '0000-00-00' && item.start_date != '' && item.end_date != '' && item.end_date != null">&nbsp;-&nbsp;</span>
+                                    <span *ngIf="item.end_date != '0000-00-00' && item.end_date != ''"
+                                          class="font-weight-bold viewTopicName">{{item.end_date|customDateFormat}})</span>&nbsp;<br />
+                                </div>
+                            </h4>
+                        </button>
+                    </div>
+                    <div ngbAccordionCollapse>
+                        <div ngbAccordionBody>
+                            <ng-template>
+                                <div class="col-md-12 dropdotted">
+                                    <div class="col-12 px-0" *ngFor="let list of item.topicArray; let j = index">
+                                        <div [ngClass]="{'class-card-new' : list.student_content_status == '1', 'class-card-in-progress' : list.student_content_status == '2', 'class-card-completed' : ['3', '4', '5', '6'].indexOf(list.student_content_status) > -1}"
+                                             class="card class-card class-hover cursor">
+                                            <div (click)="checkContentTime(list)" class="card-body">
+                                                <div class="row">
+                                                    <div class="col-2">
+                                                        <img *ngIf="list.profile_url != ''" [src]="sanitizer.bypassSecurityTrustResourceUrl(webhost + '/' + list.profile_url)" alt="" class="rounded-circle" style="width: 50px;height: 50px;">
+                                                        <img *ngIf="list.profile_url == ''" alt="" class="rounded-circle" src="assets/images/ristaschool/option-writing-checkbox-concepts-survey.png" style="width: 50px;height: 50px;">
+                                                    </div>
+                                                    <div class="col-4 align-self-center">
+                                                        <h4 class="t-period mb-0"><span class="font-weight-bold">{{list.content_name}} </span><b class="contenttext">
+                                                            <small>{{list.content_format == 3 ? '(TEXT)' : list?.is_pdf_content != 1 ? '(LINK)' : '(PDF)'}}</small></b></h4>
+                                                        <p>
+                                                    <span *ngIf="list.content_type == '1'"
+                                                          class="badge badge-green font-weight-bold align-self-center">Resource</span>
+                                                            <span *ngIf="list.content_type == '2'"
+                                                                  class="badge badge-warning font-weight-bold align-self-center">Assignment</span>
+                                                            <span *ngIf="list.content_type == '3'"
+                                                                  class="badge badge-primary font-weight-bold align-self-center">Assessment</span>
+                                                        </p>
+                                                    </div>
+                                                    <div class="col-3 align-self-center">
+                                                        <p><span>Subject: </span> <span class="t-name font-weight-bold">{{list.subject_name}}</span></p>
+                                                    </div>
+                                                    <div class="col-3 align-self-center">
+                                                        <p class="d-flex justify-content-between align-items-center">
+                                                            <span>
+                                                               <span>End: </span> <span *ngIf="list.end_date != '0000-00-00'" class="t-name font-weight-bold"> {{list.end_date|date:'MM/dd/yyyy'}}</span> &nbsp; &nbsp;
+                                                            </span>
+                                                            <i (click)="navigateToSATReport(list, $event)" title="View Analystics" *ngIf="list.student_content_status == '3' && list.content_format == '3'"
+                                                               style="font-size: 18px" class="fa fa-bar-chart mr-4 color-primary" aria-hidden="true"></i>
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 px-0" *ngIf="item.topicArray.length == 0">
+                                        <label class="col-12 my-4 custom-label">No Content Available</label>
+                                    </div>
+                                </div>
+                            </ng-template>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-12 mt-{{topicListData.length != 0 ? '5' : '3'}}">
+            <div class="row">
+                <div class="col-12 mb-2 align-self-center">
+                    <h4 class="viewname">{{topicListData.length > 0 ? 'Other Curriculum' : 'Curriculum'}}</h4>
+                </div>
+                <div class="col-12 mt-5"  *ngIf="curriculumListWithoutTopic.length == 0">
+                    <div class="row d-flex align-items-center justify-content-center mt-1">
+                        <div class="col-10 mt-2 card class-card1 w-99">
+                            <p class="m-0 text-center p-3">No Data Found!</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="home-sec-scroll col-12 px-0">
+                    <div *ngFor="let curriculum of curriculumListWithoutTopic" class="col-md-12 mt-1 cursor">
+                        <div [ngClass]="{'class-card-new' : curriculum.student_content_status == '1', 'class-card-in-progress' : curriculum.student_content_status == '2', 'class-card-completed' : ['3', '4', '5', '6'].indexOf(curriculum.student_content_status) > -1}"
+                             class="card class-card class-hover">
+                            <div (click)="checkContentTime(curriculum)" class="card-body">
+                                <div class="row">
+                                    <div class="col-2">
+                                        <img *ngIf="curriculum.profile_url != ''" [src]="sanitizer.bypassSecurityTrustResourceUrl(webhost + '/' + curriculum.profile_url)" alt="" class="rounded-circle" style="width: 50px;height: 50px;">
+                                        <img *ngIf="curriculum.profile_url == ''" alt="" class="rounded-circle" src="assets/images/ristaschool/option-writing-checkbox-concepts-survey.png" style="width: 50px;height: 50px;">
+                                    </div>
+                                    <div class="col-4 align-self-center">
+                                        <h4 class="t-period mb-0"><span class="font-weight-bold">{{curriculum.content_name}} </span><b class="contenttext">
+                                            <small *ngIf="curriculum.content_format == 1">(PDF)</small>
+                                            <small *ngIf="curriculum.content_format == 3">(TEXT)</small></b></h4>
+                                        <p>
+                                    <span *ngIf="curriculum.content_type == '1'"
+                                          class="badge badge-green font-weight-bold align-self-center">Resource</span>
+                                            <span *ngIf="curriculum.content_type == '2'"
+                                                  class="badge badge-warning font-weight-bold align-self-center">Assignment</span>
+                                            <span *ngIf="curriculum.content_type == '3'"
+                                                  class="badge badge-primary font-weight-bold align-self-center">Assessment</span>
+                                        </p>
+                                    </div>
+                                    <div class="col-3 align-self-center">
+                                        <p><span>Subject: </span> <span class="t-name font-weight-bold">{{curriculum.subject_name}}</span></p>
+                                    </div>
+                                    <div class="col-3 align-self-center">
+                                        <p class="d-flex justify-content-between align-items-center">
+                                            <span>
+                                                <span>End: </span> <span *ngIf="curriculum.end_date != '0000-00-00'" class="t-name font-weight-bold"> {{curriculum.end_date|date:'MM/dd/yyyy'}}</span> &nbsp; &nbsp;
+                                            </span>
+                                            <i (click)="navigateToSATReport(curriculum, $event)" *ngIf="curriculum.student_content_status == '3' && curriculum.content_format == '3'"
+                                               style="font-size: 18px" class="fa fa-bar-chart mr-4 color-primary cursor" aria-hidden="true"></i>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+<!--        <div *ngIf="tabShow == 'assignment'"  class="col-12 col-md-12 mt-3">-->
+<!--            <ul class="nav nav-tabs color-primary">-->
+<!--                <li class="nav-item cursor">-->
+<!--                    <a (click)="filterAssignmentData('1', 'new')" aria-current="page" class="nav-link {{assignmentFilterType == 'new' ? 'active' : ''}}"><b>New</b></a>-->
+<!--                </li>-->
+<!--                <li class="nav-item cursor">-->
+<!--                    <a (click)="filterAssignmentData('2', 'pending')" aria-current="page" class="nav-link {{assignmentFilterType == 'pending' ? 'active' : ''}}"><b>In-progress</b></a>-->
+<!--                </li>-->
+<!--                <li class="nav-item cursor">-->
+<!--                    <a (click)="filterAssignmentData('3', 'completed')" aria-current="page" class="nav-link {{assignmentFilterType == 'completed' ? 'active' : ''}}"><b>Completed</b></a>-->
+<!--                </li>-->
+<!--            </ul>-->
+<!--            <div class="row">-->
+<!--                <div class="col-md-12 home-sec-scroll">-->
+<!--                    <div class="row">-->
+<!--                        <div class="col d-flex justify-content-center list-card mt-5" *ngIf="assignmentFilteredData.length == 0">-->
+<!--                            <div class="col-12">-->
+<!--                                <button class="nodataList">No Data Available!</button>-->
+<!--                            </div>-->
+<!--                        </div>-->
+<!--                        <div *ngFor="let assign of assignmentFilteredData" class="col-md-12 mt-1 cursor">-->
+<!--                            <div class="card class-card class-hover">-->
+<!--                                <div (click)="assignmentPage(assign)" class="card-body">-->
+<!--                                    <div class="row">-->
+<!--                                        <div class="col-2">-->
+<!--                                            <img *ngIf="assign.profile_url != ''" [src]="sanitizer.bypassSecurityTrustResourceUrl(webhost + '/' + assign.profile_url)" alt="" class="rounded-circle" style="width: 50px;height: 50px;">-->
+<!--                                            <img *ngIf="assign.profile_url == ''" alt="" class="rounded-circle" src="assets/images/ristaschool/option-writing-checkbox-concepts-survey.png" style="width: 50px;height: 50px;">-->
+<!--                                        </div>-->
+<!--                                        <div class="col-4 align-self-center">-->
+<!--                                            <h4 class="t-period mb-0"><span class="font-weight-bold">{{assign.content_name}} </span><b class="contenttext">-->
+<!--                                                <small *ngIf="assign.content_format == 1">(PDF)</small>-->
+<!--                                                <small *ngIf="assign.content_format == 3">(TEXT)</small></b></h4>-->
+<!--                                        </div>-->
+<!--                                        <div class="col-3 align-self-center">-->
+<!--                                            <p><span>Subject: </span> <span class="t-name font-weight-bold">{{assign.subject_name}}</span></p>-->
+<!--                                        </div>-->
+<!--                                        <div class="col-3 align-self-center">-->
+<!--                                            <p><span>End: </span> <span *ngIf="assign.end_date != '0000-00-00'" class="t-name font-weight-bold"> {{assign.end_date|date:'MM/dd/yyyy'}}</span> &nbsp; &nbsp;-->
+<!--                                            </p>-->
+<!--                                        </div>-->
+<!--                                    </div>-->
+<!--                                </div>-->
+<!--                            </div>-->
+<!--                        </div>-->
+<!--                    </div>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--        <div *ngIf="tabShow == 'assessment'"  class="col-12 col-md-12 mt-3">-->
+<!--            <ul class="nav nav-tabs color-primary">-->
+<!--                <li class="nav-item cursor">-->
+<!--                    <a (click)="filterAssessmentData('1', 'new')" aria-current="page" class="nav-link {{assessmentFilterType == 'new' ? 'active' : ''}}"><b>New</b></a>-->
+<!--                </li>-->
+<!--                <li class="nav-item cursor">-->
+<!--                    <a (click)="filterAssessmentData('2', 'pending')" aria-current="page" class="nav-link {{assessmentFilterType == 'pending' ? 'active' : ''}}"><b>In-progress</b></a>-->
+<!--                </li>-->
+<!--                <li class="nav-item cursor">-->
+<!--                    <a (click)="filterAssessmentData('3', 'completed')" aria-current="page" class="nav-link {{assessmentFilterType == 'completed' ? 'active' : ''}}"><b>Completed</b></a>-->
+<!--                </li>-->
+<!--            </ul>-->
+<!--            <div class="row">-->
+<!--                <div class="col-md-12 home-sec-scroll">-->
+<!--                    <div class="row">-->
+<!--                        <div class="col d-flex justify-content-center list-card mt-5" *ngIf="assessmentFilteredData.length ==0">-->
+<!--                            <div class="col-12">-->
+<!--                                <button class="nodataList">No Data Available!</button>-->
+<!--                            </div>-->
+<!--                        </div>-->
+<!--                        <div *ngFor="let assess of assessmentFilteredData" class="col-md-12 mt-1 cursor">-->
+<!--                            <div class="card class-card class-hover">-->
+<!--                                <div (click)="checkContentTime(assess, 'assess')" class="card-body">-->
+<!--                                    <div class="row">-->
+<!--                                        <div class="col-1">-->
+<!--                                            <img *ngIf="assess.profile_url == ''" alt="" class="rounded-circle" src="assets/images/ristaschool/assessment.png" style="width: 50px;height: 50px;">-->
+<!--                                            <img *ngIf="assess.profile_url != ''" [src]="sanitizer.bypassSecurityTrustResourceUrl(webhost + '/' + assess.profile_url)" alt="" class="rounded-circle" style="width: 50px;height: 50px;">-->
+<!--                                        </div>-->
+<!--                                        <div class="col-4 align-self-center">-->
+<!--                                            <h4 class="t-period mb-0"><span class="font-weight-bold">{{assess.content_name}} </span><b class="contenttext">-->
+<!--                                                <small *ngIf="assess.content_format == 1">(PDF)</small>-->
+<!--                                                <small *ngIf="assess.content_format == 3">(TEXT)</small></b></h4>-->
+<!--                                        </div>-->
+<!--                                        <div class="col-3 align-self-center">-->
+<!--                                            <p><span>Subject: </span> <span class="t-name font-weight-bold">{{assess.subject_name}}</span></p>-->
+<!--                                        </div>-->
+<!--                                        <div class="col-4 align-self-center">-->
+<!--                                            <p><span>Start: </span> <span *ngIf="assess.start_date != '0000-00-00'" class="t-name font-weight-bold">{{assess.start_date|date:'MM/dd/yyyy'}}</span> &nbsp; &nbsp;-->
+<!--                                                <span>End: </span> <span *ngIf="assess.end_date != '0000-00-00'" class="t-name font-weight-bold">{{assess.end_date|date:'MM/dd/yyyy'}}</span>-->
+<!--                                            </p>-->
+<!--                                        </div>-->
+<!--                                    </div>-->
+<!--                                </div>-->
+<!--                            </div>-->
+<!--                        </div>-->
+<!--                    </div>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </div>-->
+    </section>
+
+    <section class="row list-card" *ngIf="tabShow == 'recordings'">
+        <div class="col-12 col-md-12 mt-3">
+            <div class="row">
+                <div class="col-12 mb-2 align-self-center">
+                    <h4 class="viewname">Recordings</h4>
+                </div>
+                <div class="col-md-12 home-sec-scroll">
+                    <div class="row py-3">
+                        <div *ngFor="let source of videoSource;let i=index" class="col-md-12 mt-1 cursor">
+                            <div class="card class-card class-hover">
+                                <div (click)="navigateOutsideRecording(source)" class="card-body">
+                                    <div class="row">
+                                        <div class="col-4 align-self-center">
+                                            <p><span>Passcode: </span>
+                                                <span class="t-name font-weight-bold">{{source.passcode}}
+                                            </span> &nbsp; &nbsp;
+                                            </p>
+                                        </div>
+                                        <div class="col-4 align-self-center">
+                                            <p><span>Start: </span> <span *ngIf="source.recording_start != '0000-00-00'" class="t-name font-weight-bold">{{source.recording_start|date:'MM/dd/yyyy'}} &nbsp;{{source.recording_start}}</span>
+                                            </p>
+                                        </div>
+                                        <div class="col-4 align-self-center">
+                                            <p>
+                                                <span>End: </span> <span *ngIf="source.recording_end != '0000-00-00'" class="t-name font-weight-bold">{{source.recording_end|date:'MM/dd/yyyy hh:mm:ss a'}} &nbsp;{{source.recording_end}}</span>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- <div *ngIf="videoSource.length == 0" class="col-md-12 mt-1 cursor">
+                            <div class="card">
+                                <div  class="card-body card-hover2" style="align-self: center;">
+                                    <div class="row">
+                                        <span>No data found</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div> -->
+                        <div class="col-12"  *ngIf="videoSource.length == 0">
+                            <div class="row d-flex align-items-center justify-content-center mt-1">
+                                <div class="col-10 mt-2 card class-card1 w-99">
+                                    <p class="m-0 text-center p-3">No Recordings Found!</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="col-12 px-0" *ngIf="tabShow == 'otherlinks'">
+        <app-other-link [titleName]="'Other Links'" [showLink]="false" [arrayValue]="linkdata"></app-other-link>
+    </section>
+
+    <section class="row list-card mt-2" *ngIf="tabShow == 'notes'">
+
+        <div class="col-12 my-4" *ngFor="let classSeparation of updatedAnnouncementList">
+            <div class="card announcement-page">
+                <div class="card-header">
+                    <div class="row">
+                        <div class="col-12 d-flex align-itmes-center justify-content-between">
+                            <h4 class="m-0">{{classSeparation.class_name}}</h4>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row d-flex align-items-center justify-content-center" *ngIf="classSeparation.announcement_data.length == 0">
+                        <div class="col-10 mt-2 card class-card1 w-99">
+                            <p class="m-0 text-center p-3">No Announcement Found!</p>
+                        </div>
+                    </div>
+                    <div class="row" *ngIf="classSeparation.announcement_data.length != 0">
+                        <div class="col-12 my-2" *ngFor="let announcement of classSeparation.announcement_data; let announcementIndex = index">
+                            <h5>Announcement {{announcementIndex + 1}}</h5>
+                            <div class="col-12 mt-2 card class-card1 w-99">
+                                <div class="row pt-2" *ngIf="announcement.add_date != '00-00-0000'">
+                                    <div class="col-9" style="word-wrap: break-word;">
+                                        <h5 [ngClass]="auth.getUserId() == announcement.user_id ? 'letter-primary': 'letter-info'" [innerHTML]="announcement.note"></h5>
+                                        <p class="pb-2 text-dark"><small  *ngIf="announcement.created_by != '' && announcement.add_date != ''">By: <strong> {{announcement.created_by}}</strong> - <small>{{announcement.add_date | date:'medium'}}</small><br></small></p>
+                                    </div>
+                                    <div class="col-12 mb-2">
+                                        <div class="input-group" *ngIf="classSeparation.announcement_type == '3'">
+                                            <input type="text" class="form-control" placeholder="Comment" [(ngModel)]="announcement.comment" (keyup.enter)="announcementCommentDetails(announcement)">
+                                            <div class="input-group-append">
+                                                <button class="btn btn-info d-flex align-items-center" type="submit" (click)="announcementCommentDetails(announcement)"><span class="send-icon"><span class="send-icon-content"><img src="assets/images/send.png" alt=""></span></span></button>
+                                            </div>
+                                        </div>
+                                        <p><small class="text-primary cursor" *ngIf="announcement.comment_count != 0" (click)="announcement.id == announcementSend ? announcementSend = '' : announcementView(announcement)">
+                                            {{announcement.comment_count}} Comment<span *ngIf="announcement.comment_count > 1">s</span></small>
+                                            <small class="text-dark" *ngIf="announcement.comment_count == 0">No Comment Available</small></p>
+                                    </div>
+                                    <div class="col-12" *ngIf="announcement.id == announcementSend">
+                                        <div class="col-12 p-2 mb-3 bg-light text-dark rounded shadow-sm" *ngFor="let data of announcementCommentData">
+                                            <div class="row">
+                                                <div class="col-12">
+                                                    <p [ngClass]="auth.getUserId() == data.user_id ? 'letter f-16': 'text-primary f-16'">{{data.comment}}</p>
+                                                    <p class="p-0 text-dark"><small>By: <strong>{{data.created_by}}</strong> - {{data.comment_date | date:'medium'}}</small></p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<ng-template #content let-c="close" let-d="dismiss">
+    <div class="modal-header color-primary">
+        <h4 class="modal-title" id="modal-basic-title">Other links</h4>
+    </div>
+    <div class="modal-body">
+        <!-- Container-fluid starts-->
+        <div class="container-fluid">
+            <div class="row" *ngFor="let item of linkdata; let j = index">
+                <div class="col-md-12">
+                    <a class="cursor" href="{{item}}" target="_blank">
+                        <span style="overflow: scroll; overflow-y: hidden" title="{{item}}">{{item}}</span>
+                    </a>
+                    <hr>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-primary {{env.deviceType() ? 'border-radius-5' : ''}}" (click)="onSave()">Cancel</button>
+    </div>
+</ng-template>
+
+<!-- Container-fluid Ends-->
+<ng-template #throwError>
+    <div class="modal-header">
+        <h5 class="modal-title letter">{{ErrorTitle}}</h5>
+        <i class="fa fa-close cursor" (click)="onSave()"></i>
+    </div>
+    <div class="modal-body">
+        <p class="mb-0"><b>{{message}}</b></p>
+    </div>
+    <div class="modal-footer">
+        <div class="pull-right">
+            <button class="btn cancel {{env.deviceType() ? 'border-radius-5' : ''}}" (click)="onSave()">Ok</button>
+        </div>
+    </div>
+</ng-template>
+
+<!--//zoom confirmation pop-up-->
+
+<ng-template #zoomDialog let-c="close" let-d="dismiss">
+    <div class="modal-header">
+        <h4 class="modal-title text-center">Zoom Meet</h4>
+        <i class="fa fa-close cursor" (click)="modalRef.close()" ></i>
+    </div>
+    <div class="modal-body d-flex justify-content-right">
+        <div class="col-12 text-center">
+            <h5>Open zoom in </h5>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-primary {{env.deviceType() ? 'border-radius-5' : ''}}" (click)="modalRef.close();zoomService.initZoomMeeting(selectedClass)">In App</button>
+        <button (click)="navigateOutsideZoom(zoomResponse)" class="btn btn-outline-primary {{env.deviceType() ? 'border-radius-5' : ''}}" type="button">New Tab</button>
+    </div>
+</ng-template>
+<ng-template #zoomDialog1 let-c="close" let-d="dismiss">
+    <div class="modal-header">
+        <h4 class="modal-title text-center">Zoom Meet</h4>
+        <i class="fa fa-close cursor" (click)="modalRef.close()" ></i>
+    </div>
+    <div class="modal-body d-flex justify-content-right">
+        <div class="col-12 text-center">
+            <h5>No Zoom Meet Scheduled for this day</h5>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button  class="btn btn-primary {{env.deviceType() ? 'border-radius-5' : ''}}" (click)="modalRef.close();">OK</button>
+    </div>
+</ng-template>
+<ng-template #video let-c="close" let-d="dismiss">
+    <div class="modal-header">
+        <h4 class="modal-title text-center">Zoom Meet</h4>
+        <i (click)="modalRef.close()" class="fa fa-close cursor" ></i>
+    </div>
+    <div class="modal-body d-flex justify-content-right">
+        <div class="col-12 text-center">
+            <!--            <vg-player>-->
+            <!--                <vg-controls>-->
+            <!--                    <vg-play-pause></vg-play-pause>-->
+            <!--                    <vg-playback-button></vg-playback-button>-->
+
+            <!--                    <vg-time-display vgProperty="current" vgFormat="mm:ss"></vg-time-display>-->
+
+            <!--                    <vg-scrub-bar>-->
+            <!--                        <vg-scrub-bar-current-time></vg-scrub-bar-current-time>-->
+            <!--                        <vg-scrub-bar-buffering-time></vg-scrub-bar-buffering-time>-->
+            <!--                    </vg-scrub-bar>-->
+
+            <!--                    <vg-time-display vgProperty="total" vgFormat="mm:ss"></vg-time-display>-->
+
+            <!--                    <vg-mute></vg-mute>-->
+            <!--                    <vg-volume></vg-volume>-->
+
+            <!--                    <vg-fullscreen></vg-fullscreen>-->
+            <!--                </vg-controls>-->
+
+            <!--                <video #media id="singleVideo" preload="auto" crossorigin>-->
+            <!--                    <source src="http://static.videogular.com/assets/videos/videogular.mp4" type="video/mp4">-->
+            <!--                </video>-->
+            <!--            </vg-player>-->
+            <video controls height="420" width="700">
+                <!--                <source src="http://static.videogular.com/assets/videos/videogular.mp4" type="video/mp4">-->
+                <source src="{{selectedRecording.play_video}}" type="text/html">
+            </video>
+        </div>
+    </div>
+</ng-template>
+
+<ng-template #submitPopUp let-c="close" let-d="dismiss">
+    <div class="modal-header">
+        <h5 class="contenttext text-center mb-0">Duration Completed</h5>
+    </div>
+    <div class="modal-body">
+        <div class="row">
+            <div class="col-md-12">
+                <h5 class="mb-0">
+                    <span>Test time is now complete. All your answers will be saved and submitted automatically</span></h5>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-primary" type="submit" (click)="submitAnswer(contentData)">Ok</button>
+    </div>
+</ng-template>
+
+<ng-template #submitTestPopUp let-c="close" let-d="dismiss">
+    <div class="modal-header">
+        <h5 class="contenttext text-center mb-0">Duration Completed</h5>
+    </div>
+    <div class="modal-body">
+        <div class="row">
+            <div class="col-md-12">
+                <h5 class="mb-0">
+                    <span>Test time is now complete for {{testContentData?.module_name}}. All your answers will be saved
+                        <span *ngIf="!testContentData?.lastQuestions"> , submitted  and moved to next content automatically.</span>
+                        <span *ngIf="testContentData?.lastQuestions"> and submitted automatically.</span>
+                    </span>
+                </h5>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-primary" type="submit" (click)="submitAnswer(testContentData, 'test')">Ok</button>
+    </div>
+</ng-template>
+
+<ng-template #startTimerDuration let-c="close" let-d="dismiss">
+    <div class="modal-header">
+        <h5 class="contenttext text-center mb-0">Start Timer Duration</h5>
+    </div>
+    <div class="modal-body">
+        <div class="row">
+            <div class="col-md-12">
+                <h5 class="mb-0">
+                    Click 'Ok' to start the assessment. Do not close the window once the assessment is started.
+                </h5>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button class="btn cancel mr-1" (click)="onSave()">Cancel</button>
+        <button class="btn btn-primary" type="submit" (click)="updateContentStatus(contentDetails)">Ok</button>
+    </div>
+</ng-template>
+
+<ng-template #feedbackStatus>
+    <div class="modal-body">
+        <div class="col-12 px-0 my-3 d-flex flex-row align-items-center">
+            <div class="feedback_spinner"></div>
+            <span class="ml-3" style="font-size: 16px">{{popUpMessage}}</span>
+        </div>
+    </div>
+</ng-template>

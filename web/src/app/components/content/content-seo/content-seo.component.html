@@ -1,0 +1,209 @@
+<div class="row mt-3">
+    <div class="col-xl-12 mb-30">
+      <div class="card card-statistics h-100">
+        <div class="card-header">
+          <h5 class="px-0">Content SEO</h5>
+        </div>
+        <div class="card-body">
+          <div class="row mb-4">
+            <div class="col-4">
+              <label style="font-weight: 600">Select Content</label>
+              <ng-select
+                [items]="blogListData"
+                bindLabel="name"
+                bindValue="content_id"
+                placeholder="Select Content"
+                typeToSearchText=""
+                [clearable]="false"
+                [(ngModel)]="blogSeoSelected"
+                (change)="getListBlogDetails($event)">
+              </ng-select>
+            </div>
+  
+            <div class="col-8 d-flex align-items-end justify-content-end" *ngIf="blogSeoSelected != undefined && blogSeoSelected != '' && !buttonClicked && (type == 'add' && blogSeoData.length == 0 || type == 'edit' && blogSeoData.length != 0 )">
+              <button class="btn btn-primary pull-right" (click)="addOrEditButtonClicked()">{{type == 'add' ? 'Add' : 'Edit'}} Content SEO</button>
+            </div>
+  
+            <div class="col-12 my-4 mx-2" *ngIf="blogSeoSelected && (type == 'add' && buttonClicked || type == 'edit' && blogSeoData.length != 0 )">
+              <form [formGroup]="seoFormGroup">
+  
+                <div class="form-group row align-items-center my-4">
+                  <label class="col-3 mb-0">Meta Author Name <span class="text-danger">*</span></label>
+                  <div class="col-9">
+                    <input class="form-control" formControlName="meta_author" [readOnly]="type == 'edit' && !buttonClicked" placeholder="Enter Meta Author Name">
+                    <em class="error" *ngIf="!seoFormGroup.get('meta_author').valid && (seoFormGroup.get('meta_author').dirty || seoFormGroup.get('meta_author').touched)">Author name is required</em>
+                  </div>
+                </div>
+                <div class="form-group row align-items-center my-4">
+                  <label class="col-3 mb-0">Meta Title <span class="text-danger">*</span></label>
+                  <div class="col-9">
+                    <input class="form-control" formControlName="meta_title" [readOnly]="type == 'edit' && !buttonClicked" placeholder="Enter Meta Title">
+                    <em class="error" *ngIf="!seoFormGroup.get('meta_title').valid && (seoFormGroup.get('meta_title').dirty || seoFormGroup.get('meta_title').touched)">Meta Title is required</em>
+                  </div>
+                </div>
+                <div class="form-group row align-items-center my-4">
+                  <label class="col-3 mb-0">Meta Description <span class="text-danger">*</span></label>
+                  <div class="col-9">
+                    <input class="form-control" formControlName="meta_description" [readOnly]="type == 'edit' && !buttonClicked"  placeholder="Enter Meta Description">
+                    <em class="error" *ngIf="!seoFormGroup.get('meta_description').valid && (seoFormGroup.get('meta_description').dirty || seoFormGroup.get('meta_description').touched)">Meta Description is required</em>
+                  </div>
+                </div>
+                <div class="form-group row align-items-center my-4">
+                  <label class="col-3 mb-0">Meta Keywords <span class="text-danger">*</span></label>
+                  <div class="col-9">
+                    <input class="form-control" formControlName="meta_keywords" [readOnly]="type == 'edit' && !buttonClicked" placeholder="Enter Meta Keywords">
+                    <em class="error" *ngIf="!seoFormGroup.get('meta_keywords').valid && (seoFormGroup.get('meta_keywords').dirty || seoFormGroup.get('meta_keywords').touched)">Meta Keywords is required</em>
+                  </div>
+                </div>
+                <div class="form-group row align-items-center my-4">
+                  <label class="col-3 mb-0">Meta Keyphrase <span class="text-danger">*</span></label>
+                  <div class="col-9">
+                    <input class="form-control" formControlName="meta_keyphrase" [readOnly]="type == 'edit' && !buttonClicked" placeholder="Enter Meta Keyphrase">
+                    <em class="error" *ngIf="!seoFormGroup.get('meta_keyphrase').valid && (seoFormGroup.get('meta_keyphrase').dirty || seoFormGroup.get('meta_keyphrase').touched)">Meta Keyphrase is required</em>
+                  </div>
+                </div>
+                <div class="form-group row align-items-center my-4">
+                  <label class="col-3 mb-0">Meta Topic <span class="text-danger">*</span></label>
+                  <div class="col-9">
+                    <input class="form-control" formControlName="meta_topic" [readOnly]="type == 'edit' && !buttonClicked" placeholder="Enter Meta Topic">
+                    <em class="error" *ngIf="!seoFormGroup.get('meta_topic').valid && (seoFormGroup.get('meta_topic').dirty || seoFormGroup.get('meta_topic').touched)">Meta Topic is required</em>
+                  </div>
+                </div>
+                <div class="form-group row align-items-center my-4">
+                  <label class="col-3 mb-0">Meta Subject <span class="text-danger">*</span></label>
+                  <div class="col-9">
+                    <input class="form-control" formControlName="meta_subject" [readOnly]="type == 'edit' && !buttonClicked" placeholder="Enter Meta Subject">
+                    <em class="error" *ngIf="!seoFormGroup.get('meta_subject').valid && (seoFormGroup.get('meta_subject').dirty || seoFormGroup.get('meta_subject').touched)">Meta Subject is required</em>
+                  </div>
+                </div>
+                <div class="form-group row align-items-center my-4">
+                  <label class="col-3 mb-0">Meta Classification <span class="text-danger">*</span></label>
+                  <div class="col-9">
+                    <input class="form-control" formControlName="meta_classification" [readOnly]="type == 'edit' && !buttonClicked" placeholder="Enter Meta Classification">
+                    <em class="error" *ngIf="!seoFormGroup.get('meta_classification').valid && (seoFormGroup.get('meta_classification').dirty || seoFormGroup.get('meta_classification').touched)">Meta Classification is required</em>
+                  </div>
+                </div>
+                <div class="form-group row align-items-center my-4">
+                  <label class="col-3 mb-0">Meta Robots <span class="text-danger">*</span></label>
+                  <div class="col-9">
+                    <input class="form-control" formControlName="meta_robots" [readOnly]="type == 'edit' && !buttonClicked" placeholder="Enter Meta Robots">
+                    <em class="error" *ngIf="!seoFormGroup.get('meta_robots').valid && (seoFormGroup.get('meta_robots').dirty || seoFormGroup.get('meta_robots').touched)">Meta Robots is required</em>
+                  </div>
+                </div>
+                <div class="form-group row align-items-center my-4">
+                  <label class="col-3 mb-0">Meta Rating <span class="text-danger">*</span></label>
+                  <div class="col-9">
+                    <input class="form-control" formControlName="meta_rating" [readOnly]="type == 'edit' && !buttonClicked" placeholder="Enter Meta Rating">
+                    <em class="error" *ngIf="!seoFormGroup.get('meta_rating').valid && (seoFormGroup.get('meta_rating').dirty || seoFormGroup.get('meta_rating').touched)">Meta Rating is required</em>
+                  </div>
+                </div>
+                <div class="form-group row align-items-center my-4">
+                  <label class="col-3 mb-0">Meta Audience <span class="text-danger">*</span></label>
+                  <div class="col-9">
+                    <input class="form-control" formControlName="meta_audience" [readOnly]="type == 'edit' && !buttonClicked" placeholder="Enter Meta Audience">
+                    <em class="error" *ngIf="!seoFormGroup.get('meta_audience').valid && (seoFormGroup.get('meta_audience').dirty || seoFormGroup.get('meta_audience').touched)">Meta Audience is required</em>
+                  </div>
+                </div>
+                <div class="form-group row align-items-center my-4">
+                  <label class="col-3 mb-0">Open Graph Title <span class="text-danger">*</span></label>
+                  <div class="col-9">
+                    <input class="form-control" formControlName="og_title" [readOnly]="type == 'edit' && !buttonClicked" placeholder="Enter Open Graph Title">
+                    <em class="error" *ngIf="!seoFormGroup.get('og_title').valid && (seoFormGroup.get('og_title').dirty || seoFormGroup.get('og_title').touched)">Enter Open Graph Title is required</em>
+                  </div>
+                </div>
+                <div class="form-group row align-items-center my-4">
+                  <label class="col-3 mb-0">Open Graph Type <span class="text-danger">*</span></label>
+                  <div class="col-9">
+                    <input class="form-control" formControlName="og_type" [readOnly]="type == 'edit' && !buttonClicked" placeholder="Enter Open Graph Type">
+                    <em class="error" *ngIf="!seoFormGroup.get('og_type').valid && (seoFormGroup.get('og_type').dirty || seoFormGroup.get('og_type').touched)">Open Graph Type is required</em>
+                  </div>
+                </div>
+                <div class="form-group row align-items-center my-4">
+                  <label class="col-3 mb-0">Open Graph Site Name <span class="text-danger">*</span></label>
+                  <div class="col-9">
+                    <input class="form-control" formControlName="og_site_name" [readOnly]="type == 'edit' && !buttonClicked" placeholder="Enter Open Graph Site Name">
+                    <em class="error" *ngIf="!seoFormGroup.get('og_site_name').valid && (seoFormGroup.get('og_site_name').dirty || seoFormGroup.get('og_site_name').touched)">Open Graph Site Name is required</em>
+                  </div>
+                </div>
+                <div class="form-group row align-items-center my-4">
+                  <label class="col-3 mb-0">Open Graph Description <span class="text-danger">*</span></label>
+                  <div class="col-9">
+                    <input class="form-control" formControlName="og_description" [readOnly]="type == 'edit' && !buttonClicked" placeholder="Enter Open Graph Description">
+                    <em class="error" *ngIf="!seoFormGroup.get('og_description').valid && (seoFormGroup.get('og_description').dirty || seoFormGroup.get('og_description').touched)">Open Graph Description is required</em>
+                  </div>
+                </div>
+  
+                <div class="form-group row align-items-center my-4">
+                  <label class="col-3 mb-0">Open Graph Site Url <span class="text-danger">*</span></label>
+                  <div class="col-9">
+                    <input class="form-control" formControlName="og_site_url" [readOnly]="type == 'edit' && !buttonClicked" placeholder="Enter Open Graph Site Url">
+                    <em class="error" *ngIf="!seoFormGroup.get('og_site_url').valid && (seoFormGroup.get('og_site_url').dirty || seoFormGroup.get('og_site_url').touched)">Open Graph Site Url is required</em>
+                  </div>
+                </div>
+  
+                <div class="form-group row align-items-center my-4">
+                  <label class="col-3 mb-0">Twitter Title <span class="text-danger">*</span></label>
+                  <div class="col-9">
+                    <input class="form-control" formControlName="twitter_title" [readOnly]="type == 'edit' && !buttonClicked" placeholder="Enter Twitter Title">
+                    <em class="error" *ngIf="!seoFormGroup.get('twitter_title').valid && (seoFormGroup.get('twitter_title').dirty || seoFormGroup.get('twitter_title').touched)">Twitter Title is required</em>
+                  </div>
+                </div>
+  
+                <div class="form-group row align-items-center my-4">
+                  <label class="col-3 mb-0">Twitter Site <span class="text-danger">*</span></label>
+                  <div class="col-9">
+                    <input class="form-control" formControlName="twitter_site" [readOnly]="type == 'edit' && !buttonClicked" placeholder="Enter Twitter Site">
+                    <em class="error" *ngIf="!seoFormGroup.get('twitter_site').valid && (seoFormGroup.get('twitter_site').dirty || seoFormGroup.get('twitter_site').touched)">Twitter Site Name is required</em>
+                  </div>
+                </div>
+  
+                <div class="form-group row align-items-center my-4">
+                  <label class="col-3 mb-0">Twitter Card <span class="text-danger">*</span></label>
+                  <div class="col-9">
+                    <input class="form-control" formControlName="twitter_card" [readOnly]="type == 'edit' && !buttonClicked" placeholder="Enter Twitter Card">
+                    <em class="error" *ngIf="!seoFormGroup.get('twitter_card').valid && (seoFormGroup.get('twitter_card').dirty || seoFormGroup.get('twitter_card').touched)">Twitter Card Name is required</em>
+                  </div>
+                </div>
+                <div class="form-group row align-items-center my-4">
+                  <label class="col-3 mb-0">Twitter Description <span class="text-danger">*</span></label>
+                  <div class="col-9">
+                    <input class="form-control" formControlName="twitter_description" [readOnly]="type == 'edit' && !buttonClicked" placeholder="Enter Twitter Description">
+                    <em class="error" *ngIf="!seoFormGroup.get('twitter_description').valid && (seoFormGroup.get('twitter_description').dirty || seoFormGroup.get('twitter_description').touched)">Twitter Description Name is required</em>
+                  </div>
+                </div>
+                <div class="form-group row align-items-center my-4">
+                  <label class="col-3 mb-0">Twitter Creator <span class="text-danger">*</span></label>
+                  <div class="col-9">
+                    <input class="form-control" formControlName="twitter_creator" [readOnly]="type == 'edit' && !buttonClicked" placeholder="Enter Twitter Creator">
+                    <em class="error" *ngIf="!seoFormGroup.get('twitter_creator').valid && (seoFormGroup.get('twitter_creator').dirty || seoFormGroup.get('twitter_creator').touched)">Twitter Creator Name is required</em>
+                  </div>
+                </div>
+  
+                <div class="form-group row align-items-center my-4">
+                  <label class="col-3 mb-0">Status <span class="text-danger">*</span></label>
+                  <div class="col-9">
+                    <select class="form-control" formControlName="status">
+                      <option value="A">Active</option>
+                      <option value="I">Suspended</option>
+                    </select>
+                  </div>
+                </div>
+              </form>
+  
+              <div class="col-12 pt-2" *ngIf="buttonClicked">
+                <button (click)="submitSeoForm()" class="btn btn-primary pull-right ml-3">{{type == 'add' ? 'Add' : 'Update'}} SEO</button>
+                <button class="btn btn-outline-primary pull-right" (click)="cancelButtonClicked()">Cancel</button>
+              </div>
+            </div>
+  
+          </div>
+          <div class="row d-flex align-items-center justify-content-center my-5" *ngIf="blogSeoData.length == 0 && !buttonClicked">
+            <div class="col-6 p-5 text-center">
+              <img class="w-50" src="assets/images/nodatafound.jpg" alt="No Data Found" title="No Data Found"/>
+              <p><strong>No Data Found</strong></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>  

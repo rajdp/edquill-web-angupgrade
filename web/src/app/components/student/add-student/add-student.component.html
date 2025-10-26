@@ -1,0 +1,410 @@
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4" *ngIf="manageStudent || type == 'edit'">
+        <div class="col-12">
+            <div class="page-header">
+                <h2 class="page-title">
+                    <i class="fa fa-user-graduate mr-2"></i>
+                    {{ type === 'add' ? 'Add New' : 'Edit' }} {{ terminology.get('student.singular') }}
+                </h2>
+                <p class="page-subtitle text-muted">
+                    {{ terminology.getSectionHeader('personalInfo') }} and {{ terminology.getSectionHeader('contactInfo') }}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Form -->
+    <div class="row" *ngIf="manageStudent || type == 'edit'">
+        <div class="col-12">
+            <form [formGroup]="studentform" class="enterprise-form" novalidate>
+                
+                <!-- Personal Information Section -->
+                <app-form-section 
+                    [title]="terminology.getSectionHeader('personalInfo')"
+                    subtitle="Basic information about the student">
+                    
+                    <!-- Name Row -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="first_name" class="form-label">
+                                    <span class="text-danger">*</span>
+                                    {{ terminology.getFieldLabel('first_name') }}
+                                </label>
+                                <input 
+                                    id="first_name"
+                                    formControlName="first_name"
+                                    type="text"
+                                    class="form-control"
+                                    [placeholder]="terminology.getPlaceholder('first_name')"
+                                    required
+                                />
+                                <em class="error" *ngIf="!studentform.get('first_name').valid && (studentform.get('first_name').dirty || studentform.get('first_name').touched)">
+                                    {{ terminology.getValidationMessage('required', {field: terminology.getFieldLabel('first_name')}) }}
+                                </em>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="last_name" class="form-label">
+                                    <span class="text-danger">*</span>
+                                    {{ terminology.getFieldLabel('last_name') }}
+                                </label>
+                                <input 
+                                    id="last_name"
+                                    formControlName="last_name"
+                                    type="text"
+                                    class="form-control"
+                                    [placeholder]="terminology.getPlaceholder('last_name')"
+                                    required
+                                />
+                                <em class="error" *ngIf="!studentform.get('last_name').valid && (studentform.get('last_name').dirty || studentform.get('last_name').touched)">
+                                    {{ terminology.getValidationMessage('required', {field: terminology.getFieldLabel('last_name')}) }}
+                                </em>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Email & Gender Row -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="email_id" class="form-label">
+                                    <span class="text-danger">*</span>
+                                    {{ terminology.getFieldLabel('email_id') }}
+                                </label>
+                                <input 
+                                    *ngIf="type == 'add' || email"
+                                    id="email_id"
+                                    formControlName="email_id"
+                                    type="email"
+                                    class="form-control"
+                                    [placeholder]="terminology.getPlaceholder('email_id')"
+                                    required
+                                />
+                                <input 
+                                    *ngIf="type != 'add' && !email"
+                                    readonly
+                                    id="email_id_readonly"
+                                    formControlName="email_id"
+                                    type="email"
+                                    class="form-control"
+                                    [placeholder]="terminology.getPlaceholder('email_id')"
+                                />
+                                <small class="form-text text-muted">{{ terminology.getHelpText('email_id') }}</small>
+                                <em class="error" *ngIf="studentform.get('email_id').hasError('required') && (studentform.get('email_id').dirty || studentform.get('email_id').touched)">
+                                    {{ terminology.getValidationMessage('required', {field: terminology.getFieldLabel('email_id')}) }}
+                                </em>
+                                <em class="error" *ngIf="studentform.get('email_id').hasError('pattern')">
+                                    {{ terminology.getValidationMessage('email') }}
+                                </em>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="gender" class="form-label">
+                                    {{ terminology.getFieldLabel('gender') }}
+                                </label>
+                                <select id="gender" formControlName="gender" class="form-control">
+                                    <option value="">Select Gender</option>
+                                    <option value="male">{{ terminology.getGenderLabel('male') }}</option>
+                                    <option value="female">{{ terminology.getGenderLabel('female') }}</option>
+                                    <option value="n/a">{{ terminology.getGenderLabel('n/a') }}</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- DOB & Grade Row -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">
+                                    {{ terminology.getFieldLabel('dob') }}
+                                </label>
+                                <div class="input-group">
+                                    <input 
+                                        class="form-control" 
+                                        placeholder="mm/dd/yyyy"
+                                        name="dp"  
+                                        formControlName="dob" 
+                                        angular-mydatepicker 
+                                        #dp="angular-mydatepicker" 
+                                        (keypress)="datePattern($event)"
+                                        [options]="myDpOptions" 
+                                        autocomplete="off"
+                                    />
+                                    <div class="input-group-append">
+                                        <button type="button" class="btn btn-outline-primary" (click)="dp.toggleCalendar()">
+                                            <i class="fa fa-calendar"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <em class="error" *ngIf="studentform.get('dob').invalid && (studentform.get('dob').dirty || studentform.get('dob').touched)">
+                                    Date of birth is invalid
+                                </em>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <span class="text-danger">*</span>
+                                    {{ terminology.getFieldLabel('grade') }}
+                                </label>
+                                <ng-select 
+                                    [items]="gradeData"
+                                           bindLabel="grade_name"
+                                           bindValue="grade_id"
+                                           formControlName="grade"
+                                    placeholder="Select Grade Level"
+                                >
+                                </ng-select>
+                                <em class="error" *ngIf="!studentform.get('grade').valid && (studentform.get('grade').dirty || studentform.get('grade').touched)">
+                                    {{ terminology.getValidationMessage('required', {field: terminology.getFieldLabel('grade')}) }}
+                                </em>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Student ID Row -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="studentId" class="form-label">
+                                    {{ terminology.getFieldLabel('studentId') }}
+                                </label>
+                                <input 
+                                    id="studentId"
+                                    formControlName="studentId"
+                                    type="text"
+                                    class="form-control"
+                                    [placeholder]="terminology.getPlaceholder('studentId')"
+                                />
+                                <small class="form-text text-muted">{{ terminology.getHelpText('studentId') }}</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contact Numbers Row -->
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="mobile" class="form-label">
+                                    {{ terminology.getFieldLabel('mobile') }}
+                                </label>
+                                <input 
+                                    id="mobile"
+                                    formControlName="mobile"
+                                    type="tel"
+                                    class="form-control"
+                                    [placeholder]="terminology.getPlaceholder('mobile')"
+                                    (keypress)="numberPattern($event)" 
+                                    maxlength="15" 
+                                    minlength="10"
+                                />
+                                <small class="form-text text-muted">{{ terminology.getHelpText('mobile') }}</small>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="mobile1" class="form-label">
+                                    {{ terminology.getFieldLabel('mobile1') }}
+                                </label>
+                                <input 
+                                    id="mobile1"
+                                    formControlName="mobile1"
+                                    type="tel"
+                                    class="form-control"
+                                    [placeholder]="terminology.getPlaceholder('mobile')"
+                                    (keypress)="numberPattern($event)" 
+                                    maxlength="15" 
+                                    minlength="10"
+                                />
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="mobile2" class="form-label">
+                                    {{ terminology.getFieldLabel('mobile2') }}
+                                </label>
+                                <input 
+                                    id="mobile2"
+                                    formControlName="mobile2"
+                                    type="tel"
+                                    class="form-control"
+                                    [placeholder]="terminology.getPlaceholder('mobile')"
+                                    (keypress)="numberPattern($event)" 
+                                    maxlength="15" 
+                                    minlength="10"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Status & Dates Row -->
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="status" class="form-label">
+                                    <span class="text-danger">*</span>
+                                    {{ terminology.getFieldLabel('status') }}
+                                </label>
+                                <select id="status" formControlName="status" class="form-control" (change)="statusChange()">
+                                    <option value="1">{{ terminology.getStatusLabel('1') }}</option>
+                                    <option value="2">{{ terminology.getStatusLabel('2') }}</option>
+                                    <option *ngIf="type =='edit'" value="4">{{ terminology.getStatusLabel('4') }}</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="form-label">
+                                    {{ terminology.getFieldLabel('registration_date') }}
+                                </label>
+                                <div class="input-group">
+                                    <input 
+                                        class="form-control" 
+                                        placeholder="mm/dd/yyyy"
+                                        name="dp1"  
+                                        formControlName="registration_date" 
+                                        angular-mydatepicker 
+                                        #dp1="angular-mydatepicker" 
+                                        (keypress)="datePattern($event)"
+                                        [options]="myDpOptions1" 
+                                        (inputFieldChanged)="checkValue($event)" 
+                                        autocomplete="off"
+                                    />
+                                    <div class="input-group-append">
+                                        <button type="button" class="btn btn-outline-primary" (click)="dp1.toggleCalendar()">
+                                            <i class="fa fa-calendar"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <small class="form-text text-muted">{{ terminology.getHelpText('registration_date') }}</small>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4" *ngIf="showDroppedDate">
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <span class="text-danger">*</span>
+                                    {{ terminology.getFieldLabel('dropped_date') }}
+                                </label>
+                                <div class="input-group">
+                                    <input 
+                                        class="form-control" 
+                                        placeholder="mm/dd/yyyy"
+                                        name="dp2"  
+                                        formControlName="dropped_date" 
+                                        angular-mydatepicker 
+                                        #dp2="angular-mydatepicker"
+                                        [options]="myDpOptions1" 
+                                        (inputFieldChanged)="droppedDateCheckValue($event)" 
+                                        autocomplete="off"
+                                    />
+                                    <div class="input-group-append">
+                                        <button type="button" class="btn btn-outline-primary" (click)="dp2.toggleCalendar()">
+                                            <i class="fa fa-calendar"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <small class="form-text text-muted">{{ terminology.getHelpText('dropped_date') }}</small>
+                            </div>
+                        </div>
+                            </div>
+
+                    <!-- Profile Photo -->
+                        <div class="row">
+                            <div class="col-md-12">
+                            <div class="form-group">
+                                <label class="form-label">
+                                    {{ terminology.getFieldLabel('profile_photo') }}
+                                </label>
+                                <div class="file-upload-wrapper">
+                                    <input 
+                                        #myInput 
+                                        type="file" 
+                                        class="file-upload-input" 
+                                        (change)="encodeImageFileAsURL($event)" 
+                                        accept=".png, .jpeg, .jpg"
+                                    />
+                                    <small class="form-text text-muted">{{ terminology.getHelpText('profile_photo') }}</small>
+                                </div>
+
+                                <div *ngIf="imagepath.length > 0" class="mt-3">
+                                    <div class="image-preview-wrapper" *ngFor="let file of imagepath; let i = index">
+                                        <img [src]="sanitizer.bypassSecurityTrustResourceUrl(webhost + '/' + file)" alt="Profile Photo" class="profile-preview-img" />
+                                        <button 
+                                            type="button"
+                                            class="btn btn-sm btn-danger remove-image-btn" 
+                                            (click)="deleteImg()"
+                                            title="Remove photo">
+                                            <i class="fa fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                                    </div>
+                                </div>
+                </app-form-section>
+
+                <!-- Primary Contact Section -->
+                <app-contact-info-group
+                    [formGroup]="studentform"
+                    [contactNumber]="1"
+                    [countryList]="countryListData"
+                    [stateList]="stateListData"
+                    [onCountryChange]="stateList.bind(this)">
+                </app-contact-info-group>
+
+                <!-- Secondary Contact Section -->
+                <app-contact-info-group
+                    [formGroup]="studentform"
+                    [contactNumber]="2"
+                    [countryList]="countryListData"
+                    [stateList]="stateListData1"
+                    [onCountryChange]="stateList1.bind(this)"
+                    [showAddress]="false">
+                </app-contact-info-group>
+
+                <!-- Form Actions -->
+                <div class="form-actions">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <button type="button" class="btn btn-outline-secondary" (click)="backAction()">
+                            <i class="fa fa-arrow-left mr-2"></i>
+                            {{ terminology.getButtonLabel('cancel') }}
+                        </button>
+                        
+                        <div>
+                            <button type="button" class="btn btn-primary" (click)="addstudent()">
+                                <i class="fa" [class.fa-save]="type == 'add'" [class.fa-check]="type == 'edit'"></i>
+                                {{ type == 'add' ? terminology.getButtonLabel('save') : terminology.getButtonLabel('update') }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Permission Denied Message -->
+    <div class="row mt-4" *ngIf="!manageStudent && type != 'edit'">
+        <div class="col-md-12">
+            <div class="alert alert-warning">
+                <i class="fa fa-exclamation-triangle mr-2"></i>
+                You do not have permission to manage students.
+            </div>
+            <button class="btn btn-outline-primary" (click)="backAction()">
+                <i class="fa fa-arrow-left mr-2"></i> 
+                {{ terminology.getButtonLabel('back') }}
+            </button>
+        </div>
+    </div>
+</div>

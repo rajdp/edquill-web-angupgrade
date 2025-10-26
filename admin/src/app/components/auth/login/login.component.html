@@ -1,0 +1,146 @@
+<!--=================================
+ preloader -->
+<div id="pre-loader" *ngIf="commondata.loader.value">
+    <img src="assets/images/pre-loader/loader-01.svg" alt="">
+</div>
+<section *ngIf="type == undefined">
+    <div class="page-wrapper">
+        <div class="authentication-box">
+            <div class="container">
+                <div class="row">
+                    <div class="col-12 col-md-5 p-0 card-left">
+                        <div class="card bg-primary mb-0">
+                            <div class="svg-icon d-flex justify-content-center" style="min-height: 15rem">
+                                <img alt="" class="my-2" src="assets/images/{{this.logo}}" style="height: auto; object-fit: contain">
+                            </div>
+                            <h3 class="my-3">{{owlcarousel[0].title}}</h3>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-7 p-0 mt-2 card-right">
+                        <div class="card tab2-card">
+                            <div class="card-body">
+                                <ngb-tabset class="tab-coupon mb-0">
+                                    <ngb-tab>
+                                        <ng-template ngbTabTitle><i class="icon-user mr-2"></i>Login</ng-template>
+                                        <ng-template ngbTabContent>
+                                            <div class="tab-pane fade active show" id="account" role="tabpanel"
+                                                 aria-labelledby="account-tab">
+                                                <form [formGroup]="loginForm"
+                                                      class="form-horizontal auth-form" novalidate="">
+                                                    <div class="form-group">
+                                                        <input autofocus required="" formControlName="userName" name="login[username]" type="email"
+                                                               class="form-control" placeholder="Username"
+                                                               id="exampleInputEmail1">
+                                                        <em class="error" *ngIf="!loginForm.get('userName').valid && (loginForm.get('userName').dirty || loginForm.get('userName').touched)">User name is required</em>
+                                                    </div>
+                                                    <div class="form-group">
+                                                        <div class="input-group">
+                                                            <input required=""  name="login[password]" type="text" formControlName="password"
+                                                                   class="form-control" placeholder="Password" aria-label="Recipient's username" aria-describedby="basic-addon1" [type]="conps ? 'password' : 'text'">
+                                                            <div class="input-group-append">
+                                                        <span class="input-group-text" id="basic-addon3">
+                                                            <i [class]="conps ? 'fa fa-eye-slash' : 'fa fa-eye'" aria-hidden="true" (click)="conps = !conps"></i>
+                                                        </span>
+                                                            </div>
+                                                        </div>
+                                                        <em class="error" *ngIf="!loginForm.get('password').valid && (loginForm.get('password').dirty || loginForm.get('password').touched)">Password is required</em>
+                                                    </div>
+                                                    <div class="form-terms">
+                                                        <div class="custom-control custom-checkbox mr-sm-2">
+                                                            <input type="checkbox" class="custom-control-input"
+                                                                   id="customControlAutosizing" (click)="rememberList($event)">
+                                                            <label class="custom-control-label"
+                                                                   for="customControlAutosizing">Remember me</label>
+                                                            <a [routerLink]="'/auth/forgotPassword'"
+                                                               class="btn btn-default forgot-pass">Forgot
+                                                                password</a>
+                                                        </div>
+                                                    </div>
+                                                    <div class="form-button">
+                                                        <button class="btn btn-primary" (click)="login()">Login<i class="ml-2 fa fa-long-arrow-right fa-1x" aria-hidden="true"></i></button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </ng-template>
+                                    </ngb-tab>
+
+                                    //Register Details
+                                </ngb-tabset>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<section *ngIf="type == 'blogger'">
+    <div class="page-wrapper">
+        <div class="authentication-box">
+            <div class="container">
+                <div class="row">
+                    <div class="col-12 col-md-5 p-0 card-left">
+                        <div class="card bg-primary mb-0">
+                            <div class="svg-icon d-flex justify-content-center" style="min-height: 15rem">
+                                <img alt="" class="my-2" src="assets/images/{{this.logo}}" style="height: auto; object-fit: fill">
+                            </div>
+                            <h3 class="my-3">{{owlcarousel[0].title}}</h3>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-7 p-0 mt-2 card-right">
+                        <div class="card tab2-card">
+                            <div class="card-body">
+                                <ngb-tabset class="tab-coupon mb-0">
+                                    <ngb-tab>
+                                        <ng-template ngbTabTitle><i class="icon-user mr-2"></i>Blogger Login</ng-template>
+                                        <ng-template ngbTabContent>
+                                            <div class="tab-pane fade active show" role="tabpanel"
+                                                 aria-labelledby="account-tab">
+                                                <form [formGroup]="loginForm"
+                                                      class="form-horizontal auth-form" novalidate="">
+                                                    <div class="form-group">
+                                                        <input autofocus required="" formControlName="userName" name="login[username]" type="email"
+                                                               class="form-control" placeholder="Username">
+                                                        <em class="error" *ngIf="!loginForm.get('userName').valid && (loginForm.get('userName').dirty || loginForm.get('userName').touched)">User name is required</em>
+                                                    </div>
+                                                    <div class="form-group">
+                                                        <div class="input-group">
+                                                            <input required=""  name="login[password]" type="text" formControlName="password"
+                                                                   class="form-control" placeholder="Password" aria-label="Recipient's username" aria-describedby="basic-addon1" [type]="conps ? 'password' : 'text'">
+                                                            <div class="input-group-append">
+                                                        <span class="input-group-text">
+                                                            <i [class]="conps ? 'fa fa-eye-slash' : 'fa fa-eye'" aria-hidden="true" (click)="conps = !conps"></i>
+                                                        </span>
+                                                            </div>
+                                                        </div>
+                                                        <em class="error" *ngIf="!loginForm.get('password').valid && (loginForm.get('password').dirty || loginForm.get('password').touched)">Password is required</em>
+                                                    </div>
+                                                    <div class="form-terms">
+                                                        <div class="custom-control custom-checkbox mr-sm-2">
+                                                            <input type="checkbox" class="custom-control-input"
+                                                                    (click)="rememberList($event)">
+                                                            <label class="custom-control-label"
+                                                                   for="customControlAutosizing">Remember me</label>
+                                                            <a [routerLink]="'/auth/forgotPassword'"
+                                                               class="btn btn-default forgot-pass">Forgot
+                                                                password</a>
+                                                        </div>
+                                                    </div>
+                                                    <div class="form-button">
+                                                        <button class="btn btn-primary" (click)="login()">Login<i class="ml-2 fa fa-long-arrow-right fa-1x" aria-hidden="true"></i></button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </ng-template>
+                                    </ngb-tab>
+
+                                    //Register Details
+                                </ngb-tabset>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

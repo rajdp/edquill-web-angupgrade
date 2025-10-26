@@ -1,0 +1,259 @@
+<!-- main body -->
+<div class="row">
+    <div class="col-xl-12 mb-30">
+        <div class="card">
+            <div class="card-header">
+                <div class="row">
+                    <div class="col-6 d-flex align-items-center">
+                        <h5 class="px-0">Course Details</h5>
+                    </div>
+                    <div class="col-6">
+                        <button class="btn btn-primary float-right"
+                                [routerLink]="['/course/details/add']">Add Course</button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="form-group col-3 my-3">
+                        <ng-select [multiple]="true" placeholder="Select Category" [(ngModel)]="selectedCategory"
+                                   [items]="categoryList" (change)="searchList()"
+                                   bindLabel="category_name" bindValue="category_id"></ng-select>
+                    </div>
+                    <div class="form-group col-3 mt-2 my-3 px-0">
+                        <input style="height: 36px" type='text' class="form-control" (input)="searchList()"
+                               placeholder='Search using Course name, author or lessons' [(ngModel)]="searchedValue"  />
+                    </div>
+                    <div class="form-group col-3 my-3 pr-0">
+                        <ng-select [multiple]="false" placeholder="Select Course Type" [(ngModel)]="selectedCourseType"
+                                   [items]="courseTypeList" (change)="searchList()" [clearable]="false"
+                                   bindLabel="value" bindValue="id"></ng-select>
+                    </div>
+                    <div class="form-group col-3 my-3">
+                        <ng-select [multiple]="true" placeholder="Select Status" [(ngModel)]="selectedStatus"
+                                   [items]="courseStatus" (change)="searchList()"
+                                   bindLabel="value" bindValue="id"></ng-select>
+                    </div>
+
+                    <div class="col-12">
+                        <ngx-datatable #table
+                                       style="border: 1px solid #d1d4d7; border-radius: 2px"
+                                       class="bootstrap ngx-datatable-design"
+                                       [externalSorting]="false" [rows]="rows"
+                                       [headerHeight]="50"
+                                       [limit]="recordPerPage"
+                                       [footerHeight]="50" [rowHeight]="'auto'"
+                                       [scrollbarH]="false"
+                                       [columnMode]="'force'"
+                                       [messages]="{emptyMessage: 'No Course Details found'}"
+                        >
+                            <!-- Row Detail Template -->
+
+                            <ngx-datatable-column name="Course Name" prop="course_name">
+                                <ng-template let-row="row" let-rowIndex="rowIndex" let-value="value" ngx-datatable-cell-template let-expanded="expanded">
+                                    <h6 (click)="showCourseDetail(row)" class="blue-color cursor">{{row.course_name}}</h6>
+                                </ng-template>
+                            </ngx-datatable-column>
+                            <ngx-datatable-column name="Display Order" prop="display_order" [width]="150">
+                                <ng-template let-row="row" ngx-datatable-cell-template>
+                                    {{row.display_order == '' ? '---' : row.display_order}}
+                                </ng-template>
+                            </ngx-datatable-column>
+
+                            <ngx-datatable-column name="Category" prop="category_name">
+                                <ng-template let-row="row" let-value="value" let-expanded="expanded" ngx-datatable-cell-template>
+                                    <span>  {{row.category_name.join(', ')}} </span>
+                                </ng-template>
+                            </ngx-datatable-column>
+
+                            <ngx-datatable-column name="Subject" prop="subject_name">
+                                <ng-template let-row="row" let-value="value" let-expanded="expanded" ngx-datatable-cell-template>
+                                    <span>  {{row.subject_name.join(', ')}}</span>
+                                </ng-template>
+                            </ngx-datatable-column>
+
+                            <ngx-datatable-column name="Fee" prop="fees">
+                                <ng-template let-row="row" let-value="value" ngx-datatable-cell-template>
+                                    <span *ngIf="row.fees != ''">$ {{row.fees}}</span><span *ngIf="row.fees == ''">---</span>
+                                </ng-template>
+                            </ngx-datatable-column>
+
+                            <ngx-datatable-column name="Popular">
+                                <ng-template let-row="row" ngx-datatable-cell-template>
+                                    <span class="badge badge-primary">{{row.is_popular == 'Y' ? 'Yes' : 'No'}}</span>
+                                </ng-template>
+                            </ngx-datatable-column>
+
+                            <ngx-datatable-column name="Webinar">
+                                <ng-template let-row="row"  ngx-datatable-cell-template>
+                                    <span class="badge badge-warning">{{row.event == '1' ? 'Yes' : 'No'}}</span>
+                                </ng-template>
+                            </ngx-datatable-column>
+
+                            <ngx-datatable-column name="Cover Image">
+                                <ng-template let-row="row" let-value="value" ngx-datatable-cell-template>
+                                    <img class="img-thumbnail"  [src]="env.imgUrl + '/' + row.path" alt="Cover Image" />
+                                </ng-template>
+                            </ngx-datatable-column>
+
+                            <ngx-datatable-column name="Status" prop="author">
+                                <ng-template let-row="row" ngx-datatable-cell-template>
+                                    <span class="badge badge-success" *ngIf="row.status == 'A'">Approved</span>
+                                    <span class="badge badge-warning" *ngIf="row.status == 'P'">Ready for review</span>
+                                    <span class="badge badge-secondary" *ngIf="row.status == 'D'">Draft</span>
+                                    <span class="badge badge-info" *ngIf="row.status == 'R'">Rework</span>
+                                    <span class="badge badge-danger" *ngIf="row.status == 'C'">Cancelled</span>
+                                </ng-template>
+                            </ngx-datatable-column>
+
+                            <ngx-datatable-column name="Action" prop="batch">
+                                <ng-template let-row="row" let-value="value" ngx-datatable-cell-template>
+                                    <i class="fa fa-pencil-square fa-2x fa-edit cursor text-center" aria-hidden="true" (click)="editCourseDetails(row)" style="color:#00bfff;" title="Edit Course Details"></i>
+                                </ng-template>
+                            </ngx-datatable-column>
+
+                        </ngx-datatable>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+<ng-template #courseDetail let-c="close" let-d="dismiss">
+    <div class="modal-header align-items-center">
+        <h5 class="contenttext text-center mb-0">Course Detail</h5>
+        <i class="fa fa fa-times-circle pull-right cursor color-red-icon" aria-hidden="true" (click)="close()"></i>
+    </div>
+    <div class= "modal-body">
+        <div class="container-fluid">
+            <div class="row mt-3">
+                <div class="col-4">
+                    <p>Course Name</p>
+                </div>
+                <div class="col-8">
+                    <p>{{selectedCourseDetail.course_name}}</p>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-4">
+                    <p>Category</p>
+                </div>
+                <div class="col-8">
+                    <span *ngFor="let data of selectedCourseDetail.category_name">{{data}}</span>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-4">
+                    <p>Subject</p>
+                </div>
+                <div class="col-8">
+                    <span *ngFor="let data of selectedCourseDetail.subject_name">{{data}}</span>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-4">
+                    <p>Short Description</p>
+                </div>
+                <div class="col-8" [innerHTML]="selectedCourseDetail.short_description == '' ? '---' : selectedCourseDetail.short_description">
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-4">
+                    <p>Description</p>
+                </div>
+                <div class="col-8" [innerHTML]="selectedCourseDetail.description == '' ? '---' : selectedCourseDetail.description">
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-4">
+                    <p>Overview Content</p>
+                </div>
+                <div class="col-8" [innerHTML]="selectedCourseDetail.overview_content == '' ? '---' : selectedCourseDetail.overview_content">
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-4">
+                    <p>Course Content</p>
+                </div>
+                <div class="col-8" [innerHTML]="selectedCourseDetail.course_content == '' ? '---' : selectedCourseDetail.course_content">
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-4">
+                    <p>Course Pre Requisites</p>
+                </div>
+                <div class="col-8" [innerHTML]="selectedCourseDetail.prerequisites == '' ? '---' : selectedCourseDetail.prerequisites">
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-4">
+                    <p>Other Details</p>
+                </div>
+                <div class="col-8" [innerHTML]="selectedCourseDetail.other_details == '' ? '---' : selectedCourseDetail.other_details">
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-4">
+                    <p>Lesson</p>
+                </div>
+                <div class="col-8" [innerHTML]="selectedCourseDetail.lessons == '' ? '---' : selectedCourseDetail.lessons">
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-4">
+                    <p>Author</p>
+                </div>
+                <div class="col-8">
+                    <p>{{selectedCourseDetail.author == '' ? '---' : selectedCourseDetail.author}}</p>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-4">
+                    <p>Fees</p>
+                </div>
+                <div class="col-8">
+                    <p *ngIf="selectedCourseDetail.author != ''">$ {{selectedCourseDetail.fees}}</p>
+                    <p *ngIf="selectedCourseDetail.author == ''">---</p>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-4">
+                    <p>Cover Image</p>
+                </div>
+                <div class="col-4">
+                    <img class="img-thumbnail" src="{{webhost}}{{selectedCourseDetail.path}}"  alt="Cover Image" />
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-4">
+                    <p>Status</p>
+                </div>
+                <div class="col-8">
+                    <p><span class="badge badge-success" *ngIf="selectedCourseDetail.status == 'A'">Active</span>
+                        <span class="badge badge-danger" *ngIf="selectedCourseDetail.status == 'I'">Suspended</span></p>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-4">
+                    <p>Certified Course</p>
+                </div>
+                <div class="col-8">
+                    <p>{{selectedCourseDetail.certified_course == 'Y' ? 'Yes' : 'No'}}</p>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-4">
+                    <p>Allow Multiple Schedule Select</p>
+                </div>
+                <div class="col-8">
+                    <p>{{selectedCourseDetail.multiple_schedule == 'Y' ? 'Yes' : 'No'}}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button (click)="editCourseDetails(selectedCourseDetail)" class="btn btn-primary my-1 float-left float-sm-right">Edit Course Detail</button>
+    </div>
+</ng-template>

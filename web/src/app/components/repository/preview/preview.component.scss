@@ -1,0 +1,54 @@
+.selectColor{
+  background: purple;
+  color: #fff;
+}
+
+
+
+@keyframes blinkStroke {
+  100%,
+  0% {
+    stroke: #500;
+  }
+  30% {
+    stroke: deeppink;
+  }
+  60% {
+    stroke: yellow;
+  }
+  100% {
+    stroke: black;
+  }
+}
+
+@keyframes blinkFill {
+  100%,
+  0% {
+    fill: #500;
+  }
+  30% {
+    fill: deeppink;
+  }
+  60% {
+    fill: yellow;
+  }
+  100% {
+    fill: black;
+  }
+}
+
+.editAction {
+  font-size: 24px;
+  border: 1px solid #8F008A;
+  padding: 4px;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #8f008a;
+}
+.test-width {
+  min-width: 200px !important;
+  ::ng-deep .ng-select .ng-select-container, ::ng-deep .ng-dropdown-panel .ng-dropdown-panel-items .ng-option {
+    font-size: 14px !important;
+    font-weight: normal !important;
+  }
+}

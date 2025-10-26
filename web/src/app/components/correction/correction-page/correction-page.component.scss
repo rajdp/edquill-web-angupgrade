@@ -1,0 +1,100 @@
+@keyframes blinkStroke {
+  100%,
+  0% {
+    stroke: #500;
+  }
+  30% {
+    stroke: deeppink;
+  }
+  60% {
+    stroke: yellow;
+  }
+  100% {
+    stroke: black;
+  }
+}
+
+@keyframes blinkFill {
+  100%,
+  0% {
+    fill: #500;
+  }
+  30% {
+    fill: deeppink;
+  }
+  60% {
+    fill: yellow;
+  }
+  100% {
+    fill: black;
+  }
+}
+
+.deleteIcon{
+  background: #e6baea !important;
+}
+
+
+.inner_button {
+  padding: 4px 8px !important;
+  background: #ffff !important;
+  color: black;
+  border: 2px solid #e1e4eb !important;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 16px;
+  height: 30px;
+  cursor: text;
+}
+
+.button_design {
+  cursor: default;
+}
+
+.inner_button:focus, .button_design:focus {
+  box-shadow: none !important;
+  outline: none;
+}
+
+.button_design:active {
+  color: #FFFFFF !important;
+}
+
+.inner_button:active {
+  color: black !important;
+}
+
+.inner_button:focus-visible, .button_design:focus-visible {
+  outline: none !important;
+}
+.timer_button {
+  border: 1px solid #8f008a;
+  background: #fff !important;
+  border-radius: 4px;
+}
+
+.student-selected {
+  background-color: #e9ccec !important;
+  border-radius: 4px !important;
+}
+.correct-ans-selected {
+  background-color: #d4edda !important;
+  border-radius: 4px !important;
+}
+.wrong-ans-selected {
+  background-color: #ffb7b7 !important;
+  border-radius: 4px !important;
+}
+
+.img-fluid {
+  height: 60px !important;
+}
+
+.mark-input {
+  border-bottom: 2px solid #8F008A !important;
+}
+
+.progress-bar {
+  transition: width 0.8s ease-in-out;
+  background-color: #00a8ff;
+}

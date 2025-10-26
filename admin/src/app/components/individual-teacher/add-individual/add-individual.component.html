@@ -1,0 +1,263 @@
+<!-- Container-fluid starts-->
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="card tab2-card">
+                <div class="card-header">
+                    <h5 class="text-capitalize" *ngIf="type == 'add'">Add Private Tutor</h5>
+                    <h5 class="text-capitalize" *ngIf="type == 'edit'">Edit Private Tutor</h5>
+                    <label class="text-muted">All fields marked with <span class="text-danger">*</span> are required</label>
+                </div>
+                <div class="card-body tab2-card">
+                    <form [formGroup]="teacherForm" class="needs-validation user-add" novalida>
+                        <div class="form-group row">
+                            <label for="validationCustom0" class="col-xl-3 col-md-4"><span>*</span>
+                               First Name</label>
+                            <div class="col-xl-8 col-md-7">
+                                <input class="form-control " formControlName="firstName" id="validationCustom0"
+                                       type="text" placeholder="First Name" required="">
+                                <em class="error" *ngIf="!teacherForm.get('firstName').valid && (teacherForm.get('firstName').dirty || teacherForm.get('firstName').touched)">First name is required</em>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="validationCustom1" class="col-xl-3 col-md-4"><span>*</span>
+                                Last Name</label>
+                            <div class="col-xl-8 col-md-7">
+                                <input class="form-control " formControlName="lastName" id="validationCustom1"
+                                       type="text" placeholder="Last Name" required="">
+                                <em class="error" *ngIf="!teacherForm.get('lastName').valid && (teacherForm.get('lastName').dirty || teacherForm.get('lastName').touched)">Last name is required</em>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="validationCustom2" class="col-xl-3 col-md-4"><span>*</span>
+                                 Email Address</label>
+                            <div class="col-xl-8 col-md-7">
+                                <input class="form-control" formControlName="email_id" id="validationCustom2" pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-z]{2,4}$"
+                                       type="email" placeholder="Email" required="">
+                                <em class="error" *ngIf="teacherForm.get('email_id').hasError('required') && (teacherForm.get('email_id').dirty || teacherForm.get('email_id').touched)">Email-id is required</em>
+                                <em class="error" *ngIf="teacherForm.get('email_id').hasError('pattern')">Please Enter valid Email-id</em>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="validationCustom3" class="col-xl-3 col-md-4"><span>*</span>
+                                Contact Number</label>
+                            <div class="col-xl-8 col-md-7">
+                                <input class="form-control " formControlName="mobile" id="validationCustom3"
+                                       type="text" placeholder="Contact Number" (keypress)="numberPattern($event)" maxlength="15" minlength="10" required="">
+                                <em class="error" *ngIf="!teacherForm.get('mobile').valid && (teacherForm.get('mobile').dirty || teacherForm.get('mobile').touched)">Contact Number is required</em>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="validationCustom5" class="col-xl-3 col-md-4"><span style="visibility: hidden">*</span>
+                                Institution Name</label>
+                            <div class="col-xl-8 col-md-7">
+                                <input class="form-control " formControlName="institution" id="validationCustom5"
+                                       type="text" placeholder="Institution Name">
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label class="col-xl-3 col-md-4"><span style="visibility: hidden">*</span>
+                                Date Of Joining</label>
+                            <div class="col-xl-8 col-md-7 form-group">
+                                <div class="input-group">
+                                    <!-- input box -->
+                                    <input class="form-control" name="mydate" placeholder="mm-dd-yyyy"
+                                           formControlName="doj" angular-mydatepicker #dp="angular-mydatepicker" [options]="myDpOptions" (inputFieldChanged)="checkValue($event)"
+                                           (dateChanged)="onDateChanged($event)"/>
+                                    <div class="input-group-append">
+                                        <button type="button" class="btn btn-primary" (click)="dp.toggleCalendar()">
+                                            <i class="fa fa-calendar-o"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <em class="error" *ngIf="!teacherForm.get('doj').valid && (teacherForm.get('doj').dirty || teacherForm.get('doj').touched)">Please enter Valid Date</em>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label class="col-xl-3 col-md-4" ><span style="visibility: hidden">*</span>
+                                Date Of Birth</label>
+                            <div class="col-xl-8 col-md-7 form-group">
+                                <div class="input-group">
+                                    <!-- input box -->
+                                    <input class="form-control" name="mydate" placeholder="mm-dd-yyyy"
+                                           formControlName="dob" angular-mydatepicker #dp1="angular-mydatepicker" [options]="myDpOptions1"
+                                           (dateChanged)="onDateChanged($event)"/>
+                                    <div class="input-group-append">
+                                        <button type="button" class="btn btn-primary" (click)="dp1.toggleCalendar()">
+                                            <i class="fa fa-calendar-o"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="validationCustom7" class="col-xl-3 col-md-4"><span style="visibility: hidden">*</span>
+                                Gender</label>
+                            <div class="col-xl-8 col-md-7">
+                                <select class="form-control"  formControlName="gender" id="validationCustom7">
+                                    <option value="">Select Gender</option>
+                                    <option value="male">Male</option>
+                                    <option value="female">Female</option>
+                                    <option value="n/a">Do not want to disclose</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <label for="validationCustom8" class="col-xl-3 col-md-4"><span style="visibility: hidden">*</span>
+                                Address 1</label>
+                            <div class="col-xl-8 col-md-7">
+                                <input class="form-control" formControlName="address1" id="validationCustom8"
+                                       type="text" placeholder="Address1">
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="validationCustom9" class="col-xl-3 col-md-4"><span style="visibility: hidden">*</span>
+                                Address 2</label>
+                            <div class="col-xl-8 col-md-7">
+                                <input class="form-control" formControlName="address2" id="validationCustom9"
+                                       type="text" placeholder="Address2">
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="validationCustom10" class="col-xl-3 col-md-4"><span style="visibility: hidden">*</span>
+                                City</label>
+                            <div class="col-xl-8 col-md-7">
+                                <input class="form-control" formControlName="city" id="validationCustom10"
+                                       type="text" placeholder="City">
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label class="col-xl-3 col-md-4"><span style="visibility: hidden">*</span>
+                                State</label>
+                            <div class="col-xl-8 col-md-7">
+                                <ng-select [items]="stateListData"
+                                           bindLabel="name"
+                                           bindValue="state_id"
+                                           formControlName="state"
+                                           placeholder="Please Select"
+                                >
+                                </ng-select>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label class="col-xl-3 col-md-4"><span style="visibility: hidden">*</span>
+                                Country</label>
+                            <div class="col-xl-8 col-md-7">
+                                <ng-select [items]="countryListData"
+                                           bindLabel="name"
+                                           bindValue="country_id"
+                                           formControlName="country"
+                                           placeholder="Please Select"
+                                           (change)="stateList($event.country_id)"
+                                >
+                                </ng-select>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="validationCustom13" class="col-xl-3 col-md-4"><span style="visibility: hidden">*</span>
+                                Zip </label>
+                            <div class="col-xl-8 col-md-7">
+                                <input class="form-control" multiple formControlName="postalCode" id="validationCustom13"
+                                       type="text" placeholder="Enter Zip" (keypress)="numberPattern($event)" minlength="3" maxlength="9">
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label class="col-xl-3 col-md-4"><span>*</span>
+                                Status</label>
+                            <div class="col-xl-8 col-md-7">
+                                <select class="form-control " formControlName="status">
+                                    <option value="1">Active</option>
+                                    <option value="2">Inactive</option>
+                                    <option *ngIf="type == 'edit'" value="3">Suspended</option>
+                                    <option *ngIf="type == 'edit'" value="4">Deleted</option>
+                                </select>
+                                <em class="error" *ngIf="!teacherForm.get('status').valid && (teacherForm.get('status').dirty || teacherForm.get('status').touched)">status is required</em>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label class="col-xl-3 col-md-4 "><span style="visibility: hidden">*</span>Profile Photo</label>
+                            <div class="col-xl-8 col-md-7">
+                                <input #myInput type="file" class="custom-upload-input" (change)="encodeImageFileAsURL($event)" accept=".png, .jpeg, .jpg" >
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-xl-3 col-md-4"  style="position: relative;left: 25%">
+                                <div  class="files-list fit-image" *ngFor="let file of imagepath;let i= index">
+                                    <img *ngIf="imagepath != ''" [src]="sanitizer.bypassSecurityTrustResourceUrl(webhost + '/' + file)" alt="">
+                                        <i *ngIf="imagepath != ''" class="fa fa-times" style="position: relative; right: 26px; bottom: 85px; cursor: pointer;  background: #eeeeee;
+       padding: 10px; border-radius: 45px;" title="close" (click)="deleteImg()" ></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12 mt-4">
+                                <h3 style="color: #000; font-weight: 800;">Permissions</h3>
+                                <hr>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-4">
+                                <h4>Manage Student</h4>
+                                <div class="row">
+                                    <div class="col-12" style="position: relative; left: 1.5rem">
+                                        <input type="checkbox" class="form-check-input" id="addStudent" disabled formControlName="addStudent" ><label for="addStudent">Add Student</label>
+                                    </div>
+                                    <div class="col-12" style="position: relative; left: 1.5rem">
+                                        <input type="checkbox" class="form-check-input" id="updateStudent" disabled formControlName="updateStudent" ><label for="updateStudent">Update Student</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <h4>Manage Subject</h4>
+                                <div class="row">
+                                    <div class="col-12" style="position: relative; left: 1.5rem">
+                                        <input type="checkbox" class="form-check-input" id="addSubject" disabled formControlName="addSubject" ><label for="addSubject">Add Subject</label>
+                                    </div>
+                                    <div class="col-12" style="position: relative; left: 1.5rem">
+                                        <input type="checkbox" class="form-check-input" id="updateSubject" disabled formControlName="updateSubject" ><label for="updateSubject">Update Subject</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <h4>Manage Books</h4>
+                                <div class="row">
+                                    <div class="col-12" style="position: relative; left: 1.5rem">
+                                        <input type="checkbox" class="form-check-input" id="addBooks" disabled formControlName="addBooks" ><label for="addBooks">Add Books</label>
+                                    </div>
+                                    <div class="col-12" style="position: relative; left: 1.5rem">
+                                        <input type="checkbox" class="form-check-input" id="updateBooks" disabled formControlName="updateBooks" ><label for="updateBooks">Update Books</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-4 mt-2">
+                                <h4>Manage Content</h4>
+                                <div class="row">
+                                    <div class="col-12" style="position: relative; left: 1.5rem">
+                                        <input type="checkbox" class="form-check-input" id="addContents" disabled formControlName="addContents"><label for="addContents">Add Content</label>
+                                    </div>
+                                    <div class="col-12" style="position: relative; left: 1.5rem">
+                                        <input type="checkbox" class="form-check-input" id="updateContents" disabled formControlName="updateContents"><label for="updateContents">Update Content</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-4 mt-2">
+                                <h4>Manage Class</h4>
+                                <div class="row">
+                                    <div class="col-12" style="position: relative; left: 1.5rem">
+                                        <input type="checkbox" class="form-check-input" id="addRoom1" disabled formControlName="addClass"><label for="addRoom1">Create & Update Class</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                    <div class="pull-right">
+                        <button type="button" *ngIf="type == 'add'" (click)="addTeacher('add')" class="btn btn-primary mt-3" >Save</button>
+                        <button type="button" *ngIf="type == 'edit'" (click)="addTeacher('edit')"  class="btn btn-primary mt-3">Update</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Container-fluid Ends-->

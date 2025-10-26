@@ -1,0 +1,125 @@
+<!-- main body -->
+<div class="row">
+    <div class="col-xl-12 mb-30">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="px-0">Course Category List</h5>
+            </div>
+            <div class="card-body">
+
+                <div class="row mt-1 mb-3">
+                    <div class="col-4">
+                        <div class="input-group">
+                            <input (input)="searchFunction()" type="text" class="form-control" style="height:40px" size="50" placeholder="Search Category" [(ngModel)]="searchedValue">
+                            <div class="input-group-append">
+                                <button class="btn btn-primary" type="submit"><i class="fa fa-search" aria-hidden="true"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-8">
+                        <button class="btn btn-primary float-right"
+                                [routerLink]="['/course/category/add']">Add Course Category</button>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <ngx-datatable #table
+                                   style="font-size: 12px;border: 1px solid #d1d4d7; border-radius: 2px"
+                                   class="bootstrap expandable ngx-datatable-design"
+                                   [externalSorting]="false" [rows]="categoryListData"
+                                   [headerHeight]="50"
+                                   [limit]="10"
+                                   [footerHeight]="50" [rowHeight]="'auto'"
+                                   [scrollbarH]="false"
+                                   [columnMode]="'force'"
+                                   [messages]="{emptyMessage: 'No Category found'}"
+                    >
+
+                        <ngx-datatable-column name="Category Name" prop="category_name" [width]="250">
+                            <ng-template let-row="row" ngx-datatable-cell-template>
+                                <h6 (click)="showCategoryList(row)" class="blue-color cursor">{{row.category_name}}</h6>
+                            </ng-template>
+                        </ngx-datatable-column>
+                        <ngx-datatable-column name="Description" [width]="200">
+                            <ng-template let-row="row" ngx-datatable-cell-template>
+                                <span [title]="auth.stripHtml(row.description)" [innerHTML]="row.description | truncateHtml : 50"></span>
+                            </ng-template>
+                        </ngx-datatable-column>display_order
+                        <ngx-datatable-column name="Display Order" prop="display_order" [width]="100">
+                            <ng-template let-row="row" ngx-datatable-cell-template>
+                                {{row.display_order}}
+                            </ng-template>
+                        </ngx-datatable-column>
+                        <ngx-datatable-column name="Cover Image" [width]="150">
+                            <ng-template let-row="row" ngx-datatable-cell-template>
+                                <img *ngIf="row.path != ''" class="img-thumbnail" [src]="env.imgUrl + '/' + row.path" alt="Cover Image" />
+                                <img alt="" *ngIf="row.path == ''"  src="assets/images/blog/08.jpg" class="img-thumbnail">
+                            </ng-template>
+                        </ngx-datatable-column>
+
+                        <ngx-datatable-column name="Status" prop="author" [width]="80">
+                            <ng-template let-row="row" ngx-datatable-cell-template>
+                                <span class="badge badge-success" *ngIf="row.status == 'A'">Active</span>
+                                <span class="badge badge-danger" *ngIf="row.status == 'I'">Suspended</span>
+                            </ng-template>
+                        </ngx-datatable-column>
+
+                        <ngx-datatable-column name="Action" prop="batch" [width]="80">
+                            <ng-template let-row="row" ngx-datatable-cell-template>
+                                <i class="fa fa-pencil-square fa-2x fa-edit cursor text-center" aria-hidden="true" (click)="getEditcourse(row)" style="color:#00bfff;" title="Edit"></i>
+                            </ng-template>
+                        </ngx-datatable-column>
+
+                    </ngx-datatable>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<ng-template #categoryViewList let-c="close" let-d="dismiss">
+    <div class="modal-header align-items-center">
+        <h5 class="contenttext text-center mb-0">Course Category</h5>
+        <i class="fa fa fa-times-circle pull-right cursor color-red-icon" aria-hidden="true" (click)="close()"></i>
+    </div>
+    <div class= "modal-body">
+        <div class="container-fluid">
+            <div class="row mt-3">
+                <div class="col-4">
+                    <p>Category Name</p>
+                </div>
+                <div class="col-8">
+                    <p>{{selectedCategoryList.category_name}}</p>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-4">
+                    <p>Description</p>
+                </div>
+                <div class="col-8" [innerHTML]="selectedCategoryList.description == '' ? '---' : selectedCategoryList.description">
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-4">
+                    <p>Cover Image</p>
+                </div>
+                <div class="col-4">
+                    <img class="img-thumbnail" src="{{env.imgUrl}}{{selectedCategoryList.path}}"  alt="Cover Image" />
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-4">
+                    <p>Status</p>
+                </div>
+                <div class="col-8">
+                    <p><span class="badge badge-success" *ngIf="selectedCategoryList.status == 'A'">Active</span>
+                        <span class="badge badge-danger" *ngIf="selectedCategoryList.status == 'I'">Suspended</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button (click)="getEditcourse(selectedCategoryList)" class="btn btn-primary my-1 float-left float-sm-right">Edit Course Category</button>
+    </div>
+</ng-template>

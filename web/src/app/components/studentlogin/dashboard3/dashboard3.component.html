@@ -1,0 +1,415 @@
+<section class="row dashboard_section py-{{globalAnnouncementList.length != 0 ? '4' : '5'}} dashboard px-4">
+
+    <div class="col-12 px-2" *ngIf="globalAnnouncementList.length != 0">
+        <div class="card">
+            <div class="card-body">
+                <div class="marquee">
+                    <div class="marquee-item">
+                        <span *ngFor="let announcement of globalAnnouncementList; let i = index; let last = last">
+                            <span class="font-weight-bold">{{ announcement.title + ' - ' }}</span>
+                            <span class="color-primary">{{(announcement.description ?? '') }} {{globalAnnouncementList.length > 1 && !last ? ', ' : ''}}</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-8">
+        <div class="row">
+            <div class="col-12 px-2 mt-1">
+                <div class="card" style="background: #f7f6f8;border-radius: 16px">
+                    <div class="card-header" style="background-color: #1999e8; color: white;">
+                        <div class="row">
+                            <div class="col-6 d-flex align-items-center">
+                                <app-feather-icons class="icon mt-1" [icon]="'calendar'"></app-feather-icons>
+                                <span class="title">&nbsp; Today's Schedule</span>
+                            </div>
+                            <div class="col-6 text-right align-self-center">
+                                <span (click)="routePage('schedule')" class="text-right cursor" style="font-size: 10px; color: white;">
+                                    <a>View Details</a></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-body">
+                        <div class="row d-flex justify-content-center align-items-center" *ngIf="scheduleData.length == 0">
+                            <div class="col-12 mt-4">
+                                <button class="nodataList border-0">No Classes Today!</button>
+                            </div>
+                        </div>
+                        <div class="row px-3 div-height" *ngIf="scheduleData.length != 0">
+                            <div (click)="enterList(item)" class="col-12 cursor card dashboard-hover dashboard-card_even px-0" *ngFor="let item of scheduleData; let j = index; let even = even">
+                                <div class="card-body">
+                                    <h5 style="font-size: 14px;line-height: 20px" class="color-primary align-self-center mb-0">{{item.class_name}}</h5>
+                                    <div class="row" style="margin-top: 10px">
+                                        <div class="col-9">
+                                            <div class="row">
+                                                <div class="col-4">
+                                                    <b>Subject:</b>  <br>
+                                                    <span class="mb-0 fs-12 font-weight-bold-400">{{item.subject_name}}</span>
+                                                </div>
+                                                <div class="col-4">
+                                                    <b>Date:</b> <br>
+                                                    <span class="fs-12 font-weight-bold-400">{{item.class_start_date | date : 'MM/dd/yyyy'}} - {{item.class_end_date | date : 'MM/dd/yyyy'}}</span>
+                                                </div>
+                                                <div class="col-4">
+                                                    <b>Time:</b> <br>
+                                                    <span class="fs-12 font-weight-bold-400">{{item.slotstarttime + ' - ' + item.slotendtime}}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-3 text-right align-self-center">
+                                            <i (click)="openZoomDialog(item, $event)" *ngIf="item.class_type == '1' && item.schedule_id != ''"
+                                               class="fa fa-video-camera mr-1" title="Enter Online Class"></i>
+                                            <i *ngIf="item.class_details?.announcement_type != '1'" (click)="redirectToAnnouncementOrInbox(item, 'announcement')" class="fa fa-bullhorn color-primary mr-1" title="New Announcement">
+                                                <span *ngIf="item.announcement_count != 0" class="upload-count">{{item.announcement_count ?? '0'}}</span>
+                                            </i>
+                                            <i (click)="redirectToAnnouncementOrInbox(item, 'inbox')" class="fa fa-commenting-o color-primary mr-1" title="New Inbox Message">
+                                                <span *ngIf="item.inbox_count != 0" class="upload-count">{{item.inbox_count ?? '0'}}</span>
+                                            </i>
+                                            <!-- <i (click)="showInformation(item, $event)" class="fa fa-info mr-1" title="Class Info"></i> -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <div class="row">
+            <div class="col-12 px-2 mt-1">
+                <div class="card" style="background: #f7f6f8;border-radius: 16px">
+                    <div class="card-header" style="background-color: #1999e8; color: white;padding: 12px 10px">
+                        <div class="row">
+                            <div class="col-6 d-flex align-items-center">
+                                <app-feather-icons class="d-flex" [icon]="'book'"></app-feather-icons>
+                                <span class="title">&nbsp; My Classes</span>
+                            </div>
+                            <div class="col-6 align-self-center text-right">
+                                <span (click)="routePage('class')" class="text-right cursor" style="font-size: 10px; color: white;">
+                                <a>View All</a></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-body">
+
+                        <div class="row px-3 mb-2 pb-1">
+                            <button *ngFor="let data of buttonName" (click)="updateClassData(data.id)" [ngClass]="{'active': data.active}"
+                                    class="dashboard-button {{data.className}}">{{data.name}}<span class="badge {{data.badge_class}} ml-1">{{data.count}}</span></button>
+                        </div>
+                        <div class="row d-flex justify-content-center align-items-center" *ngIf="filteredClassData.length == 0">
+                            <div class="col-12 mt-4">
+                                <button class="nodataList border-0">No {{selectedButtonForClass == '2' ? 'In-Progress' : selectedButtonForClass == '4' ? 'Upcoming' : 'Completed'}} Class Available!</button>
+                            </div>
+                        </div>
+                        <div class="row px-3 div-height2" *ngIf="filteredClassData.length != 0">
+                            <div (click)="classEnterList(item)" [ngClass]="{'dashboard-card_inProgress' : selectedButtonForClass == '2', 'dashboard-card_upcoming' : selectedButtonForClass == '4', 'dashboard-card_completed' : selectedButtonForClass == '3'}"
+                                 class="col-12 cursor card dashboard-hover px-0" *ngFor="let item of filteredClassData; let j = index">
+                                <div class="card-body">
+                                    <h5 style="font-size: 14px;line-height: 20px" class="color-primary align-self-center mb-0">{{item.class_name}}</h5>
+                                    <h6 style="line-height: 18px" class="mb-0 fs-12 pr-0">{{item.subject_name}}</h6>
+                                    <div class="row">
+                                        <h6 class="mb-0 col-12 text-right align-self-center">
+                                            <span [title]="returnDayTitle(item, day.id, day.value)" [ngClass]="{'scheduledDate': checkAvailabilityDate(item, day.id)}"
+                                                  style="color: #817d7d; padding: 6px 5px; margin-left: 4px; margin-right: 4px"
+                                                  class="circle_design fs-10" *ngFor="let day of days;">{{day.day}}</span>
+                                        </h6>
+                                    </div>
+                                    <i *ngIf="item.class_details?.announcement_type != '1'" (click)="redirectToAnnouncementOrInbox(item, 'announcement')" class="fa fa-bullhorn color-primary mr-1" title="New Announcement">
+                                        <span *ngIf="item.announcement_count != 0" class="upload-count">{{item.announcement_count ?? '0'}}</span>
+                                    </i>
+                                    <i (click)="redirectToAnnouncementOrInbox(item, 'inbox')" class="fa fa-commenting-o color-primary mr-1" title="New Inbox Message">
+                                        <span *ngIf="item.inbox_count != 0" class="upload-count">{{item.inbox_count ?? '0'}}</span>
+                                    </i>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 px-2 mt-1">
+                <div class="card" style="background: #f7f6f8;border-radius: 16px">
+                    <div class="card-header" style="background-color: #1999e8; color: white;">
+                        <div class="d-flex align-items-center">
+                          <app-feather-icons class="icon" [icon]="'award'"></app-feather-icons>
+                          <span class="title">&nbsp; Recent Scores</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row px-3 align-items-center justify-content-between pb-3">
+                            <span class="d-flex align-items-center" style="font-size: 10px">
+                                <i style="color: #00a8ff !important;font-size: 14px !important;" class="fa fa-square"></i>- Assignment
+                                <i style="color: #81ba00 !important;font-size: 14px !important;" class="fa fa-square"></i>- Assessment
+                            </span>
+                        </div>
+<!--                         <div class="row d-flex justify-content-center align-items-center" *ngIf="recentScore.length == 0">
+                            <div class="col-12">
+                                <button class="nodataList border-0">No Recent Score released!</button>
+                            </div>
+                        </div> -->
+                        <div class="row px-3 div-height" *ngIf="recentScore.length != 0">
+                            <div (click)="answerPage(item)" [ngClass]="{'dashboard-card_upcoming' : item.content_type == '2', 'dashboard-card_completed' : item.content_type == '3'}"
+                                 class="col-12 card px-0 dashboard-hover" *ngFor="let item of recentScore; let j = index">
+                                <div class="card-body">
+                                    <div class="col-12 px-0 {{item.allow_answer_key == '1' && item.student_content_status == '3' && item.downloadPDF?.length != 0 ? 'd-flex justify-content-between' : ''}}">
+                                        <h5 style="font-size: 14px;line-height: 20px" class="color-primary align-self-center mb-0">{{item.content_name}}</h5>
+                                        <i *ngIf="item.allow_answer_key == '1' && item.student_content_status == '3' && item.downloadPDF?.length != 0"
+                                           class="fa fa-key mr-1 cursor" aria-hidden="true" title="Answer Key & Explanation" (click)="viewAnswerKeyPdf($event, item)"></i>
+                                    </div>
+                                    <h6 style="line-height: 18px" class="fs-12 mb-0">{{item.class_name}}</h6>
+                                    <div class="d-flex align-items-center justify-content-end">
+                                        <span style="background-color: #5FAE99" class="badge badge-warning">
+                                            {{item.obtained_score}} / {{item.total_score}}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-4">
+        <div class="row">
+            <div class="col-12 px-2">
+                <div class="card" style="border-radius: 16px; background: #f7f6f8">
+                    <div class="card-header" style="background-color: #1999e8; color: white;">
+                        <div class="d-flex align-items-center">
+                          <app-feather-icons class="icon" [icon]="'activity'"></app-feather-icons>
+                          <span class="title">&nbsp; Upcoming Tasks</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row message-row-1" *ngIf="upcomingTask.length != 0">
+                            <div (click)="answerPage(item)"
+                                 class="col-12 cursor heading_main_card px-0" *ngFor="let item of upcomingTask; let j = index; let last = last">
+                                 <div class="card-body heading_card px-0">
+                                    <div class="row message-row">
+                                        <div class="col-7 align-self-center px-0">
+                                            <h5 class="mb-0 heading line-wrap">{{item.content_name}}</h5>
+                                        </div>
+                                        <div class="col-5 align-self-center pl-1 pr-0">
+                                            <h5 class="mb-0 d-flex align-items-center justify-content-end">
+                                                <span *ngIf="item.end_date != '0000-00-00'" style="color: #777777 !important;" class="fs-10 mb-0">Due:
+                                                    <span style="color: #81ba00" class="font-weight-bold">
+                                                        {{item.end_date | date : 'MM/dd/yyyy'}}</span>
+                                                    </span>
+                                                <span *ngIf="item.content_type == '1'" style="color: white !important;" class="ml-1 badge fs-10 badge-warning">Resource</span>
+                                                <span *ngIf="item.content_type == '2'" style="color: white !important;" class="ml-1 badge badge-info fs-10">Assignment</span>
+                                                <span *ngIf="item.content_type == '3'" style="color: white !important;" class="ml-1 badge fs-10 badge-success">Assessment</span>
+                                            </h5>
+                                        </div>
+                                    </div>
+                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 mt-1 px-2">
+                <div class="card" style="background: #f7f6f8;border-radius: 16px">
+                    <div class="card-header" style="background-color: #1999e8; color : white;">
+                        <div class="d-flex align-items-center">
+                          <app-feather-icons class="icon" [icon]="'bell'"></app-feather-icons>
+                          <span class="title">&nbsp; Announcements / Messages</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row message-row-1">
+                            <div (click)="redirectToAnnouncementOrInbox(item)"
+                                 class="col-12 cursor heading_main_card px-0" *ngFor="let item of recentUpdate; let j = index">
+                                <div class="card-body heading_card px-2">
+                                    <div class="row message-row">
+                                       <div class="col-8 px-2 align-self-center">
+                                           <p *ngIf="item.message_type == 'inbox'" class="m-0">
+                                               <span *ngIf="item.message.convertedFullText != ''" [title]="item.message.convertedFullText">
+                                                <h5 class="mb-0 heading">{{item.message.convertedText ?? ''}}</h5></span>
+                                               <span class="color-primary" *ngIf="item.message.convertedFullText == ''" [title]="'Attachment added to the chat'">
+                                                   Attachment added here<i style="font-size: 12px; color: black !important;" class="fa fa-file color-primary"></i> </span>
+                                           </p>
+                                           <p class="m-0" *ngIf="item.message_type != 'inbox'">
+                                               <span [title]="item.message.convertedFullText"><h5 class="mb-0 heading">{{item.message.convertedText ?? ''}}</h5></span>
+                                           </p>
+                                       </div>
+                                        <div class="col-4 px-2 text-right">
+                                            <span *ngIf="item.message_type == 'inbox'" style="background: #8f008a" class="ml-1 badge fs-10">Message</span>
+                                            <span *ngIf="item.message_type != 'inbox'" style="background: #8d6eeb" class="badge fs-10">Announcement</span>
+                                        </div>
+                                   </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 mt-1 px-2">
+                <div class="card" style="background: #f7f6f8;border-radius: 16px">
+                    <div class="card-header" style="background-color: #1999e8; color: white;">
+                        <div class="d-flex align-items-center">
+                          <app-feather-icons class="icon" [icon]="'alert-circle'"></app-feather-icons>
+                          <span class="title">&nbsp; Past Due</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+
+                        <div class="row message-row-1" *ngIf="overdueTask.length != 0">
+                            <div (click)="answerPage(item)" class="col-12 cursor heading_main_card px-0" *ngFor="let item of overdueTask; let j = index">
+                                <div class="card-body heading_card px-0">
+                                    <div class="row message-row">
+                                        <div class="col-7 align-self-center px-0">
+                                            <span><h5 class="mb-0 heading line-wrap">{{item.content_name}}</h5></span>
+                                        </div>
+                                        <div class="col-5 pr-0">
+                                            <h5 class="mb-0 d-flex align-items-center justify-content-end">
+                                                <span *ngIf="item.end_date != '0000-00-00'" style="color: #777777 !important;" class="fs-10 mb-0">Due:
+                                                    <span style="color: #FF0000" class="font-weight-bold">
+                                                        {{item.end_date | date : 'MM/dd/yyyy'}}</span>
+                                                    </span>
+                                                <span *ngIf="item.content_type == '1'" style="color: white !important;" class="ml-1 badge fs-10 badge-warning">Resource</span>
+                                                <span *ngIf="item.content_type == '2'" style="color: white !important;" class="ml-1 badge badge-info fs-10">Assignment</span>
+                                                <span *ngIf="item.content_type == '3'" style="color: white !important;" class="ml-1 badge fs-10 badge-success">Assessment</span>
+                                            </h5>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</section>
+
+<ng-template #throwError>
+    <div class="modal-header align-items-center">
+        <h4 class="modal-title letter">{{ErrorTitle}}</h4>
+        <i style="color:#000 !important;" class="fa fa-close cursor" (click)="onSave()" ></i>
+    </div>
+    <div class="modal-body">
+        <p class="mb-0"><b>{{message}}</b></p>
+    </div>
+    <div class="modal-footer">
+        <button class="btn cancel pull-right" (click)="onSave()">ok</button>
+    </div>
+</ng-template>
+
+<ng-template #showInform>
+    <div class="modal-header align-items-center">
+        <h4 class="modal-title">Info</h4>
+        <i style="font-size: 16px; color: black !important;" class="fa fa-close cursor" (click)="modalRef.close()"></i>
+    </div>
+    <div class="modal-body">
+        <p class="p-0" *ngIf="classInfo?.class_start_date != ''"><small class="letter">Start Date: </small> <span class="t-name font-weight-bold">{{classInfo.class_start_date}}</span></p>
+        <p class="p-0" *ngIf="classInfo?.class_end_date != ''"><small class="letter">End Date: </small> <span class="t-name font-weight-bold">{{classInfo.class_end_date}}</span></p>
+        <p class="p-0" *ngIf="classInfo?.subject_name != ''"><small class="letter">Subject: </small> <span class="t-name font-weight-bold">{{classInfo.subject_name}}</span></p>
+        <p class="p-0" *ngIf="classInfo?.grade_name != ''"><small class="letter">Grade: </small> <span class="t-name capital font-weight-bold">{{classInfo.grade_name}}</span></p>
+    </div>
+
+</ng-template>
+
+<ng-template #zoomDialog>
+    <div class="modal-header align-items-center">
+        <h4 class="modal-title text-center">Zoom Meet</h4>
+        <i (click)="modalRef.close()" class="fa fa-close cursor" ></i>
+    </div>
+    <div class="modal-body d-flex justify-content-right">
+        <div class="col-12 text-center">
+            <h5>Open zoom in </h5>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button  (click)="modalRef.close();zoomService.initZoomMeeting(selectedClass)" class="btn btn-primary">In App</button>
+        <button (click)="navigateOutsideZoom(this.selectedClass.availabilityDate[0])" class="btn btn-outline-primary" type="button">New Tab</button>
+    </div>
+</ng-template>
+
+<ng-template #zoomDialog1>
+    <div class="modal-header align-items-center">
+        <h4 class="modal-title text-center">Zoom Meet</h4>
+        <i (click)="modalRef.close()" class="fa fa-close cursor"></i>
+    </div>
+    <div class="modal-body d-flex justify-content-right">
+        <div class="col-12 text-center">
+            <h5>No Zoom Meet Scheduled for this day</h5>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button (click)="modalRef.close()" class="btn btn-primary">OK</button>
+    </div>
+</ng-template>
+
+<ng-template #submitPopUp>
+    <div class="modal-header">
+        <h5 class="contenttext text-center mb-0">Duration Completed</h5>
+    </div>
+    <div class="modal-body">
+        <div class="row">
+            <div class="col-md-12">
+                <h5 class="mb-0">
+                    <span>Test time is now complete. All your answers will be saved and submitted automatically</span></h5>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-primary" type="submit" (click)="submitAnswer(contentData)">Ok</button>
+    </div>
+</ng-template>
+
+<ng-template #submitTestPopUp let-c="close" let-d="dismiss">
+    <div class="modal-header">
+        <h5 class="contenttext text-center mb-0">Duration Completed</h5>
+    </div>
+    <div class="modal-body">
+        <div class="row">
+            <div class="col-md-12">
+                <h5 class="mb-0">
+                    <span>Test time is now complete for {{testContentData?.module_name}}. All your answers will be saved
+                        <span *ngIf="!testContentData?.lastQuestions"> , submitted  and moved to next content automatically.</span>
+                        <span *ngIf="testContentData?.lastQuestions"> and submitted automatically.</span>
+                    </span>
+                </h5>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-primary" type="submit" (click)="submitAnswer(testContentData, 'test')">Ok</button>
+    </div>
+</ng-template>
+
+<ng-template #startTimerDuration let-c="close" let-d="dismiss">
+    <div class="modal-header">
+        <h5 class="contenttext text-center mb-0">Start Timer Duration</h5>
+    </div>
+    <div class="modal-body">
+        <div class="row">
+            <div class="col-md-12">
+                <h5 class="mb-0">
+                    Click 'Ok' to start the assessment. Do not close the window once the assessment is started.
+                </h5>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button class="btn cancel mr-1" (click)="onSave()">Cancel</button>
+        <button class="btn btn-primary" type="submit" (click)="updateContentStatus(contentDetails)">Ok</button>
+    </div>
+</ng-template>
+
+<ng-template #feedbackStatus>
+    <div class="modal-body">
+        <div class="col-12 px-0 my-3 d-flex flex-row align-items-center">
+            <div class="feedback_spinner"></div>
+            <span class="ml-3" style="font-size: 16px">{{popUpMessage}}</span>
+        </div>
+    </div>
+</ng-template>

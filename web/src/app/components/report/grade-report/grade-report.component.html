@@ -1,0 +1,177 @@
+<section *ngIf="schoolStatus.length != 0" class="container-fluid report">
+    <form [formGroup]="studentReport">
+        <div class="row mb-2 mt-4">
+            <div class="form-group col-4">
+                <label class="col-xl-12 col-md-12 px-0 font-weight-bold">Filter By</label>
+                <select class="custom-select col-md-12" formControlName="className" (change)="selectClass($event)">
+                    <option value="" hidden>--Select--</option>
+                    <option *ngFor="let classData of classList" [value]="classData.class_code">{{classData.class_name}}</option>
+                </select>
+            </div>
+            <div class="form-group col-4">
+                <label class="col-xl-12 col-md-12 px-0 font-weight-bold">From Date</label>
+                <div class="col-xl-12 col-md-12 form-group px-1">
+                    <div class="input-group">
+                        <input class="form-control" name="fromdate" placeholder="mm/dd/yyyy" [options]="myDpOptions"
+                               formControlName="fromDate" angular-mydatepicker #dp="angular-mydatepicker" (dateChanged)="onDateChanged1($event, '1')">
+                        <div class="input-group-append">
+                            <button type="button" class="btn btn-primary" (click)="dp.toggleCalendar()">
+                                <i class="fa fa-calendar-o"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group col-4">
+                <label class="col-xl-12 col-md-12 px-0 font-weight-bold">To Date</label>
+                <div class="col-xl-12 col-md-12 form-group px-1">
+                    <div class="input-group">
+                        <input class="form-control" name="todate" placeholder="mm/dd/yyyy"
+                               formControlName="toDate" angular-mydatepicker #dp1="angular-mydatepicker" [options]="myDpOptions1" (dateChanged)="onDateChanged1($event, '2')"/>
+                        <div class="input-group-append">
+                            <button type="button" class="btn btn-primary" (click)="dp1.toggleCalendar()">
+                                <i class="fa fa-calendar-o"></i>
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+    <div class="row d-flex justify-content-center list-card mt-5" *ngIf="reportList.length == 0">
+        <div class="col-4">
+            <button class="nodataList">No Data Available!</button>
+        </div>
+    </div>
+    <div *ngIf="reportList.length != 0">
+        <div ngbAccordion *ngFor="let classData of reportList; let classIndex = index; let first = first" class="grade mb-2">
+            <div ngbAccordionItem="{{classIndex}}" #accordion="ngbAccordionItem" [collapsed]="!first">
+                <h2 ngbAccordionHeader>
+                    <button class="btn btn-link d-flex align-items-center justify-content-between p-2 w-100"
+                            ngbAccordionToggle>
+                        <h4 class="m-0">{{classData.class_name}} </h4>
+                        <div class="d-flex align-items-center justify-content-between">
+                            <h4 class="mb-0 mr-5">Avg% = {{classData.class_percentage}}</h4>
+                            <i *ngIf="accordion.collapsed; else uparrow" aria-hidden="true" class="fa fa-caret-down"></i>
+                        </div>
+                        <ng-template #uparrow><i aria-hidden="true" class="fa fa-caret-up"></i></ng-template>
+                    </button>
+                </h2>
+                <div ngbAccordionCollapse>
+                    <div ngbAccordionBody>
+                        <ng-template>
+                            <div ngbAccordion *ngFor="let student of classData.student_list; let studentIndex = index; let first = first" class="subject mb-2">
+                                <div ngbAccordionItem="{{studentIndex}}" #studentAccordion="ngbAccordionItem" [collapsed]="!first">
+                                    <h2 ngbAccordionHeader>
+                                        <button class="btn btn-link d-flex align-items-center justify-content-between p-2 w-100"
+                                                ngbAccordionToggle>
+                                            <h4 class="m-0">{{student?.student_name}} </h4>
+                                            <div class="d-flex align-items-center justify-content-between">
+                                                <i *ngIf="studentAccordion.collapsed; else uparrow" aria-hidden="true" class="fa fa-caret-down"></i>
+                                            </div>
+                                            <ng-template #uparrow><i aria-hidden="true" class="fa fa-caret-up"></i></ng-template>
+                                        </button>
+                                    </h2>
+                                    <div ngbAccordionCollapse>
+                                        <div ngbAccordionBody>
+                                            <ng-template>
+                                                <div ngbAccordion class="content mb-2">
+                                                    <div ngbAccordionItem="{{studentIndex}} + 'assessment'" #assessmentAccordion="ngbAccordionItem" [collapsed]="true">
+                                                        <h2 ngbAccordionHeader>
+                                                            <button class="btn btn-link d-flex align-items-center justify-content-between p-2 w-100"
+                                                                    ngbAccordionToggle>
+                                                                <h4 class="m-0">ASSESSMENT</h4>
+                                                                <div class="d-flex align-items-center justify-content-between">
+                                                                    <h4 class="mb-0 mr-5">Avg% = {{student.assessment_percentage}}</h4>
+                                                                    <i *ngIf="assessmentAccordion.collapsed; else uparrow" aria-hidden="true" class="fa fa-caret-down"></i>
+                                                                </div>
+                                                                <ng-template #uparrow><i aria-hidden="true" class="fa fa-caret-up"></i></ng-template>
+                                                            </button>
+                                                        </h2>
+                                                        <div ngbAccordionCollapse>
+                                                            <div ngbAccordionBody>
+                                                                <ng-template>
+                                                                    <app-table [TableType]="'Assessment'" [TableArray]="student.assessment" (clickValue)="studentCorrectionDetail($event)"></app-table>
+                                                                </ng-template>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div ngbAccordion class="content">
+                                                    <div ngbAccordionItem="{{studentIndex}} + 'assignment'" #assignmentAccordion="ngbAccordionItem" [collapsed]="true">
+                                                        <h2 ngbAccordionHeader>
+                                                            <button class="btn btn-link d-flex align-items-center justify-content-between p-2 w-100"
+                                                                    ngbAccordionToggle>
+                                                                <h4 class="m-0">ASSIGNMENT</h4>
+                                                                <div class="d-flex align-items-center justify-content-between">
+                                                                    <h4 class="mb-0 mr-5">Avg% = {{student.assignment_percentage}}</h4>
+                                                                    <i *ngIf="assignmentAccordion.collapsed; else uparrow" aria-hidden="true" class="fa fa-caret-down"></i>
+                                                                </div>
+                                                                <ng-template #uparrow><i aria-hidden="true" class="fa fa-caret-up"></i></ng-template>
+                                                            </button>
+                                                        </h2>
+                                                        <div ngbAccordionCollapse>
+                                                            <div ngbAccordionBody>
+                                                                <ng-template>
+                                                                    <app-table [TableType]="'Assignment'" [TableArray]="student.assignment" (clickValue)="studentCorrectionDetail($event)" ></app-table>
+                                                                </ng-template>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </ng-template>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </ng-template>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div *ngIf="schoolStatus.length == 0">
+    <app-emptyschool>
+    </app-emptyschool>
+</div>
+
+<ng-template #content let-c="close" let-d="dismiss">
+    <div class="modal-header">
+        <h4 class="modal-title col-12 text-center"><b>{{type == 1 ? 'Assessment' : 'Assignment'}} List</b></h4>
+    </div>
+    <div class="modal-body">
+        <!-- Container-fluid starts-->
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-sm-12" *ngIf="viewData != ''">
+                    <div class="d-flex text-center mt-3" *ngFor="let classData of viewData; let i = index">
+                        <label class="ml-3">{{i + 1}}.</label>
+                        <label class="ml-3">ContentName : {{classData.content_name}}</label>
+                        <label class="ml-3">Percentage : {{classData.percentage}}</label>
+                    </div>
+                </div>
+                <div class="col-sm-12" *ngIf="viewData == ''">
+                    <button class="nodataList w-50 ml-5">No List Available!</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-primary" (click)="close()">Ok</button>
+    </div>
+</ng-template>
+
+<ng-template #viewStudentDetails let-c="close" let-d="dismiss">
+    <div class="modal-header align-items-center">
+        <h4 class="modal-title font-weight-bold">Correction Details</h4>
+        <i class="fa fa-close cursor" (click)="onSave()"></i>
+    </div>
+    <div class="modal-body">
+        <app-answer-sheet [answerShow]="true" [contentId]="contentId" [contentFormat]="contentFormat" [is_test]="is_test"
+                          [classId]="classId" [studentReportId]="studentId" [backStatus]="false" [studentContentId]="studentContentId" ></app-answer-sheet>
+    </div>
+</ng-template>

@@ -1,0 +1,44 @@
+.upload-count {
+  padding: 4px 6px;
+  margin-left: -8px;
+  font-size: 12px;
+  color: #fff;
+  font-weight: 400;
+  border-radius: 50%;
+  position: relative;
+  top: -12px !important;
+  background: #8F008A;
+}
+
+.makUpClass_text {
+  color: #808080;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.eye-container {
+  position: relative;
+  display: inline-block;
+  padding: 10px 20px;
+  border: 2px solid #d4a0f0;
+  border-radius: 10px;
+  text-align: center;
+  box-shadow: 0 0 5px rgba(212, 160, 240, 0.5);
+}
+
+.eye-container::before {
+  content: "";
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-bottom: 10px solid #d4a0f0;
+}
+
+input:disabled {
+  cursor: default !important;
+}

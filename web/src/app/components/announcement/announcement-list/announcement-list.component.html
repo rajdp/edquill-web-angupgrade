@@ -1,0 +1,143 @@
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-header">
+            <div class="row">
+                <div class="col-12 d-flex align-items-center justify-content-between">
+                    <h5>Announcement Details</h5>
+                    <button class="btn btn-outline-primary" *ngIf="selectedClass.length != 0" (click)="announcementType()"><i class="fa fa-plus" aria-hidden="true"></i> Add Annonncement</button>
+                </div>
+            </div>
+        </div>
+        <div class="card-body my-3">
+            <div class="row">
+                <div class="col-12">
+                    <label class="font-weight-bold">Class List</label>
+                    <ng-select [items]="classListData"
+                               bindLabel="class_name"
+                               bindValue="class_id"
+                               placeholder="Select Class"
+                               typeToSearchText=""
+                               [(ngModel)]="classPatch"
+                               (change)="getclassAnnouncementList($event)"
+                                multiple="true"></ng-select>
+                </div>
+            </div>
+            <div class="col-12 my-4" *ngIf="announcementPage == 'Add'">
+                <ng-container *ngTemplateOutlet="editorAnnouncement; context: { $implicit: {type: announcementPage , data: ''}}">
+                </ng-container>
+            </div>
+            <div class="col-12 my-4" *ngFor="let classSeparation of updatedAnnouncementList;">
+                <div class="card announcement-page">
+                    <div class="card-header">
+                        <div class="row">
+                            <div class="col-12 d-flex align-itmes-center justify-content-between">
+                                <h4 class="m-0">{{classSeparation.class_name}}</h4>
+                                <i class="fa fa-plus fa-1x title cursor pr-3" aria-hidden="true" (click)="announcementEdit(classSeparation, 'Add')"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-12 my-4" *ngIf="classSeparation.class_id == announcementPage">
+                                <ng-container *ngTemplateOutlet="editorAnnouncement; context: { $implicit: {type: 'Add' , data: classSeparation}}">
+                                </ng-container>
+                            </div>
+                        </div>
+                        <div class="row d-flex align-items-center justify-content-center" *ngIf="classSeparation.announcement_data.length == 0">
+                            <div class="col-10 mt-2 card class-card1 w-99">
+                                <p class="m-0 text-center p-3">No Announcement Found!</p>
+                            </div>
+                        </div>
+                        <div class="row" *ngIf="classSeparation.announcement_data.length != 0">
+                            <div class="col-12 my-2" *ngFor="let announcement of classSeparation.announcement_data; let announcementIndex = index">
+                                <div class="row">
+                                    <div class="col-12 my-4" *ngIf="announcement.id == announcementPage">
+                                        <ng-container *ngTemplateOutlet="editorAnnouncement; context: { $implicit: {type: 'Edit' , data: announcement, index: announcementIndex}}">
+                                        </ng-container>
+                                    </div>
+                                </div>
+                                <div class="col-12 mt-2 card class-card1 w-99">
+                                    <div class="row pt-2" *ngIf="announcement.add_date != '00-00-0000'">
+                                        <div class="col-9" style="word-wrap: break-word;">
+                                            <h5 [ngClass]="auth.getUserId() == announcement.user_id ? 'letter-primary': 'letter-info'" [innerHTML]="announcement.note"></h5>
+                                            <p class="pb-2 text-dark"><small  *ngIf="announcement.created_by != '' && announcement.add_date != ''">By: <strong> {{announcement.created_by}}</strong> - <small>{{announcement.add_date | date:'medium'}}</small><br></small></p>
+                                        </div>
+                                        <div *ngIf="(auth.getRoleId() == '4' && auth.getUserId() == announcement.user_id) ||
+                                                auth.getRoleId() == '2'" class="col-3 d-flex align-items-center justify-content-end">
+                                            <i class="fa fa-pencil fa-size text-primary cursor mr-2" aria-hidden="true" title="Edit Announcement" (click)="announcementEdit(announcement, 'Edit')"></i>
+                                            <i class="fa fa-trash fa-size text-danger cursor" aria-hidden="true" title="Delete Announcement" (click)="confirmItBeforeDeleteing(announcement)"></i>
+                                        </div>
+                                        <div class="col-12 mb-2">
+                                            <div class="input-group" *ngIf="classSeparation.announcement_type == '3'">
+                                                <input type="text" class="form-control" placeholder="Comment" [(ngModel)]="announcement.comment" (keyup.enter)="announcementCommentDetails(announcement)">
+                                                <div class="input-group-append">
+                                                  <button class="btn btn-info d-flex align-items-center" type="submit" (click)="announcementCommentDetails(announcement)"><span class="send-icon"><span class="send-icon-content"><img src="assets/images/send.png" alt=""></span></span></button>
+                                                </div>
+                                            </div>
+                                            <p><small class="text-primary cursor" *ngIf="announcement.comment_count != 0" (click)="announcement.id == announcementSend ? announcementSend = '' : announcementView(announcement)">
+                                                {{announcement.comment_count}} Comment<span *ngIf="announcement.comment_count > 1">s</span></small>
+                                                <small class="text-dark" *ngIf="announcement.comment_count == 0 && classSeparation.announcement_type == '3'">No Comment Available</small></p>
+                                        </div>
+                                        <div class="col-12" *ngIf="announcement.id == announcementSend">
+                                            <div class="col-12 p-2 mb-3 bg-light text-dark rounded shadow-sm" *ngFor="let data of announcementCommentData">
+                                                <div class="row">
+                                                    <div class="col-12">
+                                                        <p [ngClass]="auth.getUserId() == data.user_id ? 'letter f-16': 'text-primary f-16'">{{data.comment}}</p>
+                                                        <p class="p-0 text-dark"><small>By: <strong>{{data.created_by}}</strong> - {{data.comment_date | date:'medium'}}</small></p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 my-5" *ngIf="selectedClass.length == 0">
+                <div class="row d-flex justify-content-center list-card">
+                    <div class="col-4">
+                        <button class="nodataList">No class is selected</button>
+                    </div>
+            </div>
+        </div>
+    </div>
+</div>
+<ng-template #editorAnnouncement let-row>
+    <div class="row">
+        <div class="col-12 d-flex align-items-center justify-content-between my-3">
+            <h4 class="m-0">{{row.type}} Announcement <span *ngIf="row.type == 'Edit'">{{row.index + 1}}</span></h4>
+        </div>
+        <div class="col-12 my-3">
+            <app-tiny-mice (emitEditorValue)="getEditorValue($event)"
+                [editorPatchValue]="row.type == 'Edit' ? addAnnouncement : false"
+                [height]="300"
+                [id]="announcementPage == 'Add' ? 'addAnnouncement' : 'EditAnnouncement' + row.index"
+                [showDropBtn]="false"
+                [showInputBtn]="false">  
+            </app-tiny-mice>
+        </div>
+        <div class="col-12 text-right my-3">
+            <button type="button" (click)="onClose()" class="btn btn-outline-primary mr-2">Cancel</button>
+            <button type="button" (click)="announcementDetails(row.data, row.type)" class="btn btn-primary">Save</button>
+        </div>
+    </div>
+</ng-template>
+
+<ng-template #deleteAnnouncement let-c="close" let-d="dismiss">
+    <div class="modal-header align-items-center">
+        <h4 class="modal-title text-center">Delete Announcement</h4>
+        <i class="fa fa-close cursor" (click)="modalRef.close()"></i>
+    </div>
+    <div class="modal-body">
+        <div class="col-md-12">
+            <h5 class="font-weight-bold">Are you sure to delete the Announcement ?</h5>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button class="btn cancel" type="button" (click)="modalRef.close()">Close</button>
+        <button class="btn btn-danger" type="button" (click)="announcementDetails(deleteData, 'delete')">Ok
+        </button>
+    </div>
+</ng-template>

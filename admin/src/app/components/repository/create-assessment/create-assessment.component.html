@@ -1,0 +1,1463 @@
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12" style="font-weight: bolder">
+            <h3 *ngIf="uploadType == 'assessment' && assessmentType == 'add'">CREATE ASSESSMENT</h3>
+            <h3 *ngIf="uploadType == 'assessment' && assessmentType == 'edit'">EDIT ASSESSMENT</h3>
+            <h3 *ngIf="uploadType == 'assignment' && assessmentType == 'add'">CREATE ASSIGNMENT</h3>
+            <h3 *ngIf="uploadType == 'assignment' && assessmentType == 'edit'">EDIT ASSIGNMENT</h3>
+        </div>
+    </div>
+    <div class="row">
+        <div class="pdf-nav col-8">
+            <button type="button" [ngClass]="{'active1': type == 'Description'}" class="btn btn-outline-primary pull-left" aria-pressed="true" (click)="classList(1)" >Description</button>
+            <button (click)="classList(2)" [ngClass]="{'active1': type == 'Workspace', 'div-disable': (!functionCalled && assessmentType != 'edit')}"  class="btn btn-outline-primary pull-left">Workspace</button>
+            <button (click)="classList(3)" [ngClass]="{'active1': type == 'Preview', 'div-disable': (!functionCalled && assessmentType != 'edit')}" class="btn btn-outline-primary pull-left" >Preview</button>
+        </div>
+
+        <div class="pdf-assign-btn col-4" *ngIf="type == 'Workspace' || type == 'Preview'">
+            <button class="btn btn-primary pull-right ml-3" *ngIf="assessmentType == 'add' && draftAdd == 'update'" (click)="assign('edit')">Publish</button>
+            <button (click)="assign('edit')" *ngIf="assessmentType == 'add' && draftAdd == 'publish'" class="btn btn-primary pull-right ml-3">Publish</button>
+            <button class="btn btn-primary pull-right ml-3" *ngIf="assessmentType == 'edit' && draftAdd == 'publish'" (click)="assign('edit')">Publish</button>
+            <button class="btn btn-primary pull-right ml-3" title="Publish" *ngIf="assessmentType == 'edit' && draftAdd == 'update'" (click)="assign('edit')">Update</button>
+            <img class="pull-right ml-3" title="Draft" src="assets/images/pdf-icons/floppy-disk.png" *ngIf="assessmentType == 'add'" (click)="draft('edit')" alt="">
+            <img class="pull-right ml-3" title="Draft" src="assets/images/pdf-icons/floppy-disk.png" *ngIf="assessmentType == 'edit'" (click)="draft('edit')" alt="">
+        </div>
+    </div>
+    <div class="row mt-2">
+        <div class="col-sm-12">
+            <div class="card tab2-card">
+                <div class="card-body tab2-card" *ngIf="type == 'Description'">
+                    <form [formGroup]="multiform">
+                        <div class="col-md-12 d-flex mb-4">
+                            <div class="col-sm-12 col-md-4 px-0">
+                                <div class="image-container-left">
+                                    <img *ngIf="!imagepath && uploadType == 'assessment'" src="assets/images/ristaschool/assessment.png" class="w-100" alt="">
+                                    <img *ngIf="!imagepath && uploadType == 'assignment'" src="assets/images/ristaschool/assignment.png" class="w-100" alt="">
+                                    <img  *ngIf="imagepath" class="w-100" [src]="sanitized.bypassSecurityTrustResourceUrl(webhost + '/' + imagepath)" alt="">
+                                    <i *ngIf="imagepath" class="fa fa-times close-button" title="close" (click)="deleteImg()" ></i>
+                                    <div class="profileUrl">
+                                        <input style="display: none" type="file" class="custom-upload-input" (change)="encodeImageFileAsURL($event)" #addAssignment accept=".png, .jpeg, .jpg">
+                                        <button type="button" class="btn btn-light btn-circle border-rista" title="upload Image" (click)="addAssignment.click()"> <i class="fa fa-upload fa-2x mb-3" aria-hidden="true"></i> </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-12 col-md-8">
+                                <div>
+                                    <h6><b>Created By</b></h6>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4 form-group">
+                                        <input readonly class="form-control" formControlName="tname" type="text" placeholder="Teacher Name">
+                                    </div>
+                                    <div class="col-md-8 form-group" *ngIf="this.uploadType == 'assignment'">
+                                        <input class="form-control" id="validationCustom1" formControlName="classname" type="text" placeholder="Assignment Name *" required="">
+                                        <em class="error" *ngIf="!multiform.get('classname').valid && (multiform.get('classname').dirty || multiform.get('classname').touched)">Assignment Name is required</em>
+                                    </div>
+                                    <div class="col-md-8 form-group" *ngIf="this.uploadType == 'assessment'">
+                                        <input class="form-control" id="validationCustom2" formControlName="classname" type="text" placeholder="Assessment Name *" required="">
+                                        <em class="error" *ngIf="!multiform.get('classname').valid && (multiform.get('classname').dirty || multiform.get('classname').touched)">Assessment Name is required</em>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-4 form-group">
+                                        <ng-select [items]="gradeData"
+                                                   bindLabel="grade_name"
+                                                   bindValue="grade_id"
+                                                   formControlName="grade"
+                                                   placeholder="Select Grade *"
+                                                   typeToSearchText=""
+                                                   multiple="true"
+                                        >
+                                        </ng-select>
+                                        <em class="error" *ngIf="!multiform.get('grade').valid && (multiform.get('grade').dirty || multiform.get('grade').touched)">Grade is required</em>
+                                    </div>
+                                    <div class="col-md-4 form-group">
+                                        <ng-select
+                                                [items]="subjectData"
+                                                bindLabel="subject_name"
+                                                bindValue="subject_id"
+                                                formControlName="subject"
+                                                placeholder="Select Subject *"
+                                                typeToSearchText=""
+                                                multiple="true"
+                                                clearable="false"
+                                        >
+                                        </ng-select>
+                                        <em class="error" *ngIf="!multiform.get('subject').valid && (multiform.get('subject').dirty || multiform.get('subject').touched)">Subject is required</em>
+                                    </div>
+                                    <div class="col-md-4 form-group">
+                                        <select class="form-control" formControlName="option">
+                                            <option value="1">Private (Within Institution)</option>
+                                            <option value="2">Private (Only You)</option>
+                                            <option *ngIf="roleid == '6'" value="4">Private (Within Corporate)</option>
+                                            <!-- <option value="3">Public</option> -->
+                                        </select>
+                                        <em class="error" *ngIf="!multiform.get('option').valid && (multiform.get('option').dirty || multiform.get('option').touched)">Class Name is required</em>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="form-group col-md-12">
+                                        <textarea name="" id="" placeholder="Enter Description" formControlName="description" style="width: 100%; height: 100px; padding: 4px"></textarea>
+                                    </div>
+                                    <div class="col-md-6 form-group align-self-center mt-2">
+                                        <div class="col-12" style="position: relative; font-size: 15px; left: 0.4rem">
+                                            <input type="checkbox" class="form-check-input cursor" id="download" formControlName="downloadContent"><label for="download">Download Content</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 form-group">
+                                        <tag-input
+                                                formControlName="tag"
+                                                [secondaryPlaceholder]="'Enter tags'"
+                                                [placeholder]="'Add tags'"
+                                                [editable]='true'
+                                                [clearOnBlur]="true"
+                                                [addOnPaste]="true"
+                                                [addOnBlur]="true"
+                                                theme='bootstrap'
+                                        ></tag-input>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-12 form-group">
+                                        <tag-input formControlName="resourcesLink"
+                                                   [secondaryPlaceholder]="'Enter Resources link'"
+                                                   [placeholder]="'Add Resources'"
+                                                   [editable]='true'
+                                                   [clearOnBlur]="true"
+                                                   [addOnPaste]="true"
+                                                   [addOnBlur]="true"
+                                                   theme='bootstrap'>
+                                        </tag-input>
+                                    </div>
+                                    <div class="col-md-12 mt-5" *ngIf="type == 'Description'">
+                                        <button class="btn btn-primary pull-right" style="margin-bottom: 5px" (click)="description()">Next <i class="fa fa-long-arrow-right fa-1x" aria-hidden="true"></i></button>
+                                        <input accept=".pdf" style="display: none" type="file"  #attachments1 (change)="encodePdfFileAsURL($event, 2)" #hiddenfileinput1>
+                                        <button class="btn btn-primary pull-right mr-3" type="file" aria-describedby="inputGroupFileAddon11"
+                                                (click)="hiddenfileinput1.click()"><i class="fa fa-upload"></i> Answer Key Upload</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="col-md-12 mt-5">
+                            <div class="row">
+                                <div class="col-md-4 d-flex justify-content-center" *ngIf="assessmentType == 'edit'">
+                                    <div class="form-group card-resource ml-4" *ngFor="let file of showpdf; let i= index">
+                                        <h4 *ngIf="uploadType == 'assignment' && assessmentType == 'edit'" style="color: black; font-weight: bold">ASSIGNMENT</h4>
+                                        <h4 *ngIf="uploadType == 'assessment' && assessmentType == 'edit'" style="color: black; font-weight: bold">ASSESSMENT</h4>
+                                        <div class="delete-icon w-100">
+                                            <img *ngIf="uploadType == 'assignment'" class="img-path" src="assets/images/ristaschool/option-writing-checkbox-concepts-survey.png" title="{{file.name}}" (click)="viewDetail(file)" alt="" >
+                                            <img *ngIf="uploadType == 'assessment'" class="img-path" src="assets/images/ristaschool/assessment.png" title="{{file.name}}" (click)="viewDetail(file)" alt="" >
+                                            <br/>
+                                            <h6 class="mt-2 classresource">{{file.image}}</h6>
+                                        </div>
+                                        <div class="row mt-5">
+                                            <div class="col-md-6">
+                                                <button class="btn btn-primary col-md-12" (click)="pdfUpload()" ><i class="fa fa-upload"></i> Upload</button>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <button class="btn btn-outline-primary col-md-12" (click)="viewDetail(file)" >Preview</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 d-flex justify-content-center" *ngIf="answerpdfpath != ''">
+                                    <div class="form-group card-resource" *ngFor="let file of answerpdfpath; let i= index">
+                                        <h4 style="color: black; font-weight: bold">Answer PDF</h4>
+                                        <div class="delete-icon w-100" *ngIf="answerpdfpath.length > 0">
+                                            <img class="cursor img-path" src="assets/images/ristaschool/answerkey.jpg" title="{{file.image}}" (click)="viewDetail(file)" alt="">
+                                            <br/>
+                                            <img *ngIf="answerpdfpath != ''" class="img-icon mt-2 float-right" (click)="deletePdf()" src="assets/images/pdf-icons/Icon material-delete@2x.png"  alt="">
+                                            <h6 class="mt-2 cursor classresource">{{file.image}}</h6>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div [hidden]="type == 'Description'" class="col-md-12">
+        <div [hidden]="type != 'Workspace'" class="row mt-1">
+            <div class="col-md-8 d-flex mb-2 px-0">
+                <div class="pdf-assign-btn pdf-tools col-md-4">
+                    <!--<img src="assets/images/pdf-icons/thumbnails@2x.png" alt="">-->
+                    <img src="assets/images/pdf-icons/add-circle.png" style="cursor: pointer" title="Zoom-in" (click)="incrementZoom(0.1)" alt="">
+                    <img src="assets/images/pdf-icons/minus-circle.png"  style="cursor: pointer" title="Zoom-out" (click)="incrementZoom(-0.1)" alt="">
+                    <img src="assets/images/pdf-icons/Icon material-delete-1.png" [ngClass]="selectedDeleteIcon ? 'deleteIcon': ''"  (click)="selectedDeleteIcon = !selectedDeleteIcon" title="Delete" style="cursor: pointer" (click)="deleteSvg()"  alt="">
+                    <!--                    <img src="assets/images/pdf-icons/Icon material-delete.png" title="Delete-All" style="cursor: pointer" (click)="deleteAction()"  alt="">-->
+                    <!--<img src="assets/images/pdf-icons/redo.png" alt="">-->
+                </div>
+                <div class="pdf-assign-btn pdf-tools col-md-8 pr-2 px-0">
+                    <input class="pull-right" title="Color" (click)="backToQuestion()" style="margin-top: 6px" type="color" [(ngModel)]="svgColor"  name="favcolor">
+                    <!--                    <img class="pull-right" src="assets/images/pdf-icons/maximize.png" alt="">-->
+                    <!--                    <img class="pull-right" src="assets/images/pdf-icons/square.png" alt="">-->
+                    <img class="pull-right" title="Sketch" (click)="backToQuestion()" [ngClass]="shapesType == 'path'? 'selected-tool-color': ''"  src="assets/images/pdf-icons/Icon awesome-pencil-alt.png" (click)="tools('path', 'crosshair')" alt="">
+                    <img class="pull-right" (click)="backToQuestion()" [ngClass]="shapesType == 'highlight'? 'selected-tool-color': ''" title="Highlighter" (click)=" tools('highlight', 'crosshair')" src="assets/images/pdf-icons/highlighter-icon.png" alt="">
+                    <!--<img class="pull-right" title="Highlighter" (click)="getSelectionHtml(); tools('highlight')" src="assets/images/pdf-icons/highlighter-icon.png" alt="">-->
+
+                    <img class="pull-right" (click)="backToQuestion()" title="Text" [ngClass]="shapesType == 'text'? 'selected-tool-color': ''"  (click)=" tools('text', 'auto')"  src="assets/images/pdf-icons/Text.png" alt="">
+
+                    <!--                    <img class="pull-right" title="Strike" (click)=" tools('strike', 'auto')"  src="assets/images/pdf-icons/surface1.png" alt="">-->
+                    <!--<img class="pull-right" title="Strike" (click)="textStrike(); tools('strike')"  src="assets/images/pdf-icons/surface1.png" alt="">-->
+                    <!--                    <img class="pull-right" src="assets/images/pdf-icons/Group 15717.png" alt="">-->
+                    <img (click)="backToQuestion()" class="pull-right" title="Erase" [ngClass]="shapesType == 'rectMask'? 'selected-tool-color': ''"  (click)="tools('rectMask', 'crosshair')" src="assets/images/pdf-icons/eraser@2x.png" alt="">
+                    <!--                    <img class="pull-right" [ngClass]="selectedTool == 'pointer'? 'selected-tool-color': ''"  (click)="tools('pointer')"  src="assets/images/pdf-icons/cursor (2).png" alt="">-->
+                    <!--<img class="pull-right" title="Line" [ngClass]="shapesType == 'line'? 'selected-tool-color': ''"  src="assets/images/pdf-icons/diagonal-line.png" (click)="tools('line', 'auto')" alt="">-->
+                    <!--<img class="pull-right" title="Circle" [ngClass]="shapesType == 'circle'? 'selected-tool-color': ''"   src="assets/images/pdf-icons/Icon feather-circl.png" (click)="tools('circle', 'auto')" alt="">-->
+                    <img class="pull-right" (click)="backToQuestion()" title="Extract" [ngClass]="shapesType == 'rect'? 'selected-tool-color': ''" src="assets/images/pdf-icons/stop.png" (click)="tools('rect', 'crosshair')" alt="">
+                    <img class="pull-right" (click)="backToQuestion()" title="Mark" [ngClass]="shapesType == 'select' ? 'selected-tool-color': ''" src="assets/images/pdf-icons/cursor (2).png" (click)="tools('select', 'auto')" alt="">
+                    <select class="form-control pull-right mr-3" style="width: 80px" title="Font size" [(ngModel)]="textFontSize">
+                        <option value="" selected disabled>--Font Size--</option>
+                        <option value="6">6</option>
+                        <option value="7">7</option>
+                        <option value="8">8</option>
+                        <option value="9">9</option>
+                        <option value="10">10</option>
+                        <option value="11">11</option>
+                        <option value="12">12</option>
+                        <option value="13">13</option>
+                        <option value="14">14</option>
+                        <option value="15">15</option>
+                        <option value="16">16</option>
+                        <option value="17">17</option>
+                        <option value="18">18</option>
+                        <option value="19">19</option>
+                        <option value="20">20</option>
+                    </select>
+
+
+
+                </div>
+            </div>
+            <div class="col-md-4 pr-2">
+                <div *ngIf="type == 'Workspace'" class="d-flex justify-content-between pr-4"  style="flex-wrap: wrap">
+                    <div *ngFor="let item of icons" class="row question-type">
+                        <img (click)="question(item.question_type_id)" [attr.data-target]="'#log' + item.question_type_id" [src]="sanitized.bypassSecurityTrustResourceUrl(webhost + '/' + item.icon_path)" alt=""
+                             class="card-img img-thumbnail" data-toggle="modal"
+                             title="{{item.question_type}}">
+                    </div>
+                    <div class="row question-type">
+                        <img  (click)="question('40')" [attr.data-target]="'#log40'" alt="" data-toggle="modal"
+                              class="card-img img-thumbnail"
+                              src="assets/images/pdf-icons/graph_2x.png" title="Graph Question">
+                    </div>
+                    <div class="row question-type">
+                        <img  class="card-img img-thumbnail" title="Add section"
+                              src="assets/images/pdf-icons/add-section.png"
+                              alt="" (click)="addSec()">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-8" id="pdf-page" #pdfPage
+                 (click)="mouseEvent($event)"
+                 (mousemove)="mouseEvent($event)"
+                 (mousedown)="mouseEvent($event)"
+                 (mouseup)="mouseEvent($event)">
+                <div id="custom-pdf-loader" *ngIf="customPdfLoader" style="height: 100vh;">
+                    <img src="assets/images/pre-loader/loader-01.svg" alt="">
+                </div>
+                <pdf-viewer  [src]="pdfTemplate" [zoom]="zoom"
+                             [original-size]="true"
+                             [fit-to-page]="true"
+                             [render-text]="this.shapesType == 'select'"
+                             (text-layer-rendered)="textRender($event)"
+                             (after-load-complete)="callBackFn($event)"
+                             (error)="onerror($event)"
+                             [show-all]="true" (pagechanging)="pagechanging($event)"
+                             [(page)]="pageVariable" (page-rendered)="pageRendered($event)" style="display: block"></pdf-viewer>
+            </div>
+            <div class="col-md-4">
+                <div class="row">
+                    <div class="col-md-12">
+                        <button (click)="backToQuestion()" *ngIf="deleteAnnatation" class="btn btn-primary w-100 mb-3" type="button">Back</button>
+                    </div>
+                    <ng-container *ngIf="deleteAnnatation">
+                        <app-remove-annatation [items]="itemSelect"
+                                               (undoDeleteAnnatation)="undoDeleteAnnatation($event)"
+                                               (hoverremoveItem)="hoverRemoveItemEnter($event)"
+                                               (hoverleaveremoveItem)="hoverLeaveRemoveItemEnter($event)"
+                                               (removeItem)="removeAnnatation($event)"
+                                               (openDeleteDialog)="deleteAction()"
+                                               class="scrollPanel"></app-remove-annatation>
+                    </ng-container>
+                    <ng-container [hidden]="deleteAnnatation">
+                        <div class="row mt-1 scrollPanel1">
+                            <div *ngFor="let item of totalsub; let i = index" class="col-md-12">
+                                <div class="form-group col-md-12 py-3 px-0">
+                                    <div class="col-md-12 d-flex justify-content-between px-0">
+                                        <div class="col-md-{{type == 'Preview' ? 12 : 11}} {{type == 'Preview' ? 'px-0' : 'pl-0'}}">
+                                            <input (input)="validation(i, secHeadingArray[i])" [(ngModel)]="secHeadingArray[i]" [ngClass]="{'div-disable': type == 'Preview'}" [placeholder]="type != 'Preview' ? 'Enter section heading...' : ''"
+                                                   class="input-custom-modal" id="section{{i}}" type="text">
+                                        </div>
+                                        <div [hidden]="type == 'Preview'" class="col-md-1 px-0">
+                                            <div class="pull-right delete-border">
+                                                <img (click)="deleteSection(i)" alt="" src="assets/images/pdf-icons/delete2.png" title="Delete section">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <em class="error mt-2" hidden id="subHeading{{i}}">Section heading should not be same</em>
+                                    <em class="error mt-2" hidden id="headingNull{{i}}">Section heading should not be empty</em>
+                                </div>
+                                <div *ngFor="let list of item.section; let j = index" class="col-md-12 card mx-0 px-4">
+                                    <div *ngIf="showdropdown" class="card-header ant-card-small">
+                                        <div class="row">
+                                            <div class="col-md-2 px-0">
+                                    <span class="pull-left question-no col-md-10 mr-2"  id="{{list.sub + 'dropId'}}"
+                                          *ngIf="type != 'Preview'"
+                                          style="cursor: all-scroll"
+                                          (dropped)="onDrop($event)"
+                                          (mousedown)="dragQueCount($event)"
+                                          (mousemove)="dragQueCount($event)"
+                                          (mouseup)="dragQueCount($event)" cdkDrag>{{list.sub}}</span>
+                                                <span *ngIf="type == 'Preview'" class="pull-left question-no col-md-10 mr-2">{{list.sub}}</span>
+                                            </div>
+                                            <div class="col-md-6 px-0">
+                                                <img [hidden]="list.autoGrade == '0'" alt="" class="mr-2" src="assets/images/pdf-icons/auto-grade.png" title="auto graded">
+                                                <img [hidden]="list.matchCase == '0'" alt="" class="mr-2 mt-2 border" src="assets/images/pdf-icons/match-case.png" title="match case">
+                                                <img [hidden]="list.typeId != '30'" alt="" class="mr-2" src="assets/images/pdf-icons/math-icon.png" title="math question">
+                                            </div>
+                                            <div [hidden]="type != 'Workspace'" class="col-md-4 px-0">
+                                                <img (click)="deleteAlertView(list.sub, i)" alt="" class="pull-right ml-3 mt-2 cursor" src="assets/images/pdf-icons/Icon material-delete.png" title="Delete">
+                                                <img (click)="editAction(list.quesNo, list.typeId ,subQuestion, totalsub, i, j)" [attr.data-target]="'#log' + list.typeId" alt="" class="pull-right mt-2" data-toggle="modal" src="assets/images/pdf-icons/draw.png" title="Edit">
+                                            </div>
+                                            <!--                                <div *ngIf="(list.question != '' && list.question != null) && (list.typeId != '30' && list.typeId != '40')"  class="col-md-12 mt-3 px-0">-->
+                                            <!--                                    <label>{{list.question}}</label>-->
+                                            <!--                                </div>-->
+                                            <div *ngIf="list.question != ''" class="col-md-12 mt-3 px-0">
+                                                <div class="col-md-12 overflow-auto px-0" style="max-height: 30rem;overflow-y: auto;">
+                                                    <label>Question: </label>
+                                                    <span [innerHTML]="list.question | sanitizeHtml" class="div-disable" id="{{j}}+ 'show'"></span>
+                                                </div>
+                                            </div>
+                                            <div *ngIf="list.typeId == '1'" class="col-md-12 mt-3 mb-2 px-0">
+                                                <span *ngFor="let items of list.array" [ngClass]="{'selectColor' : items === list.answer}" class="multichoice-option" style="line-height: 4">{{items}}</span>
+                                            </div>
+                                            <div *ngIf="list.typeId == '3'" class="col-md-12 mt-3 mb-2 px-0">
+                                                <div class="row">
+                                                    <input [checked]="list.answer == 'true'" class="ml-4" style="pointer-events: none" type="radio"><h4 class="ml-2">True</h4><input [checked]="list.answer == 'false'" class="ml-4" style="pointer-events: none" type="radio"><h4 class="ml-2">False</h4>
+                                                </div>
+                                            </div>
+                                            <div *ngIf="list.typeId == '9'" class="col-md-12 mt-3 mb-2 px-0">
+                                                <select class="form-control">
+                                                    <option *ngFor="let chc of list.array" [selected]="chc.choice == list.answer" disabled>{{chc.choice}}</option>
+                                                </select>
+                                            </div>
+                                            <div *ngIf="list.typeId == '10'" class="col-md-12 mt-3 px-0 mb-2">
+                                                <input [title]="list.answer" [value]="list.answer" class="form-control" readonly type="text">
+                                            </div>
+                                            <div *ngIf="list.typeId == '20'" class="col-md-12 mt-3 px-0 mb-2">
+                                                <label>Essay</label>
+                                                <textarea class="form-control" cols="30" readonly rows="2">Number of lines: {{list.answer}}</textarea>
+                                            </div>
+                                            <div *ngIf="list.typeId == '30'" class="col-md-12 mt-3 px-0 mb-2" style="overflow-y: auto;">
+                                                <div>
+                                                    <label>Answer: </label>
+                                                    <span [innerHTML]="list.answer | sanitizeHtml"></span>
+                                                </div>
+                                            </div>
+                                            <div *ngIf="list.typeId == '40'" class="col-md-12 mt-3 px-0 mb-2">
+                                                <button (click)="graphDetail(list.answer)" class="btn btn-primary">view graph</button>
+                                                <div *ngIf="list.editor != ''" class="col-md-12 mt-3 px-0">
+                                                    <h4 [innerHTML]="list.editor | sanitizeHtml" class="graphEditorDiv"></h4>
+                                                </div>
+                                            </div>
+                                            <div *ngIf="list.typeId == '54'" class="col-md-12 mt-3 px-0 mb-2">
+                                                <div *ngFor="let opt of list.answer">
+                                                    <input [title]="opt.value" [value]="opt.value" class="form-control mb-2" readonly type="text">
+                                                </div>
+                                            </div>
+                                            <div *ngIf="list.explain != ''" class="col-md-12 mt-3 px-0">
+                                                <div class="col-md-12 overflow-auto px-0" style="max-height: 30rem;overflow-y: auto;">
+                                                    <button (click)="openExplanationPopup(list.explain)" class="btn-outline-primary btn-sm">view explanation</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </ng-container>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div *ngIf="multiDialog" cdkDrag class="modal d-block overflow-visible" id="log{{1}}" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-body">
+                <!-- Container-fluid starts-->
+                <div class="container-fluid">
+                    <form [formGroup]="multiform">
+                        <div class="row">
+                            <div class="col-sm-11">
+                                <h5 class="text-center"><b>Multiple Choice</b></h5>
+                            </div>
+                            <div class="col-sm-1">
+                                <i (click)="closeDialog()" class="fa fa-close cursor" data-dismiss="modal"></i>
+                            </div>
+                            <div class="col-sm-12 mt-3">
+                                <div class="row">
+                                    <div class="col-12 d-flex">
+                                        <div (mouseover)="changeSpanTo()" *ngIf="changeInput == false" class="question-no col-md-1">
+                                            <span>{{countList}}</span>
+                                        </div>
+                                        <div (mouseout)="changeInputTo()" *ngIf="changeInput == true" class="col-md-1 px-0">
+                                            <input (keypress)="numberValidate($event)" [(ngModel)]="countList" [value]="countList" class="form-control px-1" formControlName="index" type="text">
+                                        </div>
+                                        <div class="col-md-11 p-0 d-flex justify-content-end">
+                                            <select (change)="changeSection('multichoices', '1')" *ngIf="totalsub.length > 1 && submitType != 'edit'" [selectedIndex]="sectionCount" class="form-control col-md-6" formControlName="head" id="multichoices">
+                                                <option *ngFor="let item of secHeadingArray; let i = index" value="{{i}}">{{item}}</option>
+                                            </select>
+                                            <button (click)="add()" class="btn-sm btn-primary pull-right ml-2" type="button"><i class="fa fa-plus-circle"></i> Sub Question</button>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-12">
+                                        <small *ngIf="quesNoInvalid" class="errormessage">question no already exist</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-12 dropDownScroll">
+                                <div *ngFor="let list of multiform.get('repeatlink')['controls']; let i=index" formArrayName="repeatlink">
+                                    <div [formGroupName]="i" class="mb-1">
+                                        <div class="row">
+                                            <div class="col-12 d-flex justify-content-between mt-2">
+                                                <div [hidden]="this.hide == true" class="sub-question-no col-md-1 mt-0">
+                                                    <span id="subMulti">{{((i+1) + 9).toString(36).toLowerCase()}}</span>
+                                                </div>
+                                                <div [hidden]="this.hide == true" class="col-md-2 px-0">
+                                                    <div (click)="deleteSub(this.multiform.get('repeatlink'), i)" class="pull-right border p-2">
+                                                        <img alt="" src="assets/images/pdf-icons/delete2.png" title="Delete">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row mt-3">
+                                            <div class="col-md-12">
+                                                <app-tiny-mice (emitEditorValue)="getQuestionValue($event, i, multiform.get('repeatlink')['controls'])"
+                                                               [editorPatchValue]= "false"
+                                                               [height]="130"
+                                                               [id]="i+'multiQues'+ransom"
+                                                               [showDropBtn]="false"
+                                                               [showInputBtn]="false">
+                                                </app-tiny-mice>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-10 mt-2">
+                                                <label><b>Options</b></label>
+                                                <input (input)="getOptionVal($event)" (keyup)="createSpace(i, $event)" class="form-control" formControlName="option" type="text">
+                                            </div>
+                                            <div class="col-md-2 mt-2">
+                                                <label><b>Points</b></label>
+                                                <input (keypress)="numberValidate($event)" class="form-control" formControlName="points" style="margin-right: 1rem" type="text">
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-12 mt-2">
+                                                <label class="w-100"><b>Correct answer</b></label>
+                                                <div class="row mb-2">
+                                                    <!--<span *ngFor="let list of multiform['controls'].repeatlink['controls'][i]['controls']['array'].value; let j=index" class="multichoice-option mt-2" (click)="gettingChoiceList($event, i, j);"  [ngClass]="[(list.length > 1)?'multichoice-option1':'multichoice-option', {'selectColor' : multiform['controls'].repeatlink['controls'][i]['controls']['active'].value === j}]">{{list}}</span>-->
+                                                    <span (click)="gettingChoiceList($event, i, j)" *ngFor="let list of multiform['controls'].repeatlink['controls'][i]['controls']['array'].value; let j=index" [ngClass]="{'selectColor' : multiform['controls'].repeatlink['controls'][i]['controls']['active'].value === j}"  class="multichoice-option1">{{list}}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row mt-3">
+                                            <div class="col-md-12">
+                                                <label><b>Explanation</b></label>
+                                            </div>
+                                            <div class="col-md-12">
+                                                <app-tiny-mice (emitEditorValue)="getExplanationValue($event, i, multiform.get('repeatlink')['controls'])"
+                                                               [editorPatchValue]= "false"
+                                                               [height]="130"
+                                                               [id]="i+'explain'"
+                                                               [showDropBtn]="false"
+                                                               [showInputBtn]="false">
+                                                </app-tiny-mice>
+                                            </div>
+                                        </div>
+                                        <div class="row mt-3">
+                                            <div class="col-md-12">
+                                                <input formControlName="autograde" type="checkbox"><label class="ml-2">Autograde</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                    <!-- Container-fluid Ends-->
+                </div>
+                <div class="modal-footer d-flex justify-content-right mt-1" style="border-top: none">
+                    <button (click)="submitMulti('add')" *ngIf="submitType == 'add'" [attr.data-dismiss]="multiform.get('repeatlink').valid == true && !quesNoInvalid ? 'modal' : ''" class="btn btn-primary" type="button">Submit</button>
+                    <button (click)="submitMulti('edit')" *ngIf="submitType == 'edit'" [attr.data-dismiss]="multiform.get('repeatlink').valid == true && !quesNoInvalid ? 'modal' : ''" class="btn btn-primary" type="button">Update</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div *ngIf="trueDialog" cdkDrag class="modal d-block overflow-visible" id="log{{3}}" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-body">
+                <!-- Container-fluid starts-->
+                <div class="container-fluid">
+                    <form [formGroup]="multiform">
+                        <div class="row">
+                            <div class="col-sm-11">
+                                <h5 style="text-align: center"><b>True or False</b></h5>
+                            </div>
+                            <div class="col-sm-1">
+                                <i (click)="closeDialog()" class="fa fa-close cursor" data-dismiss="modal"></i>
+                            </div>
+                            <div class="col-sm-12">
+                                <div class="row mt-2">
+                                    <div class="col-12 d-flex">
+                                        <div (mouseover)="changeSpanTo()" *ngIf="changeInput == false" class="question-no col-md-1">
+                                            <span>{{countList}}</span>
+                                        </div>
+                                        <div (mouseout)="changeInputTo()" *ngIf="changeInput == true" class="col-md-1 px-0">
+                                            <input (keypress)="numberValidate($event)" [(ngModel)]="countList" [value]="countList" class="form-control px-1" formControlName="index" type="text">
+                                        </div>
+                                        <div class="col-md-11 p-0 d-flex justify-content-end">
+                                            <select (change)="changeSection('truefalse', '3')" *ngIf="totalsub.length > 1 && submitType != 'edit'" [selectedIndex]="sectionCount" class="form-control col-md-6" formControlName="head" id="truefalse">
+                                                <option *ngFor="let item of secHeadingArray; let i = index" value="{{i}}">{{item}}</option>
+                                            </select>
+                                            <button (click)="addTrue()" class="btn-sm btn-primary pull-right ml-2"><i class="fa fa-plus-circle"></i> Sub Question</button>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-12">
+                                        <small *ngIf="quesNoInvalid" class="errormessage">question no already exist</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-12 dropDownScroll">
+                                <div *ngFor="let list of multiform.get('repeatchoose')['controls']; let i=index" formArrayName="repeatchoose">
+                                    <div [formGroupName]="i" class="mb-1">
+                                        <div class="row">
+                                            <div class="col-12 d-flex justify-content-between mt-2">
+                                                <div [hidden]="this.hide == true" class="sub-question-no col-md-1 mt-0">
+                                                    <span id="subChoose">{{((i+1) + 9).toString(36).toLowerCase()}}</span>
+                                                </div>
+                                                <div [hidden]="this.hide == true" class="col-md-2 px-0">
+                                                    <div (click)="deleteSub(this.multiform.get('repeatchoose'), i)" class="pull-right border p-2">
+                                                        <img alt="" src="assets/images/pdf-icons/delete2.png" title="Delete">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row mt-3">
+                                            <div class="col-md-12">
+                                                <app-tiny-mice (emitEditorValue)="getQuestionValue($event, i, multiform.get('repeatchoose')['controls'])"
+                                                               [editorPatchValue]= "false"
+                                                               [height]="130"
+                                                               [id]="i+'chooseQues'+ransom"
+                                                               [showDropBtn]="false"
+                                                               [showInputBtn]="false">
+                                                </app-tiny-mice>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-10 mt-2">
+                                                <label><b>Correct Answer</b></label>
+                                                <div class="mt-2 d-flex flex-row">
+                                                    <div class="form-check-inline">
+                                                        <label  class="form-check-label" for="trueOption{{i}}">
+                                                            <input class="form-check-input pl-0" formControlName="optradio" id="trueOption{{i}}" type="radio" value="true">True</label>
+                                                    </div>
+                                                    <div class="form-check-inline">
+                                                        <label  class="form-check-label ml-2" for="falseOption{{i}}">
+                                                            <input class="form-check-input ml-2" formControlName="optradio" id="falseOption{{i}}" type="radio" value="false">False</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-2 mt-2">
+                                                <label><b>Points</b></label>
+                                                <input (keypress)="numberValidate($event)" class="form-control" formControlName="points1" type="text">
+                                            </div>
+                                        </div>
+                                        <div class="row mt-3">
+                                            <div class="col-md-12">
+                                                <label><b>Explanation</b></label>
+                                            </div>
+                                            <div class="col-md-12">
+                                                <app-tiny-mice (emitEditorValue)="getExplanationValue($event, i, multiform.get('repeatchoose')['controls'])"
+                                                               [editorPatchValue]= "false"
+                                                               [height]="130"
+                                                               [id]="i+'explain'"
+                                                               [showDropBtn]="false"
+                                                               [showInputBtn]="false">
+                                                </app-tiny-mice>
+                                            </div>
+                                        </div>
+                                        <div class="row mt-3">
+                                            <div class="col-md-12">
+                                                <input formControlName="autograde" type="checkbox"><label class="ml-2">Autograde</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="modal-footer d-flex justify-content-right mt-2" style="border-top: none">
+                <button (click)="submitchoose('add')" *ngIf="submitType != 'edit'" [attr.data-dismiss]="multiform.get('repeatchoose').valid == true && !quesNoInvalid ? 'modal' : ''" class="btn btn-primary" type="button">Submit</button>
+                <button (click)="submitchoose('edit')" *ngIf="submitType == 'edit'" [attr.data-dismiss]="multiform.get('repeatchoose').valid == true && !quesNoInvalid ? 'modal' : ''" class="btn btn-primary" type="button">Update</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div *ngIf="choiceDialog" cdkDrag class="modal d-block overflow-visible" id="log{{9}}" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-body">
+                <!-- Container-fluid starts-->
+                <div class="container-fluid">
+                    <form [formGroup]="multiform">
+                        <div class="row">
+                            <div class="col-sm-11">
+                                <h5 style="text-align: center"><b>Question Dropdown</b></h5>
+                            </div>
+                            <div class="col-sm-1">
+                                <i (click)="closeDialog()" class="fa fa-close cursor" data-dismiss="modal"></i>
+                            </div>
+                            <div class="col-sm-12">
+                                <div class="row mt-3">
+                                    <div class="col-12 d-flex">
+                                        <div (mouseover)="changeSpanTo()" *ngIf="changeInput == false" class="question-no col-md-1">
+                                            <span>{{countList}}</span>
+                                        </div>
+                                        <div (mouseout)="changeInputTo()" *ngIf="changeInput == true" class="col-md-1 px-0">
+                                            <input (keypress)="numberValidate($event)" [(ngModel)]="countList" [value]="countList" class="form-control px-1" formControlName="index" type="text">
+                                        </div>
+                                        <div class="col-md-11 p-0 d-flex justify-content-end">
+                                            <select (change)="changeSection('drop', '9')" *ngIf="totalsub.length > 1 && submitType != 'edit'" [selectedIndex]="sectionCount" class="form-control col-md-6" formControlName="head" id="drop">
+                                                <option *ngFor="let item of secHeadingArray; let i = index" value="{{i}}">{{item}}</option>
+                                            </select>
+                                            <button (click)="plus()" class="btn-sm btn-primary pull-right ml-2"><i class="fa fa-plus-circle"></i> Sub Question</button>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-12">
+                                        <small *ngIf="quesNoInvalid" class="errormessage">question no already exist</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-12 dropDownScroll">
+                                <div *ngFor="let list of multiform.get('repeatplus')['controls']; let i=index" formArrayName="repeatplus">
+                                    <div [formGroupName]="i" class="mb-1">
+                                        <div class="row">
+                                            <div class="col-12 d-flex justify-content-between mt-2">
+                                                <div [hidden]="this.hide == true" class="sub-question-no col-md-1 mt-0">
+                                                    <span id="subChoice">{{((i+1) + 9).toString(36).toLowerCase()}}</span>
+                                                </div>
+                                                <div [hidden]="this.hide == true" class="col-md-2 px-0">
+                                                    <div (click)="deleteSub(this.multiform.get('repeatplus'), i)" class="pull-right border p-2">
+                                                        <img alt="" src="assets/images/pdf-icons/delete2.png" title="Delete">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row mt-3">
+                                            <div class="col-md-12">
+                                                <app-tiny-mice (emitEditorValue)="getQuestionValue($event, i, multiform.get('repeatplus')['controls'])"
+                                                               [editorPatchValue]= "false"
+                                                               [height]="130"
+                                                               [id]="i+'dropDownQues'+ransom"
+                                                               [showDropBtn]="false"
+                                                               [showInputBtn]="false">
+                                                </app-tiny-mice>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-12 mt-2">
+                                                <label class="mb-0"><b>Choices</b></label>
+                                                <div formArrayName="choiceList">
+                                                    <div *ngFor="let property of list.get('choiceList')['controls']; let j=index" class="mt-2">
+                                                        <div [formGroupName]= "j">
+                                                            <div class="input-group">
+                                                                <input (change)="gettingQuestionChoiceList(i)" aria-describedby="basic-addon2" aria-label="Recipient's username" class="form-control" formControlName="choice" placeholder="Choice" type="text">
+                                                                <div class="input-group-append">
+                                                            <span class="form-control" id="basic-addon2" style="background-color: gainsboro">
+                                                                <i  (click)="removechoiceList(j)" class="fa fa-trash" style="background-color: #cccccc"></i>
+                                                            </span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-12 mt-3 text-center">
+                                                <button (click)="addPlus(list.controls.choiceList)" class="btn btn-outline-primary choiceAdd" type="button">Add Choice</button>
+                                            </div>
+                                        </div>
+                                        <div class="row mt-2">
+                                            <div class="col-md-10">
+                                                <label><b> Correct Answer </b></label>
+                                                <select (change)="gettingChoiceAnswer($event, i)" (mouseenter)="disableSelect(i, $event)" class="form-control" formControlName="answer" id="dropdown{{i}}">
+                                                    <option [selected]="submitType != 'edit'" [value]="''">select answer</option>
+                                                    <option *ngFor="let list of multiform['controls'].repeatplus['controls'][i]['controls']['optionList'].value; let j=index" [value]="list.choice">{{list.choice}}</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label><b> Points </b></label>
+                                                <input (keypress)="numberValidate($event)" class="form-control" formControlName="points" type="text">
+                                            </div>
+                                        </div>
+                                        <div class="row mt-3">
+                                            <div class="col-md-12">
+                                                <label><b>Explanation</b></label>
+                                            </div>
+                                            <div class="col-md-12">
+                                                <app-tiny-mice (emitEditorValue)="getExplanationValue($event, i, multiform.get('repeatplus')['controls'])"
+                                                               [editorPatchValue]= "false"
+                                                               [height]="130"
+                                                               [id]="i+'explain'"
+                                                               [showDropBtn]="false"
+                                                               [showInputBtn]="false">
+                                                </app-tiny-mice>
+                                            </div>
+                                        </div>
+                                        <div class="row mt-3">
+                                            <div class="col-md-12">
+                                                <input formControlName="autograde" type="checkbox"><label class="ml-2">Autograde</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="modal-footer d-flex justify-content-right" style="border-top: none">
+                <button (click)="submitChoice('add')" *ngIf="submitType != 'edit'" [attr.data-dismiss]="multiform.get('repeatplus').valid == true && !quesNoInvalid ? 'modal' : ''" class="btn btn-primary" type="button">Submit</button>
+                <button (click)="submitChoice('edit')" *ngIf="submitType == 'edit'" [attr.data-dismiss]="multiform.get('repeatplus').valid == true && !quesNoInvalid ? 'modal' : ''" class="btn btn-primary" type="button">Update</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div *ngIf="entryDialog" cdkDrag class="modal d-block overflow-visible" id="log{{10}}" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-body">
+                <!-- Container-fluid starts-->
+                <div class="container-fluid">
+                    <form [formGroup]="multiform">
+                        <div class="row">
+                            <div class="col-sm-11">
+                                <h5 style="text-align: center"><b>Text Entry</b></h5>
+                            </div>
+                            <div class="col-sm-1">
+                                <i (click)="closeDialog()" class="fa fa-close cursor" data-dismiss="modal"></i>
+                            </div>
+                            <div class="col-sm-12">
+                                <div class="row mt-3">
+                                    <div class="col-12 d-flex">
+                                        <div (mouseover)="changeSpanTo()" *ngIf="changeInput == false" class="question-no col-md-1">
+                                            <span>{{countList}}</span>
+                                        </div>
+                                        <div (mouseout)="changeInputTo()" *ngIf="changeInput == true" class="col-md-1 px-0">
+                                            <input (keypress)="numberValidate($event)" [(ngModel)]="countList" [value]="countList" class="form-control px-1" formControlName="index" type="text">
+                                        </div>
+                                        <div class="col-md-11 p-0 d-flex justify-content-end">
+                                            <select (change)="changeSection('fillin', '10')" *ngIf="totalsub.length > 1 && submitType != 'edit'" [selectedIndex]="sectionCount" class="form-control col-md-6" formControlName="head" id="fillin">
+                                                <option *ngFor="let item of secHeadingArray; let i = index" value="{{i}}">{{item}}</option>
+                                            </select>
+                                            <button (click)="addEntry()" class="btn-sm btn-primary pull-right ml-2"><i class="fa fa-plus-circle"></i> Sub Question</button>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-12">
+                                        <small *ngIf="quesNoInvalid" class="errormessage">question no already exist</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-12 dropDownScroll">
+                                <div *ngFor="let list of multiform.get('repeatentry')['controls']; let i=index" formArrayName="repeatentry">
+                                    <div [formGroupName]="i" class="mb-1">
+                                        <div class="row">
+                                            <div class="col-12 d-flex justify-content-between mt-2">
+                                                <div [hidden]="this.hide == true" class="sub-question-no col-md-1 mt-0">
+                                                    <span id="subEntry">{{((i+1) + 9).toString(36).toLowerCase()}}</span>
+                                                </div>
+                                                <div [hidden]="this.hide == true" class="col-md-2 px-0">
+                                                    <div (click)="deleteSub(this.multiform.get('repeatentry'), i)" class="pull-right border p-2">
+                                                        <img alt="" src="assets/images/pdf-icons/delete2.png" title="Delete">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-12">
+                                                <app-tiny-mice (emitEditorValue)="getQuestionValue($event, i, multiform.get('repeatentry')['controls'])"
+                                                               [editorPatchValue]= "false"
+                                                               [height]="130"
+                                                               [id]="i+'entryQues'+ransom"
+                                                               [showDropBtn]="false"
+                                                               [showInputBtn]="false">
+                                                </app-tiny-mice>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-12 mt-2">
+                                                <label><b>Correct Answer</b></label>
+                                                <input class="form-control" formControlName="correct" placeholder="Type answer here" type="text">
+                                            </div>
+                                        </div>
+                                        <div class="row mt-3">
+                                            <div class="col-md-12">
+                                                <label><b>Explanation</b></label>
+                                            </div>
+                                            <div class="col-md-12">
+                                                <app-tiny-mice (emitEditorValue)="getExplanationValue($event, i, multiform.get('repeatentry')['controls'])"
+                                                               [editorPatchValue]= "false"
+                                                               [height]="130"
+                                                               [id]="i+'explain'"
+                                                               [showDropBtn]="false"
+                                                               [showInputBtn]="false">
+                                                </app-tiny-mice>
+                                            </div>
+                                        </div>
+                                        <div class="row ml-1">
+                                            <div class="col-md-9 mt-3">
+                                                <div class="col-md-12">
+                                                    <input class="form-check-input" formControlName="matchCase" id="exampleCheck1" type="checkbox">
+                                                    <label class="form-check-label" for="exampleCheck1">Match Case</label>
+                                                </div>
+                                                <div class="col-md-12 mt-3">
+                                                    <input class="form-check-input" formControlName="autograde" type="checkbox">
+                                                    <label class="form-check-label">Autograde</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-2 ml-3 mt-2">
+                                                <label><b>Points</b></label>
+                                                <input (keypress)="numberValidate($event)" class="form-control" formControlName="points" style="width: 60px" type="text">
+                                            </div>
+                                        </div>
+                                        <div class="row mt-3">
+                                            <div class="col-md-12">
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <!-- Container-fluid Ends-->
+            </div>
+            <div class="modal-footer d-flex justify-content-right mt-2" style="border-top: none">
+                <button (click)="submitEntry('add')" *ngIf="submitType != 'edit'" [attr.data-dismiss]="multiform.get('repeatentry').valid == true && !quesNoInvalid ? 'modal' : ''" class="btn btn-primary" type="button">Submit</button>
+                <button (click)="submitEntry('edit')" *ngIf="submitType == 'edit'" [attr.data-dismiss]="multiform.get('repeatentry').valid == true && !quesNoInvalid ? 'modal' : ''" class="btn btn-primary" type="button">Update</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div *ngIf="essayDialog" cdkDrag class="modal d-block overflow-visible" id="log{{20}}" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-body">
+                <!-- Container-fluid starts-->
+                <div class="container-fluid">
+                    <form [formGroup]="multiform">
+                        <div class="row">
+                            <div class="col-sm-11">
+                                <h5 style="text-align: center"><b>Essay</b></h5>
+                            </div>
+                            <div class="col-sm-1">
+                                <i (click)="closeDialog()" class="fa fa-close cursor" data-dismiss="modal"></i>
+                            </div>
+                            <div class="col-sm-12">
+                                <div class="row mt-3">
+                                    <div class="col-12 d-flex">
+                                        <div (mouseover)="changeSpanTo()" *ngIf="changeInput == false" class="question-no col-md-1">
+                                            <span>{{countList}}</span>
+                                        </div>
+                                        <div (mouseout)="changeInputTo()" *ngIf="changeInput == true" class="col-md-1 px-0">
+                                            <input (keypress)="numberValidate($event)" [(ngModel)]="countList" [value]="countList" class="form-control px-1" formControlName="index" type="text">
+                                        </div>
+                                        <div class="col-md-11 p-0 d-flex justify-content-end">
+                                            <select (change)="changeSection('essays', '20')" *ngIf="totalsub.length > 1 && submitType != 'edit'" [selectedIndex]="sectionCount" class="form-control col-md-6" formControlName="head" id="essays">
+                                                <option *ngFor="let item of secHeadingArray; let i = index" value="{{i}}">{{item}}</option>
+                                            </select>
+                                            <button (click)="addEssay()" class="btn-sm btn-primary pull-right ml-2"><i class="fa fa-plus-circle"></i> Sub Question</button>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-12">
+                                        <small *ngIf="quesNoInvalid" class="errormessage">question no already exist</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 dropDownScroll">
+                                <div *ngFor="let list of multiform.get('repeatessay')['controls']; let i=index" formArrayName="repeatessay">
+                                    <div [formGroupName]="i" class="mb-1">
+                                        <div class="row">
+                                            <div class="col-12 d-flex justify-content-between mt-2">
+                                                <div [hidden]="this.hide == true" class="sub-question-no col-md-1 mt-0">
+                                                    <span id="sub">{{((i+1) + 9).toString(36).toLowerCase()}}</span>
+                                                </div>
+                                                <div [hidden]="this.hide == true" class="col-md-2 px-0">
+                                                    <div (click)="deleteSub(this.multiform.get('repeatessay'), i)" class="pull-right border p-2">
+                                                        <img alt="" src="assets/images/pdf-icons/delete2.png" title="Delete">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row mt-3">
+                                            <div class="col-md-12">
+                                                <app-tiny-mice (emitEditorValue)="getQuestionValue($event, i, multiform.get('repeatessay')['controls'])"
+                                                               [editorPatchValue]= "false"
+                                                               [height]="130"
+                                                               [id]="i+'essayQues'+ransom"
+                                                               [showDropBtn]="false"
+                                                               [showInputBtn]="false">
+                                                </app-tiny-mice>
+                                            </div>
+                                        </div>
+                                        <div class="row mt-2">
+                                            <div class="col-md-10">
+                                                <label><b>Minimum Line Height</b></label>
+                                                <input (keypress)="numberValidate($event)" class="form-control" formControlName="lines" placeholder="Number of Lines" type="text">
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label><b>Points</b></label>
+                                                <input (keypress)="numberValidate($event)" class="form-control" formControlName="points" type="text">
+                                            </div>
+                                        </div>
+                                        <div class="row mt-3">
+                                            <div class="col-md-12">
+                                                <label><b>Explanation</b></label>
+                                            </div>
+                                            <div class="col-md-12">
+                                                <app-tiny-mice (emitEditorValue)="getExplanationValue($event, i, multiform.get('repeatessay')['controls'])"
+                                                               [editorPatchValue]= "false"
+                                                               [height]="130"
+                                                               [id]="i+'explain'"
+                                                               [showDropBtn]="false"
+                                                               [showInputBtn]="false">
+                                                </app-tiny-mice>
+                                            </div>
+                                        </div>
+                                        <div class="row mt-3" hidden>
+                                            <div class="col-md-12">
+                                                <input formControlName="autograde" type="checkbox"><label class="ml-2">Autograde</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <!-- Container-fluid Ends-->
+            </div>
+            <div class="modal-footer d-flex justify-content-right mt-2" style="border-top: none">
+                <button (click)="submitEssay('add')" *ngIf="submitType != 'edit'" [attr.data-dismiss]="multiform.get('repeatessay').valid == true && !quesNoInvalid ? 'modal' : ''" class="btn btn-primary" type="button">Submit</button>
+                <button (click)="submitEssay('edit')" *ngIf="submitType == 'edit'" [attr.data-dismiss]="multiform.get('repeatessay').valid == true && !quesNoInvalid ? 'modal' : ''" class="btn btn-primary" type="button">Update</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div *ngIf="numericDialog" cdkDrag class="modal d-block overflow-visible" id="log{{30}}" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-body">
+                <form [formGroup]="multiform">
+                    <div class="row">
+                        <div class="col-sm-11">
+                            <h5 style="text-align: center"><b>Numeric Entry</b></h5>
+                        </div>
+                        <div class="col-sm-1">
+                            <i (click)="closeDialog()" class="fa fa-close cursor" data-dismiss="modal"></i>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="col-sm-12">
+                        <div class="row mt-3">
+                            <div class="col-12 d-flex">
+                                <div (mouseover)="changeSpanTo()" *ngIf="changeInput == false" class="question-no col-md-1">
+                                    <span>{{countList}}</span>
+                                </div>
+                                <div (mouseout)="changeInputTo()" *ngIf="changeInput == true" class="col-md-1 px-0">
+                                    <input (keypress)="numberValidate($event)" [(ngModel)]="countList" [value]="countList" class="form-control px-1" formControlName="index" type="text">
+                                </div>
+                                <div class="col-md-11 p-0 d-flex justify-content-end">
+                                    <select (change)="changeSection('math', '30')" *ngIf="totalsub.length > 1 && submitType != 'edit'" [selectedIndex]="sectionCount" class="form-control col-md-6" formControlName="head" id="math">
+                                        <option *ngFor="let item of secHeadingArray; let i = index" value="{{i}}">{{item}}</option>
+                                    </select>
+                                    <button (click)="addNumeric()" class="btn-sm btn-primary pull-right ml-2"><i class="fa fa-plus-circle"></i> Sub Question</button>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <small *ngIf="quesNoInvalid" class="errormessage">question no already exist</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 dropDownScroll">
+                        <div *ngFor="let list of multiform.get('repeatnumeric')['controls']; let i=index" formArrayName="repeatnumeric">
+                            <div [formGroupName]="i" class="mb-1">
+                                <div class="row">
+                                    <div class="col-12 d-flex justify-content-between mt-2">
+                                        <div [hidden]="this.hide == true" class="sub-question-no col-md-1 mt-0">
+                                            <span>{{((i+1) + 9).toString(36).toLowerCase()}}</span>
+                                        </div>
+                                        <div [hidden]="this.hide == true" class="col-md-2 px-0">
+                                            <div (click)="deleteSub(this.multiform.get('repeatnumeric'), i)" class="pull-right border p-2">
+                                                <img alt="" src="assets/images/pdf-icons/delete2.png" title="Delete">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row mt-3">
+                                    <div class="col-md-12 d-flex flex-column">
+                                        <div><b>Question</b></div>
+                                        <app-tiny-mice (emitEditorValue)="getQuestionValue($event, i, multiform.get('repeatnumeric')['controls'])"
+                                                       [editorPatchValue]= "false"
+                                                       [height]="130"
+                                                       [id]="i+'numericQues'+ransom"
+                                                       [showDropBtn]="false"
+                                                       [showInputBtn]="false">
+                                        </app-tiny-mice>
+                                    </div>
+                                </div>
+                                <div class="row mt-3">
+                                    <div class="col-12 d-flex flex-column">
+                                        <div><b>Correct Answers</b></div>
+                                        <!--                                <div>-->
+                                        <!--                                    <textarea *ngIf="this.mathEditor == false" class="form-control capital" cols="30" formControlName="answer" rows="2"></textarea>-->
+                                        <!--                                </div>-->
+                                        <app-tiny-mice (emitEditorValue)="getNumericAnswerValue($event, i)"
+                                                       [editorPatchValue]= "false"
+                                                       [height]="130"
+                                                       [id]="i+'numericAns'+ransom"
+                                                       [showDropBtn]="false"
+                                                       [showInputBtn]="false">
+                                        </app-tiny-mice>
+                                    </div>
+                                </div>
+                                <div class="row mt-3">
+                                    <div class="col-md-12">
+                                        <label><b>Explanation</b></label>
+                                    </div>
+                                    <div class="col-md-12">
+                                        <app-tiny-mice (emitEditorValue)="getExplanationValue($event, i, multiform.get('repeatnumeric')['controls'])"
+                                                       [editorPatchValue]= "false"
+                                                       [height]="130"
+                                                       [id]="i+'explain'"
+                                                       [showDropBtn]="false"
+                                                       [showInputBtn]="false">
+                                        </app-tiny-mice>
+                                    </div>
+                                </div>
+                                <div class="row mt-3">
+                                    <div class="col-md-10"></div>
+                                    <div class="col-md-2">
+                                        <label><b>Points</b></label>
+                                        <input (keypress)="numberValidate($event)" class="form-control"  formControlName="points" type="text">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+                <button (click)="submitNumeric('add')" *ngIf="submitType != 'edit'" [attr.data-dismiss]="multiform.get('repeatnumeric').valid == true && !quesNoInvalid ? 'modal' : ''" class="btn btn-primary pull-right mt-2" type="button">Submit</button>
+                <button (click)="submitNumeric('edit')" *ngIf="submitType == 'edit'" [attr.data-dismiss]="multiform.get('repeatnumeric').valid == true && !quesNoInvalid ? 'modal' : ''" class="btn btn-primary pull-right mt-2" type="button">Update</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div *ngIf="graphDialog" cdkDrag class="modal d-block overflow-visible" id="log{{40}}" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-body">
+                <form [formGroup]="graphform">
+                    <div class="row">
+                        <div class="col-sm-11">
+                            <h5 style="text-align: center"><b>Graph</b></h5>
+                        </div>
+                        <div class="col-sm-1">
+                            <i (click)="closeDialog()" class="fa fa-close cursor" data-dismiss="modal"></i>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="col-sm-12">
+                        <div class="row mt-3">
+                            <div class="col-12 d-flex">
+                                <div (mouseover)="changeSpanTo()" *ngIf="changeInput == false" class="question-no col-md-1">
+                                    <span>{{countList}}</span>
+                                </div>
+                                <div (mouseout)="changeInputTo()" *ngIf="changeInput == true" class="col-md-1 px-0">
+                                    <input (keypress)="numberValidate($event)" [(ngModel)]="countList" [value]="countList" class="form-control px-1" formControlName="index" type="text">
+                                </div>
+                                <div class="col-md-11 p-0 d-flex justify-content-end">
+                                    <select (change)="changeSection('graph', '40')" *ngIf="totalsub.length > 1 && submitType != 'edit'" [selectedIndex]="sectionCount" class="form-control col-md-6" formControlName="head" id="graph">
+                                        <option *ngFor="let item of secHeadingArray; let i = index" value="{{i}}">{{item}}</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <small *ngIf="quesNoInvalid" class="errormessage">question no already exist</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 dropDownScroll">
+                        <div class="row mt-3">
+                            <div class="col-md-12  d-flex flex-column">
+                                <div><b>Question</b></div>
+                                <app-tiny-mice (emitEditorValue)="getGraphQuestionValue($event, 0)"
+                                               [editorPatchValue]= "false"
+                                               [height]="130"
+                                               [id]="'numericQues'"
+                                               [showDropBtn]="false"
+                                               [showInputBtn]="false">
+                                </app-tiny-mice>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-12 d-flex flex-column">
+                                <div><b>Correct Answers</b></div>
+                                <app-graph-component (emitItem)="getEmitedValue($event)"
+                                                     (valueChange)="getGraphAnswerValue($event)"
+                                                     *ngIf="submitType != 'edit'"
+                                                     [editMode]="true"
+                                                     [editPatchValue]="false"
+                                                     [graphId]="sectionCount+'graph'+'id'+countList"
+                                                     [questionType]="'40'"></app-graph-component>
+                                <app-graph-component (emitItem)="getEmitedValue($event)"
+                                                     (valueChange)="getGraphAnswerValue($event)"
+                                                     *ngIf="submitType == 'edit'"
+                                                     [editMode]="true"
+                                                     [editPatchValue]="graphBoardValue"
+                                                     [graphId]="sectionCount+'Editgraph'+'id'+countList"
+                                                     [questionType]="'40'"></app-graph-component>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-12">
+                                <app-tiny-mice (emitEditorValue)="getEditorAnswerValue($event)"
+                                               [editorPatchValue]= "false"
+                                               [height]="200"
+                                               [id]="'editorGragh'"
+                                               [showDropBtn]="false"
+                                               [showInputBtn]="false">
+                                </app-tiny-mice>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-12">
+                                <label><b>Explanation</b></label>
+                            </div>
+                            <div class="col-md-12">
+                                <app-tiny-mice (emitEditorValue)="getGraphExplain($event, 0)"
+                                               [editorPatchValue]= "false"
+                                               [height]="130"
+                                               [id]="'explain'"
+                                               [showDropBtn]="false"
+                                               [showInputBtn]="false">
+                                </app-tiny-mice>
+                            </div>
+                        </div>
+                        <div class="row mt-3 d-flex justify-content-end">
+                            <div class="col-md-10" hidden>
+                                <input formControlName="autograde" type="checkbox"><label class="ml-2">Autograde</label>
+                            </div>
+                            <div class="col-md-2">
+                                <label><b>Points</b></label>
+                                <input (keypress)="numberValidate($event)" class="form-control"  formControlName="points" type="text">
+                            </div>
+                        </div>
+                    </div>
+                </form>
+                <button (click)="updateGraphValue('add')" *ngIf="submitType != 'edit'" [attr.data-dismiss]="graphBoardValue && !quesNoInvalid ? 'modal' : ''" class="btn btn-primary pull-right mt-4" type="button">Submit</button>
+                <button (click)="updateGraphValue('edit')" *ngIf="submitType == 'edit'" [attr.data-dismiss]="graphBoardValue && !quesNoInvalid ? 'modal' : ''" class="btn btn-primary pull-right mt-4" type="button">Update</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div *ngIf="blankDialog" cdkDrag class="modal d-block overflow-visible" id="log{{54}}" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-body">
+                <!-- Container-fluid starts-->
+                <div class="container-fluid">
+                    <form [formGroup]="multiform">
+                        <div class="row">
+                            <div class="col-sm-11">
+                                <h5 style="text-align: center"><b>Fill in the blanks</b></h5>
+                            </div>
+                            <div class="col-sm-1">
+                                <i (click)="closeDialog()" class="fa fa-close cursor" data-dismiss="modal"></i>
+                            </div>
+                            <div class="col-sm-12">
+                                <div class="row mt-3">
+                                    <div class="col-12 d-flex">
+                                        <div (mouseover)="changeSpanTo()" *ngIf="changeInput == false" class="question-no col-md-1">
+                                            <span>{{countList}}</span>
+                                        </div>
+                                        <div (mouseout)="changeInputTo()" *ngIf="changeInput == true" class="col-md-1 px-0">
+                                            <input (keypress)="numberValidate($event)" [(ngModel)]="countList" [value]="countList" class="form-control px-1" formControlName="index" type="text">
+                                        </div>
+                                        <div class="col-md-11 p-0 d-flex justify-content-end">
+                                            <select (change)="changeSection('drop', '9')" *ngIf="totalsub.length > 1 && submitType != 'edit'" [selectedIndex]="sectionCount" class="form-control col-md-6" formControlName="head" id="drop">
+                                                <option *ngFor="let item of secHeadingArray; let i = index" value="{{i}}">{{item}}</option>
+                                            </select>
+                                            <button (click)="addBlanks()" class="btn-sm btn-primary pull-right ml-2"><i class="fa fa-plus-circle"></i> Sub Question</button>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-12">
+                                        <small *ngIf="quesNoInvalid" class="errormessage">question no already exist</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-12 dropDownScroll">
+                                <div *ngFor="let list of multiform.get('repeatblanks')['controls']; let i=index" formArrayName="repeatblanks">
+                                    <div [formGroupName]="i" class="mb-1">
+                                        <div class="row">
+                                            <div class="col-12 d-flex justify-content-between mt-2">
+                                                <div [hidden]="this.hide == true" class="sub-question-no col-md-1 mt-0">
+                                                    <span>{{((i+1) + 9).toString(36).toLowerCase()}}</span>
+                                                </div>
+                                                <div [hidden]="this.hide == true" class="col-md-2 px-0">
+                                                    <div (click)="deleteSub(this.multiform.get('repeatblanks'), i)" class="pull-right border p-2">
+                                                        <img alt="" src="assets/images/pdf-icons/delete2.png" title="Delete">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row mt-3">
+                                            <div class="col-md-12">
+                                                <app-tiny-mice (emitEditorValue)="getFillinQuestionValue($event, i)"
+                                                               [editorPatchValue]= "false"
+                                                               [height]="130"
+                                                               [id]="i+'blanks'+ransom"
+                                                               [showDropBtn]="false"
+                                                               [showInputBtn]="true">
+                                                </app-tiny-mice>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-12 mt-2">
+                                                <!--                                                <label class="mb-0"><b>Choices</b></label>-->
+                                                <div>
+                                                    <div *ngFor="let property of fillInArray[i]?.input; let j=index" class="mt-2">
+                                                        <div>
+                                                            <div class="input-group">
+                                                                <input [(ngModel)]="property.value" [ngModelOptions]="{standalone: true}" aria-describedby="basic-addon2" class="form-control" placeholder="Enter input answer" type="text">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row mt-3">
+                                            <div class="col-md-12">
+                                                <label><b>Explanation</b></label>
+                                            </div>
+                                            <div class="col-md-12">
+                                                <app-tiny-mice (emitEditorValue)="getExplanationValue($event, i, multiform.get('repeatblanks')['controls'])"
+                                                               [editorPatchValue]= "false"
+                                                               [height]="130"
+                                                               [id]="i+'explain'"
+                                                               [showDropBtn]="false"
+                                                               [showInputBtn]="false">
+                                                </app-tiny-mice>
+                                            </div>
+                                        </div>
+                                        <div class="row mt-2">
+                                            <div class="col-md-10"></div>
+                                            <div class="col-md-2">
+                                                <label><b> Points </b></label>
+                                                <input (keypress)="numberValidate($event)" class="form-control" formControlName="points" type="text">
+                                            </div>
+                                        </div>
+                                        <!--                                        <div class="row mt-3">-->
+                                        <!--                                            <div class="col-md-12">-->
+                                        <!--                                                <input formControlName="autograde" type="checkbox"><label class="ml-2">Autograde</label>-->
+                                        <!--                                            </div>-->
+                                        <!--                                        </div>-->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="modal-footer d-flex justify-content-right" style="border-top: none">
+                <button (click)="submitBlanks('add')" *ngIf="submitType != 'edit'" [attr.data-dismiss]="(multiform.get('repeatblanks').valid && blankValid && !quesNoInvalid) ? 'modal' : ''" class="btn btn-primary" type="button">Submit</button>
+                <button (click)="submitBlanks('edit')" *ngIf="submitType == 'edit'" [attr.data-dismiss]="(multiform.get('repeatblanks').valid && blankValid && !quesNoInvalid) ? 'modal' : ''" class="btn btn-primary" type="button">Update</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<ng-template #viewGraph let-c="close" let-d="dismiss">
+    <div class="modal-body">
+        <div class="row mt-3">
+            <div class="col-sm-11">
+                <h5 class="text-center"><b>Graph</b></h5>
+            </div>
+            <div class="col-sm-1">
+                <i (click)="close()" class="fa fa-close cursor"></i>
+            </div>
+            <div class="col-12 d-flex flex-column">
+                <app-graph-component [editMode]="false"
+                                     [editPatchValue]="graphShow"
+                                     [graphId]="'previewGraph'"
+                                     [questionType]="'40'"></app-graph-component>
+            </div>
+        </div>
+        <button (click)="close()" class="btn btn-primary pull-right mt-4" type="button">Ok</button>
+    </div>
+</ng-template>
+<ng-template #deleteAlert let-c="close" let-d="dismiss">
+    <div class="modal-header">
+        <h4 class="modal-title letter">Delete Question</h4>
+    </div>
+    <div class="modal-body">
+        <!-- Container-fluid starts-->
+        <div class="container-fluid">
+            <div class="row">
+                <!--                <div class="col-12">-->
+                <!--                    <h4 class="letter">Delete Answer</h4>-->
+                <!--                    <hr>-->
+                <!--                </div>-->
+                <div class="col-12">
+                    <p>Are you sure you want to delete this question?</p>
+                </div>
+            </div>
+            <!-- Container-fluid Ends-->
+        </div>
+        <div class="modal-footer d-flex justify-content-right mt-2">
+            <button type="button" class="btn btn-primary-outline" (click)="deleteCancel()">Cancel</button>
+            <button type="button" class="btn btn-primary" (click)="deleteConfirm(deleteID, delSection)">Ok</button>
+        </div>
+    </div>
+</ng-template>
+<ng-template #deleteSectionPopup let-c="close" let-d="dismiss">
+    <div class="modal-header">
+        <h4 class="modal-title letter">Delete Section</h4>
+    </div>
+    <div class="modal-body">
+        <!-- Container-fluid starts-->
+        <div class="container-fluid">
+            <div class="row">
+                <!--                <div class="col-12">-->
+                <!--                    <h4 class="letter">Delete Answer</h4>-->
+                <!--                    <hr>-->
+                <!--                </div>-->
+                <div class="col-12">
+                    <p>Are you sure you want to delete this section?</p>
+                </div>
+            </div>
+            <!-- Container-fluid Ends-->
+        </div>
+        <div class="modal-footer d-flex justify-content-right mt-2">
+            <button (click)="deleteCancel()" class="btn btn-primary-outline" type="button">Cancel</button>
+            <button (click)="deleteSectionConfirm(delSection)" class="btn btn-primary" type="button">Ok</button>
+        </div>
+    </div>
+</ng-template>
+<ng-template #deleteSvgDraw let-c="close" let-d="dismiss">
+    <div class="modal-header">
+        <h4 class="modal-title letter">Delete Question</h4>
+    </div>
+    <div class="modal-body">
+
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-12">
+                    <p>Are you sure you want to delete this question?</p>
+                </div>
+            </div>
+            <!-- Container-fluid Ends-->
+        </div>
+        <div class="modal-footer d-flex justify-content-right mt-2">
+            <button type="button" class="btn btn-primary-outline" (click)="deleteCancel()">Cancel</button>
+            <button type="button" class="btn btn-primary" (click)="deleteConfirm(deleteID, delSection)">Ok</button>
+        </div>
+    </div>
+</ng-template>
+<ng-template #class let-c="close" let-d="dismiss">
+
+    <div class="modal-body" style="border: 0px">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-sm-12 text-right">
+                    <i class="fa fa-close cursor" style="font-size: 2rem" (click)="close()"></i>
+                </div>
+                <div class="col-sm-12 text-center">
+                    <h3 class="modal-title headerText">Delete Annotation</h3>
+                </div>
+
+                <div class="col-sm-12">
+                    <h5 class="text-center mt-3">Are you sure  want to delete Annotation(s) ?</h5>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-outline-primary" (click)="deleteAllAnnotation()">All Page </button>
+        <button type="button" class="btn btn-outline-primary" (click)="deleteCurrentPageAnnotation()">This Page</button>
+    </div>
+</ng-template>
+<ng-template #viewExplain let-c="close" let-d="dismiss">
+    <div class="modal-header d-flex justify-content-between">
+        <h4>Explanation</h4>
+        <i (click)="close()" class="fa fa-close cursor"></i>
+    </div>
+    <div class="modal-body">
+        <!-- Container-fluid starts-->
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-12 overflow-auto">
+                    <p [innerHTML]="ExplanationPopupValue | sanitizeHtml"></p>
+                </div>
+            </div>
+            <!-- Container-fluid Ends-->
+        </div>
+    </div>
+</ng-template>
+<ng-template #uploadPdf let-c="close" let-d="dismiss">
+    <div class="modal-header">
+        <h5 class="contenttext text-center mb-0">Upload PDF</h5>
+    </div>
+    <div class="modal-body">
+        <div class="row">
+            <div class="col-md-12">
+                <h5>Are you sure want to upload because previously uploaded pdf & data will be removed</h5>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn cancel" (click)="close()">Cancel</button>
+        <input accept=".pdf" style="display: none" type="file" #attachmentsnew (change)="encodePdfFileAsURL($event, 1)" #hiddenfileinput>
+        <button class="btn btn-primary" type="file" aria-describedby="inputGroupFileAddon01"
+                (click)="hiddenfileinput.click()">Confirm</button>
+    </div>
+</ng-template>
+<ng-template #viewPdf let-c="close" let-d="dismiss">
+    <div class="modal-body">
+        <!-- Container-fluid starts-->
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-12 modal-header">
+                    <h4 class="modal-title">{{pdfName}}</h4>
+                    <p class="text-right">
+                        <i class="fa fa-close fa-2x" aria-hidden="true" style="cursor:pointer" (click)="close()"></i>
+                    </p>
+                </div>
+                <div class="col-md-12">
+                    <pdf-viewer  [src]="pdfTemplate" style="display: block;"></pdf-viewer>
+                </div>
+            </div>
+        </div>
+        <!-- Container-fluid Ends-->
+    </div>
+</ng-template>

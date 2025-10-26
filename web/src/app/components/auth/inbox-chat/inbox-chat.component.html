@@ -1,0 +1,121 @@
+<div class="row">
+    <div class="col-md-12">
+        <div class="msger">
+            <header class="msger-header">
+                <div class="msger-header-title">
+                    <i class="fas fa-comment-alt"></i> Inbox
+                </div>
+            </header>
+
+            <main class="msger-chat" id="messagerChat">
+                <div class="row" style="height: max-content !important;">
+                    <div class="col-12 pt-5" *ngIf="messageList.length == 0">
+                        <div class="col-12 mt-2 card class-card1">
+                            <p class="m-0 text-center p-3">Conversation Not Started!</p>
+                        </div>
+                    </div>
+                    <div (click)="routeToParentMessage(message, $event)" [id]="'message' + message.message_id"
+                         [ngClass]="message?.parent_message_id ? 'cursor' : ''" class="col-12 my-2" *ngFor="let message of messageList">
+                        <div [ngClass]="!message?.createdByMe ? 'left-msg' : 'right-msg'" class="msg">
+                            <img *ngIf="message.profile_url != '' && message.profile_url.split('/').includes('assets')" class="msg-img" [srcset]="message.profile_url" alt="PI">
+                            <img *ngIf="message.profile_url != '' && !message.profile_url.split('/').includes('assets')" class="msg-img" [srcset]="env.imgUrl + '/' + message.profile_url" alt="PI">
+                            <img *ngIf="message.profile_url == ''" class="msg-img" [srcset]="'assets/images/dashboard/default.png'" alt="Default Image">
+                            <div class="msg-bubble">
+                                <div class="msg-info">
+                                    <div class="msg-info-name">{{message.from_name}}</div>
+                                    <div class="msg-info-time">{{message.created_date | date : 'MM/dd/yyyy, h:mm a'}}</div>
+                                </div>
+
+                                <div [ngClass]="!message.createdByMe ? 'reply_message_other'  : 'reply_message_you'"  class="msg-text mb-2" *ngIf="message.parent_message_id">
+                                    {{message.parent_message_data ?? 'Files Uploaded'}}
+                                </div>
+
+                                <div class="msg-text">
+                                    {{message.body}}
+                                </div>
+                                <div class="row link" *ngIf="message.attachments.length != 0">
+                                    <hr class="w-100 bg-white">
+                                    <div class="col-12 my-1" *ngFor="let attachment of message.attachments;">
+                                        <a target="_blank" [href]="env.imgUrl + '/' + attachment.attachment.original_image_url"
+                                           [ngClass]="message?.createdByMe ? 'text-white' : 'text-black'" [title]="attachment.attachment.image">
+                                            <i *ngIf="attachment.attachment.type == 'application/pdf'" class="fa fa-file-pdf-o mr-1" aria-hidden="true"></i>
+                                            <i *ngIf="attachment.attachment.type == 'application/xlsx'" class="fa fa-file-excel-o mr-1" aria-hidden="true"></i>
+                                            <i *ngIf="['application/document', 'application/doc', 'application/txt'].includes(attachment.attachment.type)"
+                                               class="fa fa-file-o mr-1" aria-hidden="true"></i>
+                                            <i *ngIf="['image/jpg', 'image/jpeg', 'image/png'].includes(attachment.attachment.type)"
+                                               class="fa fa-picture-o mr-1" aria-hidden="true"></i>
+                                            <i *ngIf="attachment.attachment.type == 'application/msword'" class="fa fa-file-text-o mr-1" aria-hidden="true"></i>
+                                            {{attachment.attachment.image}}
+                                        </a>
+                                    </div>
+                                </div>
+                                <div class="row mt-2" *ngIf="message.allowReply">
+                                    <div class="col-12 text-right">
+                                        <button (click)="reply(message)" class="btn-sm btn-outline-primary">Reply</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <form class="msger-inputarea">
+                <div class="row">
+                    <div class="w-100 custom-textarea-container" [ngClass]="messageId != ''? 'reply': ''" >
+                        <div class="row pb-1 px-1 pt-0" *ngIf="uploadMailFiles.length != 0 && !showSkeletonLoader">
+                            <div class="col-3 py-0 mt-1" *ngFor="let f of uploadMailFiles; let ind = index">
+                                <div class="file-preview">
+                                    <span class="file-icon">📄</span>
+                                    <span class="file-name">{{f.image}}</span>
+                                    <button class="remove-file cursor" style="font-size: 16px" (click)="deleteUploadFiles(ind)"><span class="close-icon">×</span></button>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="padding: 0 5px !important" class="row py-0 px-1" *ngIf="messageId != ''">
+                            <div class="col-12 py-0 mt-1">
+                                <div class="reply-preview">
+                                    <span class="reply-name">{{messageData.body}}</span>
+                                    <button class="remove-file cursor" style="font-size: 16px" (click)="clearReplyData()"><span class="reply_close_icon">×</span></button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row pb-1 px-1 pt-0" *ngIf="showSkeletonLoader">
+                            <div class="col-3 py-0 my-2" *ngFor="let f of skeletonArray">
+                                <div class="skeleton-loader">
+                                    <div class="skeleton-icon"></div>
+                                    <div class="skeleton-text"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <textarea (keydown.enter)="sendMessage()" #messageInput class="message-input form-control"
+                                  [ngClass]="messageId != ''? 'reply_textarea': ''"  colspan="5" maxlength="500"
+                                  placeholder="Enter your message..." (input)="enterMessageValue($event.target.value)"></textarea>
+                    </div>
+                    <div class="col-12 pb-0 mt-1">
+                        <div class="row">
+                            <div class="col-6" *ngIf="auth.getRoleId() != '5'">
+                                <label style="font-weight: 500" class="p-0 mb-1"><b class="p-0">Student List</b></label>
+                                <ng-multiselect-dropdown class="inbox-dropdown p-0"
+                                                         [settings]="settings"
+                                                         [data]="studentList"
+                                                         [ngModelOptions]="{standalone: true}"
+                                                         [(ngModel)]="selectedStudent"
+                                                         [placeholder]="'Select Student'">
+                                </ng-multiselect-dropdown>
+
+                            </div>
+                            <div class="col-{{auth.getRoleId() != '5' ? '6' : '12'}} text-right align-self-center">
+                                <input #hiddenfileinput (change)="encodePdfFileAsURL($event)" accept=".pdf, .doc, .txt, .docx, .xlsx, .xls, .csv, .jpg, .jpeg, .png" style="display: none" multiple type="file">
+                                <button class="btn btn-sm btn-primary ml-2 p-0" title="File Upload" (click)="hiddenfileinput.click()" aria-describedby="inputGroupFileAddon01"><i class="fa fa-paperclip" aria-hidden="true"></i></button>
+                                <button type="submit" class="btn btn-sm btn-primary ml-2 p-0 px-2" (click)="sendMessage()"><i class="fa fa-paper-plane-o" aria-hidden="true"></i> Send</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>

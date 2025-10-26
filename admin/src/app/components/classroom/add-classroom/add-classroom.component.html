@@ -1,0 +1,62 @@
+<!-- Container-fluid starts-->
+<div class="container-fluid">
+
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="card tab2-card">
+                <div class="card-header">
+                    <h5 class="text-capitalize" *ngIf="type == 'add'">Add Content Folder</h5>
+                    <h5 class="text-capitalize" *ngIf="type == 'edit'">Edit Content Folder</h5>
+                    <label class="text-muted">All fields marked with <span class="text-danger">*</span> are required</label>
+                </div>
+                <div class="card-body tab2-card">
+                    <form [formGroup]="classroomform" class="needs-validation user-add">
+                        <div class="form-group row">
+                            <label for="validationCustom1" class="col-xl-3 col-md-4"><span>*</span>
+                                Content Folder Name </label>
+                            <div class="col-xl-8 col-md-7">
+                                <input class="form-control" formControlName="batchname" id="validationCustom1"
+                                       type="text" placeholder="Enter Content Folder Name" required="">
+                                <em class="error" *ngIf="!classroomform.get('batchname').valid && (classroomform.get('batchname').dirty || classroomform.get('batchname').touched)">Content Folder Name is required</em>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="validationCustom5" class="col-xl-3 col-md-4"><span>*</span>
+                                Status</label>
+                            <div class="col-xl-8 col-md-7">
+                                <select class="form-control" formControlName="status" id="validationCustom5">
+                                    <option selected disabled>&#45;&#45;Select&#45;&#45;</option>
+                                    <option value="1">Active</option>
+                                    <option value="2">In-Active</option>
+                                    <option *ngIf="type =='edit'" value="3">Suspended</option>
+                                    <option *ngIf="type =='edit'" value="4">Deleted</option>
+                                </select>
+                                <em class="error" *ngIf="!classroomform.get('status').valid && (classroomform.get('status').dirty || classroomform.get('status').touched)">Status is required</em>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label class="col-xl-3 col-md-4"><span>*</span>
+                                Institution Name</label>
+                            <div class="col-xl-8 col-md-7">
+                                <ng-select [items]="selectedSchool"
+                                           [readonly]="!showSchoolSearch"
+                                           bindLabel="name"
+                                           bindValue="id"
+                                           formControlName="schoolId"
+                                           placeholder="Please Select"
+                                >
+                                </ng-select>
+                                <em class="error" *ngIf="!classroomform.get('schoolId').valid && (classroomform.get('schoolId').dirty || classroomform.get('schoolId').touched)">Institution Name is required</em>
+                            </div>
+                        </div>
+                    </form>
+                    <div class="pull-right">
+                        <button type="button" *ngIf="type == 'add'" (click)="addClassRoom('add')"  class="btn btn-primary">Save</button>
+                        <button type="button" *ngIf="type == 'edit'" (click)="addClassRoom('edit')"  class="btn btn-primary">Update</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Container-fluid Ends-->

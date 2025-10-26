@@ -1,0 +1,279 @@
+<!--=================================
+ preloader -->
+<div id="pre-loader" *ngIf="commondata.loader.value">
+    <img src="assets/images/pre-loader/loader-01.svg" alt="">
+</div>
+<div class="page-wrapper auth-bg">
+    <div class="authentication-box-web">
+
+        <section class="container" style="display: block" *ngIf="!type">
+            <div class="row">
+                <div class="col-12 col-md-5 p-0 card-left">
+                    <div class="card bg-primary mb-0">
+                        <div class="svg-icon d-flex justify-content-center" style="min-height: 15rem">
+                            <img alt="" class="my-2" src="assets/images/{{logo}}" style="height: auto; object-fit: fill">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-7 p-0 mt-2 card-right">
+                    <div class="card tab2-card p-4">
+                        <div class="card-body">
+                            <h4 class="login-text">Login To {{siteName}}</h4>
+
+                            <div class="d-flex justify-content-center google-sign">
+                                <div class="col-6">
+
+                                    <div id="g_id_onload"
+                                         data-client_id="854159816646-f2oidr960elk0akcu27dddb9dveoj9r3.apps.googleusercontent.com"
+                                         data-context="use"
+                                         data-ux_mode="popup"
+                                         [attr.data-login_uri]="backEndURLSignIn"
+                                         data-auto_prompt="false">
+                                    </div>
+
+                                    <div class="g_id_signin"
+                                         data-type="standard"
+                                         data-shape="rectangular"
+                                         data-theme="outline"
+                                         data-text="signin_with"
+                                         data-size="large"
+                                         data-logo_alignment="left">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="tp-login-mail text-center my-4"><p>or Sign in with Email</p></div>
+
+                            <div class="tab-pane fade active show" id="account" role="tabpanel"
+                                 aria-labelledby="account-tab">
+                                <form [formGroup]="loginForm"
+                                      class="form-horizontal auth-form1" novalidate="">
+                                    <div class="form-group">
+                                        <input autofocus required="true" formControlName="userName" name="login[username]" type="email"
+                                               class="form-control" placeholder="Username"
+                                               id="exampleInputEmail1">
+                                        <em class="error" *ngIf="!loginForm.get('userName').valid && (loginForm.get('userName').dirty || loginForm.get('userName').touched)">User name is required</em>
+                                    </div>
+                                    <div class="form-group">
+                                        <div class="input-group">
+                                            <input required="true"  name="login[password]" type="text" formControlName="password"
+                                                   class="form-control" placeholder="Password" aria-label="Recipient's username" aria-describedby="basic-addon1" [type]="conps ? 'password' : 'text'">
+                                            <div class="input-group-append cursor" (click)="conps = !conps">
+                                                <span class="input-group-text" id="basic-addon3">
+                                                    <i [class]="conps ? 'fa fa-eye-slash' : 'fa fa-eye'" aria-hidden="true"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <em class="error" *ngIf="!loginForm.get('password').valid && (loginForm.get('password').dirty || loginForm.get('password').touched)">Password is required</em>
+                                    </div>
+                                    <div class="form-terms">
+                                        <div class="custom-control custom-checkbox mr-sm-2">
+                                            <input type="checkbox" class="custom-control-input cursor" formControlName="checkbox"
+                                                   id="customControlAutosizing" (change)="setRemeberMe($event.target.checked)">
+                                            <label class="custom-control-label"
+                                                   for="customControlAutosizing">Remember me</label>
+                                            <a [routerLink]="'/forgotPassword/content'"
+                                               class="btn btn-default forgot-pass italic_text">Forgot
+                                                password</a>
+                                        </div>
+                                    </div>
+                                    <div class="form-button align-items-center justify-content-end d-flex mt-3">
+                                        <button class="btn btn-primary mb-1 w-100" (click)="login()">Login<i class="ml-2 fa fa-long-arrow-right fa-1x" aria-hidden="true"></i></button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <section class="container-fluid" *ngIf="type == 'student'">
+            <div class="row justify-content-center">
+                <div class="col-12 col-md-5 loginWith mt-2">
+                    <h2>Student</h2>
+                    <div class="card">
+                        <div class="card-body">
+                            <h3 class="mb-3">Login</h3>
+                            <div class="form-horizontal auth-form1">
+                                <form [formGroup]="studentForm">
+                                    <div class="form-group">
+                                        <input #studentUserNameFocus (keypress)="enterKey($event)" autofocus required="true" name="login[username]" type="email"
+                                               class="form-control" placeholder="User Name" formControlName="userName"
+                                               id="exampleInputEmail21" autocomplete="off">
+                                        <em class="error" *ngIf="!studentForm.get('userName').valid && (studentForm.get('userName').dirty || studentForm.get('userName').touched)">User name is required</em>
+                                    </div>
+                                    <div class="form-group">
+                                        <div class="input-group">
+                                            <input (keypress)="enterKey($event)" required="true"  name="login[password]" type="text" formControlName="password"
+                                                   class="form-control" placeholder="Password" aria-label="Recipient's username" aria-describedby="basic-addon1" autocomplete="off" [type]="conps ? 'password' : 'text'">
+                                            <div class="input-group-append">
+                                        <span class="input-group-text" id="basic-addon41">
+                                            <i [class]="conps ? 'fa fa-eye-slash' : 'fa fa-eye'" aria-hidden="true" (click)="conps = !conps"></i>
+                                        </span>
+                                            </div>
+                                        </div>
+                                        <em class="error" *ngIf="!studentForm.get('password').valid && (studentForm.get('password').dirty || studentForm.get('password').touched)">Password is required</em>
+                                    </div>
+                                    <div class="form-terms">
+                                        <div class="custom-control custom-checkbox mr-sm-2">
+                                            <input type="checkbox" class="custom-control-input"
+                                                   id="customControlAutosizing44" (click)="rememberList($event, '4')" formControlName="checkbox3">
+                                            <label class="custom-control-label"
+                                                   for="customControlAutosizing44">Remember me</label>
+                                            <a [routerLink]="'/forgotPassword/student'" class="btn btn-default forgot-pass">Forgot password</a>
+                                        </div>
+                                    </div>
+                                    <div class="form-button d-flex justify-content-between w-100">
+                                        <button (click)="login()"  class="btn btn-primary">Login<i class="ml-2 fa fa-long-arrow-right fa-1x" aria-hidden="true"></i></button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-5 mt-2 d-none d-md-block">
+                    <img src="assets/images/student-login2.png" style="width: 550px; height: 500px" alt="">
+                </div>
+            </div>
+        </section>
+        <section class="container-fluid" *ngIf="type == 'studentRegister' || type == 'googleStudentRegister'">
+            <div class="row justify-content-center">
+                <div class="col-12 col-md-5 loginWith mt-2">
+                    <div class="card">
+                        <div class="card-body google-sign p-4">
+
+                            <h4 class="login-text mb-4">Student Register</h4>
+
+                            <div class="d-flex justify-content-center google-sign">
+                                <div class="col-6">
+                                    <div id="g_id_onload"
+                                         data-client_id="854159816646-f2oidr960elk0akcu27dddb9dveoj9r3.apps.googleusercontent.com"
+                                         data-context="use"
+                                         data-ux_mode="popup"
+                                         [attr.data-login_uri]="backEndURLRegisterSignIn"
+                                         data-auto_prompt="false">
+                                    </div>
+
+                                    <div class="g_id_signin"
+                                         data-type="standard"
+                                         data-shape="rectangular"
+                                         data-theme="outline"
+                                         data-text="signin_with"
+                                         data-size="large"
+                                         data-logo_alignment="left">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="tp-login-mail text-center my-3"><p>or Sign in with Email</p></div>
+
+                            <div class="form-horizontal auth-form1">
+                                <form [formGroup]="registerForm">
+                                    <div class="form-group">
+                                        <input class="form-control" autofocus formControlName="first_name" id="validationCustom0" type="text" placeholder="First Name *" required="true">
+                                        <em class="error" *ngIf="!registerForm.get('first_name').valid && (registerForm.get('first_name').dirty || registerForm.get('first_name').touched)">First name is required</em>
+                                    </div>
+                                    <div class="form-group">
+                                        <input class="form-control" formControlName="last_name" id="validationCustom1" type="text" placeholder="Last Name *" required="true">
+                                        <em class="error" *ngIf="!registerForm.get('last_name').valid && (registerForm.get('last_name').dirty || registerForm.get('last_name').touched)">Last name is required</em>
+                                    </div>
+                                    <div class="form-group">
+                                        <select class="form-control" formControlName="gender" id="validationCustom07">
+                                                <option value="" selected>Select Gender *</option>
+                                                <option value="male">Male</option>
+                                                <option value="female">Female</option>
+                                                <option value="n/a">Do not want to disclose</option>
+                                        </select>
+                                        <em class="error" *ngIf="!registerForm.get('gender').valid && (registerForm.get('gender').dirty || registerForm.get('gender').touched)">Gender is required</em>
+                                    </div>
+                                    <div class="form-group">
+                                        <input class="form-control" formControlName="email_id" id="validationCustom5"
+                                               type="email" placeholder="Email *" autocomplete="off" required="true">
+                                        <em class="error"
+                                            *ngIf="!registerForm.get('email_id').valid && (registerForm.get('email_id').dirty || registerForm.get('email_id').touched)">Email
+                                            is required</em>
+                                    </div>
+                                    <div class="form-group">
+                                        <input class="form-control" formControlName="mobile" id="validationCustom10" type="text" maxlength="10" placeholder="Mobile Number" (keypress)="numberValidate($event)">
+                                    </div>
+                                    <div class="form-group">
+                                        <ng-select class="login-select"
+                                                    [items]="gradeList"
+                                                    bindLabel="grade_name"
+                                                    bindValue="grade_id"
+                                                    formControlName="grade_id"
+                                                    placeholder="Select Grade"
+                                                    typeToSearchText=""
+                                        >
+                                        </ng-select>
+                                    </div>
+                                    <div class="form-group">
+                                        <div class="input-group">
+                                            <input type="text" formControlName="password" class="form-control"
+                                                   placeholder="Password *" autocomplete="new-password"
+                                                   [type]="conps ? 'password' : 'text'">
+                                            <div class="input-group-append cursor" (click)="conps = !conps">
+                                                <span class="input-group-text" id="basic-addon7">
+                                                    <i class="color-primary" [class]="conps ? 'fa fa-eye-slash' : 'fa fa-eye'" aria-hidden="true"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex">
+                                            <em class="error" *ngIf="!registerForm.get('password').valid && (registerForm.get('password').dirty || registerForm.get('password').touched)">Password is required</em>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <div class="input-group">
+                                            <input required="true" type="text" formControlName="confirmpassword"
+                                                   class="form-control" placeholder="Confirm Password *"
+                                                   aria-label="Recipient's username" aria-describedby="basic-addon1"
+                                                   [type]="conps1 ? 'password' : 'text'">
+                                            <div class="input-group-append cursor" (click)="conps1 = !conps1">
+                                                <span class="input-group-text" id="basic-addon10">
+                                                    <i class="color-primary" [class]="conps1 ? 'fa fa-eye-slash' : 'fa fa-eye'"
+                                                       aria-hidden="true" ></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <em class="error" *ngIf="!registerForm.get('confirmpassword').valid &&
+                                        (registerForm.get('confirmpassword').dirty || registerForm.get('confirmpassword').touched)">Confirm Password is required</em>
+                                        <div class="d-flex" *ngIf="checkPasswords()">
+                                            <em class="error help-block">Enter same password as above</em>
+                                        </div>
+                                    </div>
+                                    <div class="form-button d-flex justify-content-end">
+                                        <button class="btn w-100 btn-primary" (click)="submitRegisterForm()">Submit<i class="ml-2 fa fa-long-arrow-right fa-1x" aria-hidden="true"></i></button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-5 mt-2 d-none d-md-block">
+                    <img src="assets/images/student-login2.png" style="width: 550px; height: 500px" alt="">
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+<ng-template #tcupdate let-c="close" let-d="dismiss">
+    <div class="modal-header">
+        <h4 class="modal-title" id="modal-basic-title">Terms & Conditions and Privacy Policy</h4>
+    </div>
+    <div class="modal-body">
+        <!-- Container-fluid starts-->
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-12">
+                    <input type="checkbox" class="form-check-input text-center" [(ngModel)]="checkterms" ><span>I accept </span><a href="https://edquill.com/terms_and_conditions.html" target="_blank"><span style="font-style: italic; text-decoration: underline;">Terms & Conditions</span></a> <span> and </span> <a href="https://edquill.com/privacy_policy.html" target="_blank" style="font-style: italic; text-decoration: underline;">Privacy Policy</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Container-fluid Ends-->
+
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-outline-primary" (click)="confirmtermDetails()" [disabled]="checkterms == undefined || !checkterms">Submit</button>
+    </div>
+</ng-template>

@@ -1,0 +1,602 @@
+<div class="container px-0">
+    <div class="card mt-2">
+        <div class="card-body">
+            <div class="row justify-content-end">
+                <div class="col-2 col-md-3 align-self-end">
+                    <h6 title="Show All Questions" style="color: black" class="d-flex align-items-center justify-content-end mb-0">
+                        <input id="selectAll" class="cursor" type="checkbox" [checked]="selectAllStudentDetails" (change)="selectQuestionStatus($event.target.checked)">
+                        <label for="selectAll" class="pl-2 font-weight-bold cursor mb-0">Show All</label>
+                    </h6>
+                </div>
+                <div class="col-4 col-md-5" *ngIf="(topicId != '' && selectedType == 'topic') || showFullQuestion">
+                    <label class="font-weight-bold">Topics</label>
+                    <ng-multiselect-dropdown #multiSelect
+                                             [placeholder]="'Select Topic'"
+                                             [settings]="settings"
+                                             [data]="topicListData"
+                                             [disabled]="false"
+                                             [(ngModel)]="selectedTopic"
+                                             (onSelect)="selectedQuestion = 1;updateStudentAnswer($event, 'single', 'topic', 'question_topic_id')"
+                                             (onDeSelect)="selectedQuestion = 1;updateStudentAnswer($event, 'single', 'topic', 'question_topic_id')"
+                                             (onSelectAll)="selectedQuestion = 1;updateStudentAnswer($event, 'all', 'topic', 'question_topic_id')"
+                                             (onDeSelectAll)="selectedQuestion = 1;updateStudentAnswer($event, 'all', 'topic', 'question_topic_id')">
+                    </ng-multiselect-dropdown>
+                </div>
+
+                <div class="col-4 col-md-5" *ngIf="subTopicId != '' && selectedType == 'subTopic'">
+                    <label class="font-weight-bold">Sub Topics</label>
+                    <ng-multiselect-dropdown #multiSelect
+                                             [placeholder]="'Select Sub Topic'"
+                                             [settings]="settings1"
+                                             [data]="subTopicListData"
+                                             [disabled]="false"
+                                             [(ngModel)]="selectedSubTopic"
+                                             (onSelect)="selectedQuestion = 1;updateStudentAnswer($event, 'single', 'subTopic', 'question_sub_topic_id')"
+                                             (onDeSelect)="selectedQuestion = 1;updateStudentAnswer($event, 'single', 'subTopic', 'question_sub_topic_id')"
+                                             (onSelectAll)="selectedQuestion = 1;updateStudentAnswer($event, 'all', 'subTopic', 'question_sub_topic_id')"
+                                             (onDeSelectAll)="selectedQuestion = 1;updateStudentAnswer($event, 'all', 'subTopic', 'question_sub_topic_id')">
+                    </ng-multiselect-dropdown>
+                </div>
+
+                <div class="col-5 col-md-3">
+                    <label class="font-weight-bold">Question Number</label>
+                    <ng-select
+                            [items]="questionNumberList"
+                            bindLabel="question_no"
+                            bindValue="question_no"
+                            [(ngModel)]="selectedQuestion"
+                            [readonly]="selectAllStudentDetails"
+                            placeholder="Question Number"
+                            (change)="getQuestionData($event)">
+                    </ng-select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card py-5 mt-2 mb-0" *ngIf="studentAnswer.length == 0">
+        <div class="row my-5 justify-content-center">
+            <div class="col-4 my-5">
+                <button style="background: #FFFFFF; cursor: default" class="nodataList">No Question Available!</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-3" *ngIf="studentAnswer.length != 0">
+        <div class="col-12" *ngFor="let item of studentAnswer; let i = index">
+            <div class="row mb-3" id="ques_no_cfs_{{item.question_no}}" *ngIf="(item.question_no == selectedQuestion && !selectAllStudentDetails) || selectAllStudentDetails">
+                <div class="col-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <div class="row p-3">
+                                <div class="col-12 cfs">
+                                    <h4 style="font-size: 18px" class="mb-3 font-weight-bold" *ngIf="item.question_type_id != '24'">Question:</h4>
+                                    <div *ngIf="item.question != '' && item.question_type_id != 24 && item.question_type_id != 55" [innerHTML]="item.question | sanitizeHtml" class="mb-0 overflow-auto div-disable"></div>
+                                    <div *ngIf="item.question != '' && item.question_type_id == 55" [innerHTML]="convertMarkdownToHtml(item.question, 'single')" class="mb-0 overflow-auto div-disable"></div>
+                                    <div *ngIf="item.question_type_id == 24">
+                                        <div *ngIf="item.subQuestions[0]?.passage && item.subQuestions[0]?.passage != ''">
+                                            <h4 style="font-size: 18px" class="mb-3 font-weight-bold">Passage:</h4>
+                                            <div [innerHTML]="item.subQuestions[0]?.passage | sanitizeHtml" class="mb-0 overflow-auto div-disable"></div>
+                                        </div>
+                                        <div class="mt-3" *ngIf="item.subQuestions[0]?.question != ''">
+                                            <h4 style="font-size: 18px" class="mb-3 font-weight-bold">Question:</h4>
+                                            <div [innerHTML]="item.subQuestions[0]?.question | sanitizeHtml" class="mb-0 overflow-auto div-disable"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 pl-0">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <div class="row p-3" *ngIf="item.question != ''">
+                                <div class="col-12 mb-3">
+                                    <div class="d-flex" style="background: #dedede9e">
+                                        <button class="button_design btn-primary">{{item.question_no}}</button>
+                                    </div>
+                                </div>
+                                <div class="col-12" *ngIf="item.question_type_id == 1 || item.question_type_id == 2">
+                                    <div [ngClass]="{'student-selected' : (item.student_answer.length == 0 ? false : item.student_answer[k].isSelected != '')}"
+                                        *ngFor="let option of item.options; let k = index" class="cursor overflow-auto row my-3 mx-0 p-2" style="max-height: 20rem">
+                                        <button class="btn-primary inner_button">{{((k+1) + 9).toString(36).toUpperCase()}}</button>
+                                        <div class="col-11 pr-0 cfs d-flex align-items-center">
+                                            <span [innerHTML]="option.options | sanitizeHtml" class="remove-margin-bottom"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12" *ngIf="item.question_type_id == 5 || item.question_type_id == 7">
+                                    <table class="table table-bordered text-center div-disable">
+                                        <thead>
+                                        <tr>
+                                            <th>Questions</th>
+                                            <th *ngFor="let list of item.answer; let k=index" [innerHTML]="list | sanitizeHtml" class="remove-margin-bottom"></th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        <tr *ngFor="let list of item.student_answer; let j=index">
+                                            <td [innerHTML]="list.options | sanitizeHtml" class="remove-margin-bottom"></td>
+                                            <td *ngFor="let ans of item.answer; let k=index">
+                                                <input *ngIf="item.question_type_id == '5'" [checked]="item.student_answer[j].isSelected == '' ? false : item.student_answer[j].isSelected == k.toString()" class="radio_animated" id="{{j}}chooseSingle{{i}}" name="{{i}}choosesingle{{j}}your" type="radio">
+                                                <input *ngIf="item.question_type_id == '7'" [checked]="splitMultiChoose(item.student_answer[j].isSelected, k)" id="{{j}}chooseMulti{{i}}" type="checkbox">
+                                            </td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="col-12" *ngIf="item.question_type_id == 9">
+                                    <div *ngFor="let data of item.student_answer; let j = index" class="col-md-12 mt-3 mb-3">
+                                        <label>Dropdown - {{j+1}}</label>
+                                        <div class="col-md-11">
+                                            <div class="col-md-12 bg-white innerhtml-margin-clear p-2 dropdown-border dropdown-toggle d-flex justify-content-between" data-toggle="dropdown" id="{{i}}dropdown{{j}}"></div>
+                                            <div class="col-md-11 dropdown-menu">
+                                                <span *ngFor="let option of data.options; let k = index"
+                                                      [innerHTML]="option.listOption | sanitizeHtml"
+                                                      class="dropdown-item dropdown-link innerhtml-margin-clear"
+                                                      style="overflow: scroll; overflow-y: hidden"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12" *ngIf="item.question_type_id == 10">
+                                    <div *ngFor="let data of item.student_answer; let j = index" class="col-md-12 mt-3 mb-3">
+                                        <label>Input - {{j+1}}</label>
+                                        <div class="form-span">
+                                            <div *ngIf="data.isSelected != ''" [innerHTML]="data.isSelected | sanitizeHtml"></div>
+                                            <div *ngIf="data.isSelected == ''">Student Not Answered</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12" *ngIf="item.question_type_id == 16">
+                                    <div *ngFor="let list of item.student_answer; let k=index" class="input-group mb-3 mt-3 inputMenu">
+                                        <div class="input-group mb-1 inputMenu">
+                                            <div class="input-group-prepend">
+                                        <span class="input-group-text">
+                                            <img class="img-fluid" src="assets/images/pdf-icons/equal@2x.png">
+                                        </span>
+                                            </div>
+                                            <h4 [innerHTML]="list.options | sanitizeHtml" class="form-control mb-0 pt-4 pb-5 overflow-scroll"></h4>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12" *ngIf="item.question_type_id == 20">
+                                    <div class="form-span">
+                                        <div *ngIf="item.student_answer[0]?.isSelected != ''" [innerHTML]="item.student_answer[0]?.isSelected | sanitizeHtml" class="innerhtml-margin-clear"></div>
+                                        <div *ngIf="item.student_answer[0]?.isSelected == ''">Student Not Answered</div>
+                                    </div>
+                                </div>
+                                <div class="col-12" *ngIf="['55'].indexOf(item.question_type_id) > -1">
+                                    <div class="col-md-{{previousFeedBack.length == 1 ? '6' : previousFeedBack.length == 0 ? '12' : convertedText && convertedText != '' ? '5' : '10'}} my-3">
+                                        <h5 class="font-weight-bold">Your Answer:</h5>
+                                        <div *ngIf="item.student_answer[0]?.isSelected != ''" class="form-span feedback-card col-md-12 d-flex">
+                                            <span [innerHTML]="convertedText && convertedText != '' ? convertMarkdownToHtml(selectedPreviousStudentAnswer?.student_answer) : convertMarkdownToHtml(item.student_answer[0]?.isSelected, 'single')" class="innerhtml-margin-clear"></span>
+                                        </div>
+                                        <div *ngIf="item.student_answer[0]?.isSelected == ''" class="col-md-12 d-flex p-2">
+                                            <span class="form-span">You Have Not Answered</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-{{previousFeedBack.length == 1 ? '6' : '5'}} my-3" *ngIf="convertedText && convertedText != '' && previousFeedBack.length != 0">
+                                        <h5 *ngIf="selectedFeedBackIndex == previousFeedBack.length" class="font-weight-bold">Final Feedback<span *ngIf="selectedPreviousStudentAnswer?.created_date"> ({{selectedPreviousStudentAnswer?.created_date | customDateFormat}} | {{selectedPreviousStudentAnswer?.created_date | date:'h:mm a'}}) </span>: </h5>
+                                        <h5 *ngIf="selectedFeedBackIndex != previousFeedBack.length" class="font-weight-bold">Feedback For Version {{selectedFeedBackIndex}}<span *ngIf="selectedPreviousStudentAnswer?.created_date"> ({{selectedPreviousStudentAnswer?.created_date | customDateFormat}} | {{selectedPreviousStudentAnswer?.created_date | date:'h:mm a'}}) </span>: </h5>
+                                        <div class="feedback-card" style="height: 74vh" [innerHTML]="convertedText"></div>
+                                    </div>
+        
+                                    <div class="col-2 my-3" *ngIf="previousFeedBack.length > 1">
+                                        <div class="col-12 sidebar-widget">
+                                            <h5 class="font-weight-bold">Version History</h5>
+                                            <ul class="widget-post pt-15">
+                                                <li style="padding: 12px 0" *ngFor="let feedback of previousFeedBack; let i = index; let first = first" [ngClass]="{'active': selectedFeedBackIndex === previousFeedBack.length - i}"
+                                                    (click)="feedbackSelected(feedback)">
+                                                    <a *ngIf="first">Your Answer</a>
+                                                    <a *ngIf="!first" class="d-flex align-items-center justify-content-between">Version {{previousFeedBack.length - i}}
+                                                        <span class="badge" [ngClass]="{'badge-exceptional': getFeedbackLabel(feedback).label === 'Exceptional', 'badge-good': getFeedbackLabel(feedback).label === 'Good',
+                                                            'badge-improve': getFeedbackLabel(feedback).label === 'Improve'}">{{getFeedbackLabel(feedback).label}}</span></a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div *ngIf="item.question_type_id == 28" class="col-md-12">
+                                    <div class="col-md-12">
+                                        <div class="form-span">
+                                            <div *ngIf="item.student_answer[0].isSelected != ''" [innerHTML]="item.student_answer[0].isSelected | sanitizeHtml" class="innerhtml-margin-clear"></div>
+                                            <div *ngIf="item.student_answer[0].isSelected == ''" class="innerhtml-margin-clear">Student Not Answered</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div *ngIf="item.question_type_id == 40 || item.question_type_id == 41" class="col-md-12 d-flex mt-4">
+                                    <div class="col-md-12">
+                                        <div class="col-12 mt-0 d-flex justify-content-center">
+                                            <app-graph-component [editMode]="false"
+                                                                 [editPatchValue]="item.student_answer.length == 0 ? false : parseVal(item.student_answer[0].correctAnswer)"
+                                                                 [graphId]="'graphAnsweringY'+i"
+                                                                 [questionType]="item.question_type_id"></app-graph-component>
+                                        </div>
+                                        <div *ngIf="item.student_editor_answer != ''" class="col-md-12 mt-3">
+                                            <div class="form-span innerhtml-margin-clear">
+                                                <div [innerHTML]="item.student_editor_answer | sanitizeHtml"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div *ngIf="item.question_type_id == 24" class="col-12">
+                                    <div *ngFor="let sec of item.subQuestions; let j = index" class="mb-3">
+                                        <div class="col-12" *ngIf="sec.question_type_id == 1 || sec.question_type_id == 2">
+                                            <div [ngClass]="{'student-selected' :  option.isSelected === '' ? false : k == option.isSelected}"
+                                                 *ngFor="let option of sec.student_answer; let k = index" class="cursor overflow-auto row my-3 mx-0 p-2" style="max-height: 20rem">
+                                                <button class="btn-primary inner_button">{{((k+1) + 9).toString(36).toUpperCase()}}</button>
+                                                <div class="col-11 d-flex align-items-center pr-0 cfs">
+                                                    <span [innerHTML]="option.options | sanitizeHtml" class="remove-margin-bottom"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div *ngIf="sec.question_type_id == '5' || sec.question_type_id == '7'" class="col-md-12 px-0">
+                                            <div class="col-md-12 table-flexible">
+                                                <table class="table table-bordered text-center div-disable">
+                                                    <thead>
+                                                    <tr>
+                                                        <th>Questions</th>
+                                                        <th *ngFor="let list of sec.answer; let l=index" [innerHTML]="list | sanitizeHtml" class="remove-margin-bottom"></th>
+                                                    </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                    <tr *ngFor="let list of sec.student_answer; let k=index">
+                                                        <td [innerHTML]="list.options | sanitizeHtml" class="remove-margin-bottom"></td>
+                                                        <td *ngFor="let ans of sec.answer; let l=index">
+                                                            <input *ngIf="sec.question_type_id == '5'" [checked]="sec.student_answer[k].isSelected == '' ? false : sec.student_answer[k].isSelected == l.toString()" class="radio_animated" name="{{j}}choo{{i}}se{{k}}if" type="radio">
+                                                            <input *ngIf="sec.question_type_id == '7'" [checked]="splitMultiChoose(sec.student_answer[k].isSelected, l)" type="checkbox">
+                                                        </td>
+                                                    </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+<!--                                            <div class="col-md-12 table-flexible">-->
+<!--                                                <div class="card w-100 mt-2" style="border: 1px solid #e8eaed">-->
+<!--                                                    <div class="card-body">-->
+<!--                                                        <label><b>Correct Answer</b></label>-->
+<!--                                                        <table class="table table-bordered text-center div-disable">-->
+<!--                                                            <thead>-->
+<!--                                                            <tr>-->
+<!--                                                                <th>Questions</th>-->
+<!--                                                                <th *ngFor="let list of sec.answer; let l=index" [innerHTML]="list | sanitizeHtml" class="remove-margin-bottom"></th>-->
+<!--                                                            </tr>-->
+<!--                                                            </thead>-->
+<!--                                                            <tbody>-->
+<!--                                                            <tr *ngFor="let list of sec.student_answer; let k=index">-->
+<!--                                                                <td [innerHTML]="list.options" class="remove-margin-bottom"></td>-->
+<!--                                                                <td *ngFor="let ans of sec.answer; let l=index">-->
+<!--                                                                    <input *ngIf="sec.question_type_id == '5'" [checked]="sec.heading_option[k].correctActive == l" class="radio_animated" name="{{i}}passage{{j}}cho{{k}}ose{{l}}" type="radio">-->
+<!--                                                                    <input *ngIf="sec.question_type_id == '7'" id="chooseMultipass1{{i}}{{j}}{{k}}{{l}}" type="checkbox">-->
+<!--                                                                </td>-->
+<!--                                                            </tr>-->
+<!--                                                            </tbody>-->
+<!--                                                        </table>-->
+<!--                                                    </div>-->
+<!--                                                </div>-->
+<!--                                            </div>-->
+                                        </div>
+                                        <div *ngIf="sec.question_type_id == '10'" class="col-md-12 px-0">
+                                            <div class="col-md-12 px-0">
+                                                <!-- <label><b>Your Answer</b></label> -->
+                                                <div *ngFor="let data of sec.student_answer;let k = index" class="col-md-12 mt-3 mb-3">
+                                                    <label>Input - {{k+1}}</label>
+                                                    <div class="form-span">
+                                                        <div *ngIf="data.isSelected != ''" [innerHTML]="data.isSelected | sanitizeHtml" class="innerhtml-margin-clear"></div>
+                                                        <div *ngIf="data.isSelected == ''">Student Not Answered</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+<!--                                            <div class="col-md-12 px-0">-->
+<!--                                                <div class="card w-100 mt-2" style="border: 1px solid #e8eaed">-->
+<!--                                                    <div class="card-body">-->
+<!--                                                        <label><b>Correct Answer</b></label>-->
+<!--                                                        <div *ngFor="let data of sec.options; let k = index" class="col-md-12 mt-3 mb-3">-->
+<!--                                                            <label>Input - {{k+1}}</label>-->
+<!--                                                            <div class="form-span">-->
+<!--                                                                <div [innerHTML]="data.options[0].value | sanitizeHtml" class="innerhtml-margin-clear"></div>-->
+<!--                                                            </div>-->
+<!--                                                        </div>-->
+<!--                                                    </div>-->
+<!--                                                </div>-->
+<!--                                            </div>-->
+                                        </div>
+                                        <div *ngIf="sec.question_type_id == '20'" class="col-md-12 px-0">
+                                            <div class="col-md-12">
+                                                <!-- <label><b>Your Answer</b></label> -->
+                                                <div class="form-span">
+                                                    <div *ngIf="sec.student_answer[0].isSelected != ''" [innerHTML]="sec.student_answer[0].isSelected | sanitizeHtml" class="innerhtml-margin-clear"></div>
+                                                    <div *ngIf="sec.student_answer[0].isSelected == ''">Student Not Answered</div>
+                                                </div>
+                                            </div>
+<!--                                            <div class="col-md-12">-->
+<!--                                                <div class="card w-100 mt-2" style="border: 1px solid #e8eaed">-->
+<!--                                                    <div class="card-body">-->
+<!--                                                        <div *ngFor="let answer of sec.answer;let i = index">-->
+<!--                                                            <label><b>Correct Answer {{i + 1}}</b></label>-->
+<!--                                                            <div class="form-span mb-2">-->
+<!--                                                                <div [innerHTML]="answer.correctAnswer | sanitizeHtml" class="innerhtml-margin-clear"></div>-->
+<!--                                                            </div>-->
+<!--                                                        </div>-->
+<!--                                                    </div>-->
+<!--                                                </div>-->
+<!--                                            </div>-->
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-12">
+                                    <div class="card w-100 mt-2" style="border: 1px solid #e8eaed">
+                                        <div class="card-body">
+                                            <div class="col-md-12 px-0" *ngIf="['1', '2'].includes(item.question_type_id)">
+                                                <label class="mb-0"><strong>Correct Answer</strong></label>
+                                                <div [ngClass]="{'correct_ans-selected' : option.correctAnswer != ''}"
+                                                     *ngFor="let option of item.answer; let k = index" style="max-height: 20rem"
+                                                     class="{{option.correctAnswer != '' ? 'my-3 mx-2 p-2 cursor overflow-auto row' : ''}}">
+                                                    <button *ngIf="option.correctAnswer != ''" class="btn-primary inner_button">{{((k+1) + 9).toString(36).toUpperCase()}}</button>
+                                                    <div class="col-11 cfs d-flex align-items-center pr-0" *ngIf="option.correctAnswer != ''">
+                                                        <span [innerHTML]="item.options[k].options | sanitizeHtml" class="remove-margin-bottom"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-12 px-0" *ngIf="item.question_type_id == 5 || item.question_type_id == 7">
+                                                <label class="mb-0"><strong>Correct Answer</strong></label>
+                                                <table class="table table-bordered text-center div-disable mt-3">
+                                                    <thead>
+                                                    <tr>
+                                                        <th>Questions</th>
+                                                        <th *ngFor="let list of item.answer; let k=index" [innerHTML]="list | sanitizeHtml" class="remove-margin-bottom"></th>
+                                                    </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                    <tr *ngFor="let list of item.student_answer; let j=index">
+                                                        <td [innerHTML]="list.options | sanitizeHtml" class="remove-margin-bottom"></td>
+                                                        <td *ngFor="let ans of item.answer; let k=index">
+                                                            <input *ngIf="item.question_type_id == '5'" [checked]="item.heading_option[j].correctActive === k" class="radio_animated" name="{{i}}choosesingle{{j}}corect" type="radio">
+                                                            <input *ngIf="item.question_type_id == '7'" [checked]="item.heading_option[j].correctActive === k" type="checkbox">
+                                                        </td>
+                                                    </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                            <div class="col-md-12 px-0" *ngIf="item.question_type_id == 9">
+                                                <label class="mb-0"><strong>Correct Answer</strong></label>
+                                                <div class="row">
+                                                    <div *ngFor="let data of item.answer; let j = index" class="col-md-12 mt-3 mb-3">
+                                                        <label>Dropdown - {{j+1}}</label>
+                                                        <div class="col-md-11">
+                                                            <div class="col-md-12 bg-white innerhtml-margin-clear p-2 dropdown-border dropdown-toggle d-flex justify-content-between" data-toggle="dropdown" id="{{i}}dropdownCorrect{{j}}"></div>
+                                                            <div class="col-md-11 dropdown-menu">
+                                                                <span *ngFor="let option of data.options; let k = index"
+                                                                      [innerHTML]="option.listOption | sanitizeHtml"
+                                                                      class="dropdown-item dropdown-link innerhtml-margin-clear"
+                                                                      style="overflow: scroll; overflow-y: hidden"></span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-12" *ngIf="item.question_type_id == 10">
+                                                <label><b>Correct Answer</b></label>
+                                                <div *ngFor="let data of item.options; let j = index" class="col-md-12 mt-3 mb-3">
+                                                    <label>Input - {{j+1}}</label>
+                                                    <div class="form-span">
+                                                        <div [innerHTML]="data.options[0].value | sanitizeHtml"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-12" *ngIf="item.question_type_id == 16">
+                                                <label><b>Correct Answer</b></label>
+                                                <div class="col-12">
+                                                    <div *ngFor="let list of item.answer; let k=index" class="input-group mb-3 mt-3 inputMenu">
+                                                        <div class="input-group mb-1 inputMenu">
+                                                            <div class="input-group-prepend">
+                                                        <span class="input-group-text">
+                                                            <img class="img-fluid" src="assets/images/pdf-icons/equal@2x.png">
+                                                        </span>
+                                                            </div>
+                                                            <h4 [innerHTML]="list.correctAnswer | sanitizeHtml" class="form-control mb-0 pt-4 pb-5 overflow-scroll"></h4>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-12" *ngIf="item.question_type_id == 20">
+                                                <div *ngFor="let answer of item.answer;let i = index">
+                                                    <label><b>Correct Answer {{i + 1}}</b></label>
+                                                    <div class="form-span mb-2">
+                                                        <div [innerHTML]="answer.correctAnswer | sanitizeHtml" class="innerhtml-margin-clear"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-12" *ngIf="['55'].indexOf(item.question_type_id) > -1">
+                                                <div class="col-md-12" *ngIf="item.answer[0]?.correctAnswer.trimStart() != ''">
+                                                    <label><b>Sample Essay</b></label>
+                                                    <div class="form-span feedback-card">
+                                                        <div [innerHTML]="convertMarkdownToHtml(item.answer[0]?.correctAnswer, 'single')" class="innerhtml-margin-clear"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div *ngIf="item.question_type_id == 24" class="col-md-12 px-0">
+                                                <div *ngFor="let sec of item.subQuestions; let j = index" class="mb-3">
+
+                                                    <div class="col-md-12 px-0" *ngIf="sec.question_type_id == 1 || sec.question_type_id == 2">
+                                                        <label class="mb-0"><strong>Correct Answer</strong></label>
+                                                        <div [ngClass]="{'correct_ans-selected' : option.correctAnswer !== ''}"
+                                                             *ngFor="let option of sec.answer; let k = index"
+                                                             class="{{option.correctAnswer !== '' ? 'cursor overflow-auto row my-3 mx-0 p-2' : ''}}" style="max-height: 20rem">
+                                                            <button *ngIf="option.correctAnswer != ''" class="btn-primary inner_button">{{((k+1) + 9).toString(36).toUpperCase()}}</button>
+                                                            <div *ngIf="option.correctAnswer !== ''" class="col-11 cfs d-flex align-items-center pr-0">
+                                                                <span [innerHTML]="sec.options[k].options | sanitizeHtml" class="remove-margin-bottom"></span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="col-md-12 px-0 py-2 table-flexible"
+                                                         *ngIf="sec.question_type_id == '5' || sec.question_type_id == '7'">
+                                                        <label><strong>Correct Answer :</strong></label>
+                                                        <table class="table table-bordered text-center div-disable">
+                                                            <thead>
+                                                            <tr>
+                                                                <th>Questions</th>
+                                                                <th *ngFor="let list of sec.answer; let k=index"
+                                                                    [innerHTML]="list | sanitizeHtml"
+                                                                    class="remove-margin-bottom"></th>
+                                                            </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                            <tr *ngFor="let list of sec.given_answer; let j=index">
+                                                                <td [innerHTML]="list.options | sanitizeHtml"
+                                                                    class="remove-margin-bottom"></td>
+                                                                <td *ngFor="let ans of sec.answer; let k=index">
+                                                                    <input *ngIf="sec.question_type_id == '5'"
+                                                                           [checked]="sec.heading_option[j].correctActive === k"
+                                                                           class="radio_animated"
+                                                                           name="{{i}}choosesingleCorrect{{j}}corect"
+                                                                           type="radio">
+                                                                    <input *ngIf="sec.question_type_id == '7'"
+                                                                           [checked]="patchCorrectMultiChoiceAnswer(sec.heading_option, k , j)"
+                                                                           id="chooseMultipass{{i}}{{j}}{{k}}" type="checkbox">
+                                                                </td>
+                                                            </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+
+                                                    <div class="col-md-12 px-0" *ngIf="sec.question_type_id == '10'">
+                                                        <label><b>Correct Answer</b></label>
+                                                        <div *ngFor="let data of sec.options; let j = index"
+                                                             class="col-md-6 mt-3 mb-3">
+                                                            <label>Input - {{j + 1}}</label>
+                                                            <div class="form-span">
+                                                                <div [innerHTML]="data.options[0].value | sanitizeHtml"></div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="col-md-12 px-0" *ngIf="sec.question_type_id == '20'">
+                                                        <label><b>Correct Answer</b></label>
+                                                        <div *ngFor="let data of sec.answer; let j = index"
+                                                             class="col-md-12 mt-3 mb-3">
+                                                            <label>Answer - {{j + 1}}</label>
+                                                            <div class="form-span">
+                                                                <div [innerHTML]="data.correctAnswer | sanitizeHtml"></div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                </div>
+                                            </div>
+                                            <div *ngIf="item.question_type_id == 28" class="col-md-12">
+                                                <div class="col-md-12">
+                                                    <label><b>Correct Answer</b></label>
+                                                    <div class="form-span">
+                                                        <div [innerHTML]="item.answer[0].correctAnswer | sanitizeHtml" class="innerhtml-margin-clear"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div *ngIf="item.question_type_id == 40 || item.question_type_id == 41" class="col-md-12 d-flex mt-4">
+                                                <div class="col-md-12">
+                                                    <label><b>Correct Answer</b></label>
+                                                    <div class="col-12 mt-0 d-flex justify-content-center">
+                                                        <app-graph-component [editMode]="false"
+                                                                             [editPatchValue]="item.answer.length == 0 ? false : parseVal(item.answer[0].correctAnswer)"
+                                                                             [graphId]="'graphAnsweringR'+i"
+                                                                             [questionType]="item.question_type_id"></app-graph-component>
+                                                    </div>
+                                                    <div  *ngIf="item.question_editor_answer != ''" class="col-md-12 mt-3">
+                                                        <div class="form-span innerhtml-margin-clear">
+                                                            <div [innerHTML]="item.question_editor_answer | sanitizeHtml"></div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div *ngIf="item.question_type_id == '24'" class="col-md-12 px-0">
+                                    <div *ngFor="let sec of item.subQuestions; let j = index">
+                                        <div *ngIf="sec.student_feedback != '' || sec.student_roughdata != ''" class="col-md-12 mt-2">
+                                            <div class="row mt-3 px-3">
+                                                <div class="col-md-{{sec.student_roughdata != '' ? '6' : '12'}} px-0" id="studentFeedback{{i}}" *ngIf="sec.student_feedback != ''">
+                                                    <h5 class="font-weight-bold">Your Feedback:</h5>
+                                                    <div class="feedback-card col-md-12">{{sec.student_feedback}}</div>
+                                                </div>
+                                                <div *ngIf="sec.student_roughdata != ''" class="col-md-{{sec.student_feedback != '' ? '6' : '12'}} px-0" id="studentRoughData{{i}}">
+                                                    <h5 class="font-weight-bold ml-{{sec.student_feedback == '' ? '0' : '3'}}">Your Workspace</h5>
+                                                    <div [innerHTML]="sec.student_roughdata | sanitizeHtml" class="feedback-card innerhtml-margin-clear col-md-12 ml-{{sec.student_feedback == '' ? '0' : '3'}}"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div *ngIf="sec.explanation != ''" class="col-md-12 mt-2">
+                                            <div class="col-md-12 px-0">
+                                                <label class="font-weight-bold">Explanation: </label>
+                                                <div class="explanation innerhtml-margin-clear" [innerHTML]="sec.explanation | sanitizeHtml"></div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-12 mt-2" *ngIf="sec.resource != ''">
+                                            <label class="font-weight-bold">Resource: </label>
+                                            <div class="explanation innerhtml-margin-clear" [innerHTML]="sec.resource | sanitizeHtml"></div>
+                                        </div>
+
+                                        <div class="col-md-12 mt-2" *ngIf="sec.feedback != ''">
+                                            <label>Feedback</label>
+                                            <textarea [value]="sec.feedback" class="form-control" cols="30" placeholder="Please Enter the Feedback" readonly rows="2"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div *ngIf="(item.student_feedback != '' || item.student_roughdata != '') && item.question_type_id != '24'" class="col-md-12 mb-3">
+                                    <div class="row mt-3 px-3">
+                                        <div class="col-md-{{item.student_roughdata != '' ? '6' : '12'}} px-0" id="studentFeedback{{i}}" *ngIf="item.student_feedback != ''">
+                                            <h5 class="font-weight-bold">Your Feedback:</h5>
+                                            <div class="feedback-card col-md-12">{{item.student_feedback}}</div>
+                                        </div>
+                                        <div *ngIf="item.student_roughdata != ''" class="col-md-{{item.question_type_id  == '55' ? '12' : item.student_feedback != '' ? '6' : '12'}} px-0" id="studentRoughData{{i}}">
+                                            <h5 class="font-weight-bold ml-{{item.question_type_id == '55' || item.student_feedback == '' ? '0' : '3'}}">{{item.question_type_id == '55' ? 'Cited Source' : 'Your Workspace'}}:</h5>
+                                            <div [innerHTML]="item.student_roughdata | sanitizeHtml" class="feedback-card innerhtml-margin-clear col-md-12 ml-{{item.question_type_id == '55' || item.student_feedback == '' ? '0' : '3'}}"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12" *ngIf="item.question_type_id != 24 && (item.explanation != '' || item.resource != '')">
+                                    <div class="col-12 px-0" *ngIf="item.explanation != ''">
+                                        <label class="mb-0"><strong>Explanation</strong></label>
+                                        <div class="col-12 mt-2">
+                                            <span [innerHTML]="item.explanation" class="remove-margin-bottom"></span>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 px-0 mt-3" *ngIf="item.resource != ''">
+                                        <label class="mb-0"><strong>Resource</strong></label>
+                                        <div class="col-12 mt-2">
+                                            <span [innerHTML]="item.resource" class="remove-margin-bottom"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div *ngIf="item.question_type_id == '24'">
+                                    <div *ngFor="let sec of item.subQuestions; let j = index" class="mb-3">
+                                        <div class="col-md-12" *ngIf="(sec.is_correct == 'true' || sec.is_correct == 'false') && sec.explanation != ''">
+                                            <label class="mb-0"><strong>Explanation</strong></label>
+                                            <div class="col-12 mt-2">
+                                                <span [innerHTML]="sec.explanation | sanitizeHtml" class="remove-margin-bottom"></span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-12 mt-3" *ngIf="(sec.is_correct == 'true' || sec.is_correct == 'false') && sec.resource != ''">
+                                            <label class="mb-0"><strong>Resource</strong></label>
+                                            <div class="col-12 mt-2">
+                                                <span [innerHTML]="sec.resource | sanitizeHtml" class="remove-margin-bottom"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

@@ -1,0 +1,28 @@
+<div class="container mt-2">
+    <div class="row">
+        <div class="col-9">
+            <h2 class="w-100" style="font-size:30px;">{{careerData.title}} &nbsp;<span class="badge badge-secondary cursor" title="Apply Job Count" *ngIf="careerData.no_of_applicants != '0'" (click)="viewMore(careerData)">{{careerData.no_of_applicants}}</span></h2>
+            <p style="color: black; cursor: pointer"><strong title="Department"></strong>{{careerData.department}}<br>
+                <span title="Address1" >{{careerData.address1}}</span>&nbsp; &nbsp;
+                <span title="Address2" >{{careerData.address2}}</span></p>
+        </div>
+        <div class="col-3 text-right">
+            <button type="button"  class="btn btn-outline-primary btn-sm" [routerLink]="'/careers/careers-list'">Back</button>
+        </div>
+    </div>
+<div class="text-left mt-5">
+    <h3>Description</h3>
+    <p class="mb-3" style="color: black; font-size: 15px;" [innerText]="careerData.description">
+    </p>
+</div>
+<div class="text-left mt-5">
+    <h3>Basic Qualification</h3>
+    <p style="color: black;font-size: 15px;" class="mb-0" [innerText]="careerData.basic_qualification">
+    </p>
+</div>
+<div class="text-left mt-5">
+    <h3>Preferred Qualification</h3>
+    <p style="color: black;font-size: 15px;" class="mb-0" [innerText]="careerData.prefered_qualification">
+    </p>
+</div>
+</div>

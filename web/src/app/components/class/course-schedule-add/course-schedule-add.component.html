@@ -1,0 +1,502 @@
+<section>
+    <div class="container-fluid card">
+        <div class="card-header">
+            <div class="row">
+                <div class="col-6 col-md-6">
+                    <h5 class="text-capitalize">{{type == 'add' ? 'Add' : 'Edit'}} Class</h5>
+                </div>
+                <div class="col-6 col-md-6">
+            <div class="pull-right">
+                <button type="button" (click)="addCourseScheduleDetails()" class="btn btn-outline-primary mr-2">Save as draft</button>
+                <button type="button" (click)="submitClass()" class="btn btn-primary">Save</button>
+            </div>
+                </div>
+            </div>
+            <label class="text-muted">All fields marked with <span class="text-danger">*</span> are required</label>
+        </div>
+      <div class="card-body">
+        <form [formGroup]="courseScheduleDetails">
+          <div class="form-group row mt-1">
+            <label class="col-sm-2 col-form-label"><span style="visibility: hidden" class="mr-1 text-danger">*</span>Course Name</label>
+            <div class="col-sm-10">
+              <ng-select appendTo="body" formControlName="course_id"
+                        [items]="courseListData"
+                         bindLabel="course_name"
+                         bindValue="course_id"
+                         placeholder="Select course"
+                         typeToSearchText=""
+                         [clearable]="false">
+              </ng-select>
+            </div>
+          </div>
+          <div class="form-group row mt-2">
+            <label for="inputCourse" class="col-sm-2 col-form-label"><span class="mr-1 text-danger">*</span>Schedule Title</label>
+            <div class="col-sm-10">
+              <input class="form-control" placeholder="Schedule Title" formControlName="schedule_title">
+              <em class="error" *ngIf="!courseScheduleDetails.get('schedule_title').valid && (courseScheduleDetails.get('schedule_title').dirty
+               || courseScheduleDetails.get('schedule_title').touched)">Schedule Title is required</em>
+            </div>
+          </div>
+          <div class="form-group row mt-1">
+            <label class="col-sm-2 col-form-label">
+                <span class="mr-1 text-danger">*</span>Registration Start Date</label>
+            <div class="col-sm-10">
+              <div class="input-group">
+                <input class="form-control" name="registration_start_date" placeholder="mm-dd-yyyy" (keypress)="$event.preventDefault()" (click)="dp.toggleCalendar()"
+                       formControlName="registration_start_date" angular-mydatepicker #dp="angular-mydatepicker"
+                       (dateChanged)="onDateChanged($event, 'registration_end_date')" [options]="myDpOptions"/>
+                <div class="input-group-append">
+                  <button type="button" class="btn btn-primary" (click)="dp.toggleCalendar()">
+                    <i class="fa fa-calendar-o"></i>
+                  </button>
+                </div>
+              </div>
+                <em class="error" *ngIf="!courseScheduleDetails.get('registration_start_date').valid && (courseScheduleDetails.get('registration_start_date').dirty
+               || courseScheduleDetails.get('registration_start_date').touched)">Registration State Date is required</em>
+            </div>
+          </div>
+          <div class="form-group row mt-1">
+            <label class="col-sm-2 col-form-label">
+                <span class="mr-1 text-danger">*</span>Registration End Date</label>
+            <div class="col-sm-10">
+              <div class="input-group">
+                <input class="form-control" name="registration_end_date" placeholder="mm-dd-yyyy" (keypress)="$event.preventDefault()" (click)="dp1.toggleCalendar()"
+                       formControlName="registration_end_date" angular-mydatepicker #dp1="angular-mydatepicker" [options]="myDpOptions1"/>
+                <div class="input-group-append">
+                  <button type="button" class="btn btn-primary" (click)="dp1.toggleCalendar()">
+                    <i class="fa fa-calendar-o"></i>
+                  </button>
+                </div>
+              </div>
+                <em class="error" *ngIf="!courseScheduleDetails.get('registration_end_date').valid && (courseScheduleDetails.get('registration_end_date').dirty
+               || courseScheduleDetails.get('registration_end_date').touched)">Registration End Date is required</em>
+            </div>
+          </div>
+          <div class="form-group row mt-1">
+            <label class="col-sm-2 col-form-label"><span class="mr-1 text-danger">*</span>Course Type</label>
+            <div class="col-sm-10">
+              <div class="main-content">
+                <select class="form-control" formControlName="course_type">
+                  <option value="" selected disabled hidden>Select Course Type</option>
+                  <option value="1">Online</option>
+                  <option value="2">In-Person</option>
+                </select>
+              </div>
+                <em class="error" *ngIf="!courseScheduleDetails.get('course_type').valid && (courseScheduleDetails.get('course_type').dirty
+               || courseScheduleDetails.get('course_type').touched)">Course Type is required</em>
+            </div>
+          </div>
+          <div class="form-group row mt-2">
+            <label for="inputCourse" class="col-sm-2 col-form-label"><span class="mr-1 text-danger">*</span>Amount</label>
+            <div class="col-sm-10">
+                <div class="input-group">
+                    <div class="input-group-append">
+                        <button style="padding: 6px 18px" type="button" class="btn btn-primary">$</button>
+                    </div>
+                    <input class="form-control" id="inputAmount" placeholder="Amount" formControlName="amount" (input)="calculateAmount()" (keypress)="numberValidation($event)">
+                </div>
+                <em class="error" *ngIf="!courseScheduleDetails.get('amount').valid && (courseScheduleDetails.get('amount').dirty
+                    || courseScheduleDetails.get('amount').touched)">Amount is required</em>
+            </div>
+          </div>
+          <div class="form-group row mt-2">
+            <label for="inputCourse" class="col-sm-2 col-form-label"><span class="mr-1 text-danger">*</span>Discount Amount</label>
+            <div class="col-sm-10">
+                <div class="input-group">
+                    <div class="input-group-append">
+                        <button style="padding: 6px 18px" type="button" class="btn btn-primary">$</button>
+                    </div>
+                    <input class="form-control" id="inputDiscount" placeholder="Discount Amount" formControlName="discount" (input)="calculateAmount()" (keypress)="numberValidation($event)">
+                </div>
+                <em class="error" *ngIf="!courseScheduleDetails.get('discount').valid && (courseScheduleDetails.get('discount').dirty
+                    || courseScheduleDetails.get('discount').touched)">Discount Amount is required</em>
+            </div>
+          </div>
+          <div class="form-group row mt-2">
+            <label for="inputCourse" class="col-sm-2 col-form-label"><span class="mr-1 text-danger">*</span>Actual Amount</label>
+            <div class="col-sm-10">
+                <div class="input-group">
+                    <div class="input-group-append">
+                        <button style="padding: 6px 18px" type="button" class="btn btn-primary">$</button>
+                    </div>
+                    <input class="form-control" id="inputCourse" placeholder="Actual Amount" formControlName="actual_amount" readonly>
+                    <em class="error" *ngIf="!courseScheduleDetails.get('actual_amount').valid && (courseScheduleDetails.get('actual_amount').dirty
+                        || courseScheduleDetails.get('actual_amount').touched)">Actual Amount is required</em>
+                </div>
+            </div>
+          </div>
+          <div class="form-group row mt-2">
+            <label for="inputSlot" class="col-sm-2 col-form-label"><span class="mr-1 text-danger">*</span>Slots Available</label>
+            <div class="col-sm-10">
+              <input maxlength="4" class="form-control" id="inputSlot" placeholder="Slots Available" formControlName="slot_available" (keypress)="numberValidation($event)">
+              <em class="error" *ngIf="!courseScheduleDetails.get('slot_available').valid && (courseScheduleDetails.get('slot_available').dirty
+                       || courseScheduleDetails.get('slot_available').touched)">Slot Available is required</em>
+            </div>
+          </div>
+          <div class="form-group row mt-1">
+            <label  class="col-sm-2 col-form-label"><span class="mr-1 text-danger">*</span>Status</label>
+            <div class="col-sm-10">
+              <div class="main-content">
+                <select class="form-control" formControlName="status">
+                  <option value="1">Active</option>
+                  <option value="2">Suspended</option>
+                </select>
+              </div>
+              <em class="error" *ngIf="!courseScheduleDetails.get('status').valid && (courseScheduleDetails.get('status').dirty
+                       || courseScheduleDetails.get('status').touched)">Status is required</em>
+            </div>
+          </div>
+          <div class="form-group row mt-1">
+            <label class="col-sm-2 col-form-label"><span class="mr-1 text-danger">*</span>Payment Type</label>
+            <div class="col-sm-{{courseScheduleDetails.controls.payment_type.value == 'R' ? '4' : '10'}}">
+              <div class="main-content">
+                <select class="form-control" formControlName="payment_type" (change)="checkSelectedValue()">
+                  <option value="" selected disabled hidden>Select Payment Type</option>
+                  <option value="F">Fixed</option>
+                  <option value="R">Recurring</option>
+                </select>
+              </div>
+              <em class="error" *ngIf="!courseScheduleDetails.get('payment_type').valid && (courseScheduleDetails.get('payment_type').dirty
+                       || courseScheduleDetails.get('payment_type').touched)">Payment Type is required</em>
+            </div>
+            <div class="col-sm-6 pr-0 row" *ngIf="courseScheduleDetails.controls.payment_type.value == 'R'">
+                <label class="col-sm-4 col-form-label"><span class="mr-1 text-danger">*</span>Recurring Type</label>
+                <div class="col-sm-8 main-content pr-0">
+                    <select class="form-control" formControlName="payment_recurring">
+                        <option value="" selected disabled hidden>Select Recurring Type</option>
+                        <option value="W">Weekly</option>
+                        <option value="M">Monthly</option>
+                        <option value="Q">Quarterly</option>
+                        <option value="H">Half Yearly</option>
+                        <option value="A">Annual</option>
+                    </select>
+                    <em class="error" *ngIf="!courseScheduleDetails.get('payment_recurring').valid && (courseScheduleDetails.get('payment_recurring').dirty
+                       || courseScheduleDetails.get('payment_recurring').touched)">Recurring Type is required</em>
+                </div>
+            </div>
+          </div>
+          <div class="row d-flex justify-content-between list-title">
+            <div class="col-12 pt-2 mb-1">
+                <h4 class="m-0 my-2 color-primary">Schedule</h4>
+                <hr class="bg-primary">
+            </div>
+          </div>
+          <div class="row">
+            <div class="form-group col-4 mt-1 mb-0">
+              <label class="col-form-label">Start Date</label>
+              <div class="form-group">
+                <div class="input-group">
+                  <input class="form-control" name="start_date" placeholder="mm-dd-yyyy" (keypress)="$event.preventDefault()" (click)="dp2.toggleCalendar()"
+                         formControlName="start_date" angular-mydatepicker #dp2="angular-mydatepicker"
+                         (dateChanged)="onDateChanged($event, 'end_date')" [options]="myDpOptions2"/>
+                  <div class="input-group-append">
+                    <button type="button" class="btn btn-primary" (click)="dp2.toggleCalendar()">
+                      <i class="fa fa-calendar-o"></i>
+                    </button>
+                  </div>
+  
+                </div>
+              </div>
+            </div>
+            <div class="form-group col-4 mt-1 mb-0">
+              <label class="col-form-label">End Date</label>
+              <div class="form-group">
+                <div class="input-group">
+                  <input class="form-control" name="end_date" placeholder="mm-dd-yyyy" (keypress)="$event.preventDefault()" (click)="dp3.toggleCalendar()"
+                         formControlName="end_date" angular-mydatepicker #dp3="angular-mydatepicker" [options]="myDpOptions3"/>
+                  <div class="input-group-append">
+                    <button type="button" class="btn btn-primary" (click)="dp3.toggleCalendar()">
+                      <i class="fa fa-calendar-o"></i>
+                    </button>
+                  </div>
+  
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="row mt-2">
+            <div class="col-12">
+                <h5 class="m-0 color-primary">Monday</h5>
+            </div>
+            <div class="col-12">
+                <div class="row d-flex flex-row p-2">
+                    <div class="ml-1 d-flex align-items-center" *ngIf="mondayTimings.length != 0">
+  
+                        <span class="badge badge-pill badge-grey-selected ml-2" *ngFor="let data of mondayTimings;let i = index;">
+                        <a><span class="slot-title">{{data.teacher_name}}</span> : <span class="slot-time-title">{{data.slotstarttime}}</span> - <span class="slot-time-title">{{data.slotendtime}}</span>  &nbsp;</a>
+                        <a class="rounded-circle" (click)="deleteTime('monday', i, data)">
+                            <i class="fa fa-close rounded-circle color-primary" aria-hidden="true"></i></a>
+                    </span>
+                        <span class="ml-2"><button type="button"  class="badge-btn cursor" (click)="addSlotDetails(1)">
+                            <i class="fa fa-plus" aria-hidden="true"></i></button>
+                        </span>
+                    </div>
+                    <div class="ml-1 d-flex align-items-center cursor" *ngIf="mondayTimings.length == 0">
+                      <span class="badge badge-pill badge-grey-selected d-flex align-items-center ml-2" (click)="addSlotDetails(1)">
+                        <a>Start Time - End Time &nbsp;</a>
+                      </span>
+                      <span class="ml-2"><button type="button"  class="badge-btn" (click)="addSlotDetails(1)">
+                        <i class="fa fa-plus" aria-hidden="true"></i></button>
+                      </span>
+                    </div>
+                </div>
+            </div>
+          </div>
+          <div class="row mt-2">
+            <div class="col-12">
+                <h5 class="m-0 color-primary">Tuesday</h5>
+            </div>
+            <div class="col-12">
+                <div class="row d-flex flex-row p-2">
+                    <div class="ml-1 d-flex align-items-center" *ngIf="tuesdayTimings.length != 0">
+                        <span class="badge badge-pill badge-grey-selected ml-2" *ngFor="let data of tuesdayTimings;let i = index;">
+                          <a><span class="slot-title">{{data.teacher_name}}</span> : <span class="slot-time-title">{{data.slotstarttime}}</span> - <span class="slot-time-title">{{data.slotendtime}}</span>  &nbsp;</a>
+                          <a class="rounded-circle" (click)="deleteTime('tuesday', i, data)">
+                            <i class="fa fa-close rounded-circle color-primary" aria-hidden="true"></i></a>
+                            <!-- <a class="rounded-circle ml-2" title="Mark Attendance">
+                                <i class="fa fa-street-view"  aria-hidden="true"></i></a> -->
+  
+                    </span>
+                        <span class="ml-2"><button type="button"  class="badge-btn cursor" (click)="addSlotDetails(2)">
+                            <i class="fa fa-plus" aria-hidden="true"></i></button>
+                        </span>
+                    </div>
+                    <div class="ml-1 d-flex align-items-center cursor" *ngIf="tuesdayTimings.length == 0">
+                      <span class="badge badge-pill badge-grey-selected d-flex align-items-center ml-2" (click)="addSlotDetails(2)">
+                          <a>Start Time - End Time &nbsp;</a>
+                      </span>
+                      <span class="ml-2"><button type="button"  class="badge-btn" (click)="addSlotDetails(2)">
+                          <i class="fa fa-plus" aria-hidden="true"></i></button>
+                      </span>
+                    </div>
+                </div>
+            </div>
+          </div>
+          <div class="row mt-2">
+            <div class="col-12">
+                <h5 class="m-0 color-primary">Wednesday</h5>
+            </div>
+            <div class="col-12">
+                <div class="row d-flex flex-row p-2">
+                    <div class="ml-1 d-flex align-items-center" *ngIf="wednesDayTimingsday.length != 0">
+  
+                        <span class="badge badge-pill badge-grey-selected ml-2" *ngFor="let data of wednesDayTimingsday;let i = index;">
+                        <a><span class="slot-title">{{data.teacher_name}}</span> : <span class="slot-time-title">{{data.slotstarttime}}</span> - <span class="slot-time-title">{{data.slotendtime}}</span>  &nbsp;</a>
+                        <a class="rounded-circle" (click)="deleteTime('wednesday', i, data)">
+                            <i class="fa fa-close rounded-circle color-primary" aria-hidden="true"></i></a>
+                            <!-- <a class="rounded-circle ml-2" title="Mark Attendance">
+                                <i class="fa fa-street-view"  aria-hidden="true"></i></a> -->
+  
+                    </span>
+                        <span class="ml-2"><button type="button"  class="badge-btn cursor" (click)="addSlotDetails(3)">
+                            <i class="fa fa-plus" aria-hidden="true"></i></button>
+                        </span>
+                    </div>
+                    <div class="ml-1 d-flex align-items-center cursor" *ngIf="wednesDayTimingsday.length == 0">
+                      <span class="badge badge-pill badge-grey-selected d-flex align-items-center ml-2" (click)="addSlotDetails(3)">
+                          <a>Start Time - End Time &nbsp;</a>
+                      </span>
+                      <span class="ml-2"><button type="button"  class="badge-btn" (click)="addSlotDetails(3)">
+                          <i class="fa fa-plus" aria-hidden="true"></i></button>
+                      </span>
+                    </div>
+                </div>
+            </div>
+          </div>
+          <div class="row mt-2">
+            <div class="col-12">
+                <h5 class="m-0 color-primary">Thursday</h5>
+            </div>
+            <div class="col-12">
+                <div class="row d-flex flex-row p-2">
+                    <div class="ml-1 d-flex align-items-center" *ngIf="thursdayTimingsday.length != 0">
+  
+                        <span class="badge badge-pill badge-grey-selected ml-2" *ngFor="let data of thursdayTimingsday;let i = index;">
+                        <a><span class="slot-title">{{data.teacher_name}}</span> : <span class="slot-time-title">{{data.slotstarttime}}</span> - <span class="slot-time-title">{{data.slotendtime}}</span>  &nbsp;</a>
+                        <a class="rounded-circle" (click)="deleteTime('thursday', i, data)">
+                            <i class="fa fa-close rounded-circle color-primary" aria-hidden="true"></i></a>
+                            <!-- <a class="rounded-circle ml-2" title="Mark Attendance">
+                                <i class="fa fa-street-view"  aria-hidden="true"></i></a> -->
+  
+                    </span>
+                        <span class="ml-2"><button type="button"  class="badge-btn cursor" (click)="addSlotDetails(4)">
+                            <i class="fa fa-plus" aria-hidden="true"></i></button>
+                        </span>
+                    </div>
+                    <div class="ml-1 d-flex align-items-center cursor" *ngIf="thursdayTimingsday.length == 0">
+                      <span class="badge badge-pill badge-grey-selected d-flex align-items-center ml-2" (click)="addSlotDetails(4)">
+                          <a>Start Time - End Time &nbsp;</a>
+                      </span>
+                      <span class="ml-2"><button type="button"  class="badge-btn" (click)="addSlotDetails(4)">
+                          <i class="fa fa-plus" aria-hidden="true"></i></button>
+                      </span>
+                    </div>
+                </div>
+            </div>
+          </div>
+          <div class="row mt-2">
+            <div class="col-12">
+                <h5 class="m-0 color-primary">Friday</h5>
+            </div>
+            <div class="col-12">
+                <div class="row d-flex flex-row p-2">
+                    <div class="ml-1 d-flex align-items-center" *ngIf="fridayTimingsday.length != 0">
+  
+                        <span class="badge badge-pill badge-grey-selected ml-2" *ngFor="let data of fridayTimingsday;let i = index;">
+                        <a><span class="slot-title">{{data.teacher_name}}</span> : <span class="slot-time-title">{{data.slotstarttime}}</span> - <span class="slot-time-title">{{data.slotendtime}}</span>  &nbsp;</a>
+                        <a class="rounded-circle" (click)="deleteTime('friday', i, data)">
+                            <i class="fa fa-close rounded-circle color-primary" aria-hidden="true"></i></a>
+                            <!-- <a class="rounded-circle ml-2" title="Mark Attendance">
+                                <i class="fa fa-street-view"  aria-hidden="true"></i></a> -->
+  
+                    </span>
+                        <span class="ml-2"><button type="button"  class="badge-btn cursor" (click)="addSlotDetails(5)">
+                            <i class="fa fa-plus" aria-hidden="true"></i></button>
+                        </span>
+                    </div>
+                    <div class="ml-1 d-flex align-items-center cursor" *ngIf="fridayTimingsday.length == 0">
+                      <span class="badge badge-pill badge-grey-selected d-flex align-items-center ml-2" (click)="addSlotDetails(5)">
+                          <a>Start Time - End Time &nbsp;</a>
+                      </span>
+                      <span class="ml-2"><button type="button"  class="badge-btn" (click)="addSlotDetails(5)">
+                          <i class="fa fa-plus" aria-hidden="true"></i></button>
+                      </span>
+                    </div>
+                </div>
+            </div>
+          </div>
+          <div class="row mt-2">
+            <div class="col-12">
+                <h5 class="m-0 color-primary">Saturday</h5>
+            </div>
+            <div class="col-12">
+                <div class="row d-flex flex-row p-2">
+                    <div class="ml-1 d-flex align-items-center" *ngIf="saturdayTimingsday.length != 0">
+  
+                        <span class="badge badge-pill badge-grey-selected ml-2" *ngFor="let data of saturdayTimingsday;let i = index;">
+                        <a><span class="slot-title">{{data.teacher_name}}</span> : <span class="slot-time-title">{{data.slotstarttime}}</span> - <span class="slot-time-title">{{data.slotendtime}}</span>  &nbsp;</a>
+                        <a class="rounded-circle" (click)="deleteTime('saturday', i, data)">
+                            <i class="fa fa-close rounded-circle color-primary" aria-hidden="true"></i></a>
+                            <!-- <a class="rounded-circle ml-2" title="Mark Attendance">
+                                <i class="fa fa-street-view"  aria-hidden="true"></i></a> -->
+  
+                    </span>
+                        <span class="ml-2"><button type="button"  class="badge-btn cursor" (click)="addSlotDetails(6)">
+                            <i class="fa fa-plus" aria-hidden="true"></i></button>
+                        </span>
+                    </div>
+                    <div class="ml-1 d-flex align-items-center cursor" *ngIf="saturdayTimingsday.length == 0">
+                      <span class="badge badge-pill badge-grey-selected d-flex align-items-center ml-2" (click)="addSlotDetails(6)">
+                          <a>Start Time - End Time &nbsp;</a>
+                      </span>
+                      <span class="ml-2"><button type="button"  class="badge-btn" (click)="addSlotDetails(6)">
+                          <i class="fa fa-plus" aria-hidden="true"></i></button>
+                      </span>
+                    </div>
+                </div>
+            </div>
+          </div>
+          <div class="row mt-2">
+            <div class="col-12">
+                <h5 class="m-0 color-primary">Sunday</h5>
+            </div>
+            <div class="col-12">
+                <div class="row d-flex flex-row p-2">
+                    <div class="ml-1 d-flex align-items-center" *ngIf="sundayTimingsday.length != 0">
+  
+                        <span class="badge badge-pill badge-grey-selected ml-2" *ngFor="let data of sundayTimingsday;let i = index;">
+                        <a><span class="slot-title">{{data.teacher_name}}</span> : <span class="slot-time-title">{{data.slotstarttime}}</span> - <span class="slot-time-title">{{data.slotendtime}}</span>  &nbsp;</a>
+                        <a class="rounded-circle" (click)="deleteTime('sunday', i, data)">
+                            <i class="fa fa-close rounded-circle color-primary" aria-hidden="true"></i></a>
+                    </span>
+                        <span class="ml-2"><button type="button"  class="badge-btn cursor" (click)="addSlotDetails(7)">
+                            <i class="fa fa-plus" aria-hidden="true"></i></button>
+                        </span>
+                    </div>
+                    <div class="ml-1 d-flex align-items-center cursor" *ngIf="sundayTimingsday.length == 0">
+                      <span class="badge badge-pill badge-grey-selected d-flex align-items-center ml-2" (click)="addSlotDetails(7)">
+                          <a>Start Time - End Time &nbsp;</a>
+                      </span>
+                      <span class="ml-2"><button type="button"  class="badge-btn" (click)="addSlotDetails(7)">
+                          <i class="fa fa-plus" aria-hidden="true"></i></button>
+                      </span>
+                    </div>
+                </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
+  <ng-template #addSlot let-c="close" let-d="dismiss">
+    <div class="modal-header align-items-center">
+        <h4 class="modal-title">Schedule</h4>
+        <i class="fa fa-close cursor" (click)="close()" ></i>
+    </div>
+    <form [formGroup]="slotform" class="telemedicineaAddAvailability">
+        <div class="modal-body">
+            <div class="row">
+                 <div class="col-md-12 form-group">
+                     <label>Teacher Name</label>
+                <ng-select [items]="teacherListData"
+                           (change)="teacherSelection(teacherListData)"
+                           formControlName="teacher_id"
+                           bindLabel="teacher_name"
+                           bindValue="teacher_id"
+                           placeholder="Select Teacher"
+                           typeToSearchText=""
+                           multiple="true"
+                >
+                </ng-select>
+            </div>
+                <div class="col-md-6 form-group">
+  
+                        <label>Start Time</label>
+                        <ngb-timepicker [(ngModel)]="fromTime" [ngModelOptions]="{standalone: true}" (ngModelChange)="checkTime()"  [meridian]="meridian" [spinners]="spinner"></ngb-timepicker>
+  
+                </div>
+                <div class="col-md-6 form-group">
+  
+                    <label>End Time</label>
+                <ngb-timepicker [(ngModel)]="toTime" [ngModelOptions]="{standalone: true}" (ngModelChange)="checkTime()"  [meridian]="meridian" [spinners]="spinner"></ngb-timepicker>
+  
+                </div>
+                <div class="w-100 text-center" *ngIf="timeErr">
+                    <div class="alert alert-danger">
+                        Please select the Valid &nbsp;<strong>From Time & To Time</strong>.
+                    </div>
+                </div>
+                <div class="col-md-12">
+                    <h5 class="text-center">Repeat for</h5>
+                    <div class="row d-flex justify-content-center">
+                        <div *ngFor="let data of days;let i= index;">
+                            <button *ngIf="data.show"
+                                    type="button" (click)="selectDate(data.id)"
+                                    [ngClass]="data.status == 0 ? 'btn btn-outline-primary m-2' : 'btn btn-primary m-2'"
+                            >{{data.day}}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-primary" (click)="submitSlot()">Submit</button>
+        </div>
+    </form>
+  </ng-template>
+
+<ng-template #classCheck let-c="close" let-d="dismiss">
+    <div class="modal-header">
+        <h4 class="text-center col-12 modal-title"><b>Draft Class</b></h4>
+    </div>
+    <div class="modal-body">
+        <h5 class="color-primary">
+            Class will be saved as draft. Add a schedule to activate.
+        </h5>
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-primary" (click)="close();addCourseScheduleDetails()">Yes</button>
+        <button class="btn btn-outline-primary" (click)="close()">No</button>
+    </div>
+</ng-template>
+

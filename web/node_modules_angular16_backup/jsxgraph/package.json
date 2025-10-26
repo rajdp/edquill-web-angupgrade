@@ -1,0 +1,74 @@
+{
+  "name": "jsxgraph",
+  "description": "Interactive geometry, plotting, visualization",
+  "homepage": "https://jsxgraph.org",
+  "version": "1.2.3",
+  "main": "distrib/jsxgraphcore.js",
+  "types": "distrib/index.d.ts",
+  "maintainers": [
+    {
+      "name": "Alfred Wassermann",
+      "email": "Alfred.Wassermann@uni-bayreuth.de"
+    },
+    {
+      "name": "Michael Gerhaeuser",
+      "email": "michael.gerhaeuser@gmail.com"
+    }
+  ],
+  "contributors": [
+    "Matthias Ehmann <matthias.ehmann@uni-bayreuth.de>",
+    "Carsten Miller <carsten.miller@uni-bayreuth.de>",
+    "Rinat Shigapov",
+    "Bianca Valentin",
+    "Heiko Vogel",
+    "Peter Wilfahrt"
+  ],
+  "license": "(MIT OR LGPL-3.0-or-later)",
+  "keywords": [
+    "geometry",
+    "dynamic geometry",
+    "function plotting",
+    "mathematics education"
+  ],
+  "bugs": {
+    "url": "https://github.com/jsxgraph/jsxgraph/issues"
+  },
+  "directories": {
+    "lib": "src"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jsxgraph/jsxgraph.git"
+  },
+  "dependencies": {
+    "requirejs": "^2.3.6"
+  },
+  "optionalDependencies": {
+    "canvas": "^2.6.0"
+  },
+  "devDependencies": {
+    "almond": "^0.3.3",
+    "axios": ">=0.21.1",
+    "bl": ">=1.2.3",
+    "braces": ">=2.3.1",
+    "diff": "^5.0.0",
+    "handlebars": "^4.7.6",
+    "intern": ">=4.9.0",
+    "js-yaml": "^3.14.0",
+    "jsdoc2": "^2.4.0",
+    "jshint": "^2.12.0",
+    "jslint": "^0.12.1",
+    "lodash": ">=4.17.19",
+    "minimist": ">=1.2.3",
+    "sinon": ">=1.14.0",
+    "uglify-js": "^3.11.5"
+  },
+  "engines": {
+    "node": ">=0.6.0"
+  },
+  "scripts": {
+    "buildCore": "./node_modules/requirejs/bin/r.js -o build/core.build.json",
+    "buildCompressor": "./node_modules/requirejs/bin/r.js -o build/compressor.build.json",
+    "test": "make tests"
+  }
+}

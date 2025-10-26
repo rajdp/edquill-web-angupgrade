@@ -1,0 +1,82 @@
+<!-- Container-fluid starts-->
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="card tab2-card">
+                <div class="card-header">
+                    <h5 class="text-capitalize"  *ngIf="type == 'add'" >Add Corporates</h5>
+                    <h5 class="text-capitalize"  *ngIf="type == 'edit'" >Edit Corporates</h5>
+                    <label class="text-muted">All fields marked with <span class="text-danger">*</span> are required</label>
+                </div>
+                <div class="card-body tab2-card">
+                    <form [formGroup]="form" class="needs-validation user-add" novalida>
+                        <div class="form-group row">
+                            <label for="validationCustom0" class="col-xl-3 col-md-4"><span>*</span>
+                                Corporate Name</label>
+                            <div class="col-xl-8 col-md-7">
+                                <input class="form-control " formControlName="corporateName" id="validationCustom0"
+                                       type="text" placeholder="Corporate Name" required="">
+                                <em class="error" *ngIf="!form.get('corporateName').valid && (form.get('corporateName').dirty || form.get('corporateName').touched)">Corporates name is required</em>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label class="col-xl-3 col-md-4"><span>*</span>
+                                Status</label>
+                            <div class="col-xl-8 col-md-7">
+                                <select class="form-control " formControlName="status">
+                                    <option value="1">Active</option>
+                                    <option value="2">Inactive</option>
+                                    <option *ngIf="type == 'edit'" value="3">Suspended</option>
+                                    <option *ngIf="type == 'edit'" value="4">Deleted</option>
+                                </select>
+                                <em class="error" *ngIf="!form.get('status').valid && (form.get('status').dirty || form.get('status').touched)">status is required</em>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="validationCustom1" class="col-xl-3 col-md-4"><span>*</span>
+                               First Name</label>
+                            <div class="col-xl-8 col-md-7">
+                                <input class="form-control " formControlName="firstName" id="validationCustom1"
+                                       type="text" placeholder="First Name" required="">
+                                <em class="error" *ngIf="!form.get('firstName').valid && (form.get('firstName').dirty || form.get('firstName').touched)">First name is required</em>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="validationCustom2" class="col-xl-3 col-md-4"><span>*</span>
+                               Last Name</label>
+                            <div class="col-xl-8 col-md-7">
+                                <input class="form-control " formControlName="lastName" id="validationCustom2"
+                                       type="text" placeholder="Last Name" required="">
+                                <em class="error" *ngIf="!form.get('lastName').valid && (form.get('lastName').dirty || form.get('lastName').touched)">Last name is required</em>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="validationCustom3" class="col-xl-3 col-md-4"><span>*</span>
+                                Email Address</label>
+                            <div class="col-xl-8 col-md-7">
+                                <input  class="form-control " formControlName="emailId" id="validationCustom3" pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-z]{2,4}$"
+                                        type="email" placeholder="Email" required="">
+                                <em class="error" *ngIf="form.get('emailId').hasError('required') && (form.get('emailId').dirty || form.get('emailId').touched)">Email is required</em>
+                                <em class="error" *ngIf="form.get('emailId').hasError('pattern')">Invalid Email-Id</em>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="validationCustom4" class="col-xl-3 col-md-4"><span>*</span>
+                                Contact Number</label>
+                            <div class="col-xl-8 col-md-7">
+                                <input class="form-control " formControlName="mobile" id="validationCustom4"
+                                       type="text" placeholder="Contact Number" (keypress)="numberPattern($event)" maxlength="15" minlength="10" required="">
+                                <em class="error" *ngIf="!form.get('mobile').valid && (form.get('mobile').dirty || form.get('mobile').touched)">Contact Number is required</em>
+                            </div>
+                        </div>
+                    </form>
+                    <div class="pull-right">
+                        <button type="button"  *ngIf="type == 'add'" (click)="add('add')" class="btn btn-primary">Save</button>
+                        <button type="button" *ngIf="type == 'edit'" (click)="add('edit')" class="btn btn-primary">Update</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Container-fluid Ends-->

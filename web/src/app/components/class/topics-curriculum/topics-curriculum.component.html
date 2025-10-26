@@ -1,0 +1,833 @@
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-4 align-self-center">
+            <h4 class="mb-0">{{className}}</h4>
+        </div>
+        <div class="col-8 col-lg-8 d-flex justify-content-md-end align-items-center">
+            <div class="btn-group">
+                <button class="btn btn-outline-primary pull-right mr-2" (click)="backAction()"><i
+                        class="fa fa-long-arrow-left fa-1x" aria-hidden="true"></i> Back
+                </button>
+            </div>
+            <button class="btn btn-outline-primary mr-2" (click)="allReports(choosedData[0], 'viewAnalytics')">
+                <i class="fa fa-inbox mr-2" aria-hidden="true"></i>View Report
+            </button>
+            <button *ngIf="auth.getRoleId() != '2'" class="btn btn-outline-primary mr-2" (click)="showType = 'inbox'">
+                <i class="fa fa-inbox mr-2" aria-hidden="true"></i>Inbox
+                <span class="inbox-count color-primary">{{messageCount}}</span>
+            </button>
+
+            <button (click)="showOtherLinks = !showOtherLinks; showType = ''" *ngIf="viewType != '2'" type="button"
+                    class="btn btn-outline-primary mr-2">
+                <i class="fa fa-external-link mr-2"></i>Other Links
+            </button>
+            <div class="btn-group">
+                <button class="btn cancel pull-right dropdown-toggle mr-2" data-toggle="dropdown" (click)="showType = ''">
+                    <i _ngcontent-serverapp-c20="" aria-hidden="true" class="fa fa-plus-circle"></i>
+                    Curriculum
+                </button>
+                <div class="custom-addcontent dropdown-menu">
+                    <a class="dropdown-item-content dropdown-link" (click)="addContentResources('resources')"><i
+                            style="font-size:14px" class="fa">&#xf02d;</i><span class="ml-2">Resource</span></a>
+                    <a class="dropdown-item-content dropdown-link" (click)="addContentResources('assignments')"><i
+                            style='font-size:14px' class='fas'>&#xf518;</i><span class="ml-2">Assignment</span></a>
+                    <a class="dropdown-item-content dropdown-link" (click)="addContentResources('assessments')"><i
+                            style="font-size:14px" class="fa">&#xf15c;</i><span class="ml-2">Assessment</span></a>
+                </div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary mr-2" (click)="showType = '';createTopic('add', '')"><i
+                       aria-hidden="true" class="fa fa-plus-circle"></i>
+                    Topic
+                </button>
+            </div>
+            <div [hidden]="viewType == '2'" class="btn-group">
+                <button (click)="showType = ''" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">{{dueButton}}</button>
+                <div class="dropdown-menu" style="left: -35px;">
+                    <a class="dropdown-item-content dropdown-link" (click)="typeSelection('1')">Upcoming</a>
+                    <a class="dropdown-item-content dropdown-link" (click)="typeSelection('2')">In Progress</a>
+                    <a class="dropdown-item-content dropdown-link" (click)="typeSelection('3')">Completed</a>
+                    <a class="dropdown-item-content dropdown-link" (click)="typeSelection('0')">All</a>
+                </div>
+            </div>
+            <span class="ml-2 expand-icon cursor" *ngIf="topicListData.length != 0" (click)="isCollapsed = !isCollapsed;"
+                  [attr.aria-expanded]="!isCollapsed"
+                  aria-controls="collapseCard">
+            <i [title]="!isCollapsed ? 'Collapse' : 'Expand'" title="Collapse"
+               class="fa {{!isCollapsed ? 'fa-compress' : 'fa-arrows-alt'}}"
+               style="font-size: 24px; cursor: pointer; color: #91048c;" aria-hidden="true"></i>
+            </span>
+        </div>
+    </div>
+
+    <hr>
+
+    <div class="col-12 px-0" *ngIf="showOtherLinks">
+        <app-other-link (saveLinks)="updateClass()" [calledFrom]="'curriculum'" [showLink]="manageClass"
+                        [arrayValue]="linkData"></app-other-link>
+    </div>
+
+    <div class="row" *ngIf="showType == 'inbox'">
+        <div class="col-12">
+            <app-inbox-chat [to_id]="toId" (updateCount)="messageCount = $event"
+                            [choosedData]="choosedData" [arrayList]="messageList"></app-inbox-chat>
+        </div>
+    </div>
+
+    <div class="row d-flex justify-content-center" style="margin-top: 100px;"
+         *ngIf="curriculumList.length == 0 && topicListData.length == 0 && showType != 'inbox'">
+        <div class="col-4">
+            <button class="nodataList">No Data Available!</button>
+        </div>
+    </div>
+
+    <div class="col-12 d-flex justify-content-end pr-0" *ngIf="(curriculumList.length != 0 || topicListData.length != 0) && showType != 'inbox' && dueButton == 'All'">
+        <span class="mt-1">
+            <span> <i class="fa fa-square ml-1" style="font-size: 14px; color: #ffbc58;"></i>&nbsp;In-Progress</span>
+            <span class="ml-2"><i class="fa fa-square ml-1" style="font-size: 14px; color: #81ba00;"></i>&nbsp;Completed</span>
+            <span class="ml-2"><i class="fa fa-square ml-1" style="font-size: 14px; color: #13c9ca;"></i>&nbsp;Upcoming</span>
+        </span>
+    </div>
+
+    <div class="row" *ngIf="showType != 'inbox' && (multiTopicId.length != 0 || multiContentId.length != 0)">
+        <div class="col-12">
+            <button (click)="deleteMultiContentOrTopic()" class="btn btn-outline-primary pull-right"><i
+                    class="fa fa-trash mr-1" aria-hidden="true"></i>Delete {{multiTopicId.length == 0 && multiContentId.length != 0 ? 'Content' :
+                multiTopicId.length != 0 && multiContentId.length == 0 ? 'Topic' : 'Topic / Content'}}</button>
+        </div>
+    </div>
+
+    <div class="custom-accordion mt-4" *ngIf="topicListData.length != 0 && showType != 'inbox'">
+        <div cdkDropList [cdkDropListData]="topicListData" #topicsList="cdkDropList"
+            (cdkDropListDropped)="drop($event)">
+            <div ngbAccordion *ngFor="let item of topicListData; let topicIndex = index" cdkDrag
+                 [closeOthers]="true">
+                <div class="mb-2 topics_accordion_item" ngbAccordionItem="{{topicIndex}}" #accordion="ngbAccordionItem" [collapsed]="isCollapsed">
+                    <div ngbAccordionHeader>
+                        <button class="col-12 header_button" style="cursor: move">
+                            <input *ngIf="manageClass" [checked]="item.checked" (change)="selectOrUnSelectContentList(item, $event, 'topic')" type="checkbox" class="mr-2 cursor">
+                            <h4 ngbAccordionToggle class="px-0 viewTopicName d-flex justify-content-between cursor">
+                                {{item.topic
+                                | titlecase}}<span
+                                    *ngIf="item.start_date != '0000-00-00' && item.start_date != '' && item.start_date != null"
+                                    class=" viewTopicName ml-2" style="cursor: move;" >-</span>
+                                <div class="px-0 ml-2"
+                                     *ngIf="item.start_date != '0000-00-00' && item.start_date != '' && item.start_date != null">
+                                    <span *ngIf="item.start_date != '0000-00-00' && item.start_date != ''"
+                                          class="font-weight-bold viewTopicName">({{item.start_date|
+                                        customDateFormat}}</span>
+                                    <span
+                                            *ngIf="item.start_date != '0000-00-00' && item.end_date != '0000-00-00' && item.start_date != '' && item.end_date != '' && item.end_date != null">&nbsp;-&nbsp;</span>
+                                    <span *ngIf="item.end_date != '0000-00-00' && item.end_date != ''"
+                                          class="font-weight-bold viewTopicName">{{item.end_date|
+                                        customDateFormat}})</span>&nbsp;<br />
+                                </div>
+                            </h4>
+
+                            <div class="custom-content">
+                                <div class="dropdown" *ngIf="manageClass">
+                                    <i style="font-size:16px; color: #7F3486; cursor: pointer;" class="fa fa-ellipsis-v"
+                                       aria-hidden="true" data-toggle="dropdown"></i>
+                                    <ul class="cursor dropdown-menu custom-drop">
+                                        <li (click)="createTopic('edit', item)"><a class="editIcon"><i
+                                                class="fa fa-pencil" aria-hidden="true"></i> Edit
+                                            Topic</a></li>
+                                        <li (click)="deleteAction('topic', item)"><a class="editIcon"><i
+                                                class="fa fa-trash" aria-hidden="true"></i>
+                                            Delete Topic</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </button>
+                    </div>
+
+                    <div ngbAccordionCollapse>
+                        <div ngbAccordionBody style="margin: 2px">
+                            <ng-template>
+                                <div class="col-md-12 dropdotted">
+                                    <div *ngIf="item.topicArray.length != 0">
+                                        <div *ngFor="let list of item.topicArray; let j = index">
+                                            <div class="col-12 card class-card class-hover mt-3">
+                                                <div class="row p-2 d-flex flex-wrap">
+                                                    <div class="col-1 school-img {{manageClass ? 'pl-0' : ''}} cursor mt-2">
+                                                        <input *ngIf="manageClass" [checked]="list.checked" (change)="selectOrUnSelectContentList(list, $event, 'content')"
+                                                               type="checkbox" class="mr-2 cursor">
+                                                        <img *ngIf="list.profile_url == ''"
+                                                             src="assets/images/ristaschool/option-writing-checkbox-concepts-survey.png"
+                                                             style="width: 50px;height: 50px;" class="cursor rounded-circle"
+                                                             alt="">
+                                                        <img *ngIf="list.profile_url != ''"
+                                                             [src]="sanitizer.bypassSecurityTrustResourceUrl(webhost + '/' + list.profile_url)"
+                                                             style="width: 50px;height: 50px;" class="cursor rounded-circle"
+                                                             alt="">
+                                                    </div>
+                                                    <div class="col-5 p-0" style="align-self: center;">
+                                                        <h4 class="t-period m-0 p-0"><span
+                                                                class="font-weight-bold">{{list.content_name}}
+                                                            <small *ngIf="list.content_format == '1'"
+                                                                   class="contenttext">(PDF)</small>
+                                                        <small *ngIf="list.content_format == '2'"
+                                                               class="contenttext">(LINK)</small>
+                                                        <small *ngIf="list.content_format == '3'"
+                                                               class="contenttext">(TEXT)</small>
+                                                    </span>
+                                                            <span *ngIf="dueButton == 'All'"
+                                                                  title="{{list.content_date_status == '3' ? 'In-Progress' : list.content_date_status == '4' ? 'Completed' : list.content_date_status == '2' ? 'Upcoming' : ''}}"
+                                                                  [ngStyle]="{'color': list.content_date_status == '3' ? '#F28500' : list.content_date_status == '4' ? '#81ba00' : list.content_date_status == '2' ? '#91048c' : '#8f008a' }"><i
+                                                                    class="fa fa-clock ml-1"
+                                                                    style="font-size: 17px;"></i></span>
+                                                        </h4>
+                                                        <div class="col-12 px-0 d-flex justify-content-between">
+                                                    <span *ngIf="list.content_type == '1'"
+                                                          class="badge badge-green font-weight-bold align-self-center">Resource</span>
+                                                            <span *ngIf="list.content_type == '2'"
+                                                                  class="badge badge-warning font-weight-bold align-self-center">Assignment</span>
+                                                            <span *ngIf="list.content_type == '3'"
+                                                                  class="badge badge-primary font-weight-bold align-self-center">Assessment</span>
+                                                            <div class="col-10 px-0">
+                                                                <p class="d-flex mb-0">
+                                                            <span
+                                                                    *ngIf="list.start_date != '0000-00-00' && list.start_date != ''"
+                                                                    class="contenttext font-weight-bold">{{list.start_date|
+                                                                customDateFormat}}</span>
+                                                                    <span
+                                                                            *ngIf="list.start_date != '0000-00-00' && list.end_date != '0000-00-00' && list.start_date != '' && list.end_date != ''">&nbsp;-&nbsp;</span>
+                                                                    <span
+                                                                            *ngIf="list.end_date != '0000-00-00' && list.end_date != ''"
+                                                                            class="contenttext font-weight-bold">{{list.end_date|
+                                                                        customDateFormat}}</span>&nbsp;<br />
+                                                                    <span *ngIf="list.start_time != list.end_time">
+                                                                <span
+                                                                        class="contenttext font-weight-bold">({{list.start_time}}</span>&nbsp;-&nbsp;<span
+                                                                            class="contenttext font-weight-bold">{{list.end_time}})</span>
+                                                            </span>
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-6 d-flex justify-content-end mt-2">
+                                                        <div class="dropdown">
+                                                            <button class="btn btn-outline-primary">Action <i class="fa fa-sort-desc float-right ml-2" aria-hidden="true"></i></button>
+                                                            <div class="dropdown-content cursor" style="right: 2px"
+                                                                 [class.dropdown-content-up]="(topicIndex + 2 == topicListData.length || topicIndex + 1 == topicListData.length) && topicListData.length > 2">
+
+                                                                <a (click)="correctionPage(list, list.content_type == '2' ? 'assignments' : 'assessments')"
+                                                                   *ngIf="viewType == 1 || viewType == 3"><i class="fa fa-users mr-1" aria-hidden="true"></i>Grading</a>
+
+                                                                <a (click)="list.content_format == 3 ? PreviewText(list, 'assignments', 'student_preview') : PreviewPage(list, 'assignments', 'student_preview')"
+                                                                   *ngIf="viewType == 1 || viewType == 3"><i class="fa fa-address-card mr-1" aria-hidden="true"></i>Student View</a>
+
+                                                                <a (click)="openTeacherVersionPdf(list)" *ngIf="list.teacher_version_path && list.teacher_version_path.length != ''"><i
+                                                                        class="fa fa-id-badge mr-1" aria-hidden="true"></i>Teacher Version PDF</a>
+
+                                                                <a (click)="list.content_format == 1 ? PreviewPage(list, 'assignments', 'teacher_preview') :
+                                                                    PreviewText(list, 'assignments', 'teacher_preview')"><i class="fa fa-eye mr-1" aria-hidden="true"></i>Teacher View</a>
+
+<!--                                                                <a (click)="reportDetails('Assignment', list)" *ngIf="viewType == '1' || viewType == 3 && manageClass"><i-->
+<!--                                                                        class="fa fa-file-text-o" aria-hidden="true"></i>Reports</a>-->
+<!--&lt;!&ndash;                                                                <a (click)="itemsReportDetails(list)" *ngIf="viewType != '2'"><i class="fa fa-file-archive-o" aria-hidden="true"></i>&ndash;&gt;-->
+<!--&lt;!&ndash;                                                                    Itemized Reports</a>&ndash;&gt;-->
+
+                                                                <a (click)="editAction(topicIndex, list)" *ngIf="manageClass && viewType != '2'"><i class="fa fa-pencil mr-1" aria-hidden="true"></i>Edit content</a>
+
+                                                                <a (click)="deleteAction('content', list)" *ngIf="manageClass"><i class="fa fa-trash mr-1" aria-hidden="true"></i>Delete content</a>
+
+<!--                                                                <a (click)="navigateToSATReport(list)" *ngIf="list.content_format == '3'"><i class="fa fa-inbox"></i>View Analytics</a>-->
+
+                                                                <a class="child-dropdown" *ngIf="topicListData.length > 1"><i class="fa fa-arrow-left mr-1" aria-hidden="true"></i>Move to Topic
+                                                                    <div class="child-dropdown-content"
+                                                                         [class.child-dropdown-content-up]="topicListData.length >= 1">
+                                                                        <div class="scrollClass">
+                                                                            <a *ngFor="let topicData of topicListData"
+                                                                               [ngStyle]="{'display': item.topic_id != topicData.topic_id ? 'block' : 'none' }"
+                                                                               (click)="moveToTopics(list, topicIndex, topicData, 'topicsList')">{{topicData.topic
+                                                                                | titlecase}}</a>
+                                                                        </div>
+                                                                    </div>
+                                                                </a>
+
+                                                                <a (click)="allReports(list)"><i class="fa fa-bar-chart mr-1" aria-hidden="true"></i>Reports</a>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div *ngIf="item.topicArray.length == 0">
+                                        <label class="col-12 custom-label">No Content Added</label>
+                                    </div>
+                                </div>
+                            </ng-template>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <hr *ngIf="topicListData.length != 0 && showType != 'inbox'">
+
+    <div *ngIf="showType != 'inbox'" class="mt-{{topicListData.length != 0 ? '2' : '4'}}">
+        <div class="col-6 align-self-center pl-0" *ngIf="newCurriculumList.length != 0">
+            <h4 class="viewname">{{topicListData.length > 0 ? 'Other Curriculums' : 'Curriculums'}}</h4>
+        </div>
+        <div *ngFor="let list of newCurriculumList; let i = index">
+            <div class="example-container mt-2">
+                <div [ngClass]="{'class-card-new' : list.content_date_status == '2', 'class-card-in-progress' : list.content_date_status == '3', 'class-card-completed' : list.content_date_status == '4'}"
+                     class="col-12 card class-card class-hover">
+                    <div class="row p-2 d-flex flex-wrap">
+                        <div class="col-1 d-inline-flex {{manageClass ? 'pl-0' : ''}} school-img cursor mt-2">
+                            <input *ngIf="manageClass" [checked]="list.checked" (change)="selectOrUnSelectContentList(list, $event, 'content')" type="checkbox" class="mr-2 cursor">
+                            <img *ngIf="list.profile_url == ''"
+                                 src="assets/images/ristaschool/option-writing-checkbox-concepts-survey.png"
+                                 style="width: 50px;height: 50px;" class="cursor rounded-circle" alt="">
+                            <img *ngIf="list.profile_url != ''"
+                                 [src]="sanitizer.bypassSecurityTrustResourceUrl(webhost + '/' + list.profile_url)"
+                                 style="width: 50px;height: 50px;" class="cursor rounded-circle" alt="">
+                        </div>
+                        <div class="col-5 p-0" style="align-self: center;">
+                            <h4 class="t-period p-0 m-0"><span
+                                    class="font-weight-bold">{{list.content_name}}
+                                <small *ngIf="list.content_format == '1'" class="contenttext">(PDF)</small>
+                                    <small *ngIf="list.content_format == '2'" class="contenttext">(LINK)</small>
+                                    <small *ngIf="list.content_format == '3'" class="contenttext">(TEXT)</small>
+                                </span>
+                            </h4>
+                            <div class="col-12 px-0 d-flex justify-content-between">
+                                <span *ngIf="list.content_type == '1'"
+                                      class="badge badge-green font-weight-bold align-self-center">Resource</span>
+                                <span *ngIf="list.content_type == '2'"
+                                      class="badge badge-warning font-weight-bold align-self-center">Assignment</span>
+                                <span *ngIf="list.content_type == '3'"
+                                      class="badge badge-primary font-weight-bold align-self-center">Assessment</span>
+                                <div class="col-10 px-0">
+                                    <p class="d-flex mb-0">
+                                        <span *ngIf="list.start_date != '0000-00-00' && list.start_date != ''"
+                                              class="contenttext font-weight-bold">{{list.start_date|
+                                            customDateFormat}}</span>
+                                        <span
+                                                *ngIf="list.start_date != '0000-00-00' && list.end_date != '0000-00-00' && list.start_date != '' && list.end_date != ''">&nbsp;-&nbsp;</span>
+                                        <span *ngIf="list.end_date != '0000-00-00' && list.end_date != ''"
+                                              class="contenttext font-weight-bold">{{list.end_date|
+                                            customDateFormat}}</span>&nbsp;<br/>
+                                        <span *ngIf="list.start_time != list.end_time">
+                                            <span class="contenttext font-weight-bold">({{list.start_time}}</span>&nbsp;-&nbsp;<span
+                                                class="contenttext font-weight-bold">{{list.end_time}})</span>
+                                        </span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6 d-flex justify-content-end mt-2">
+                            <div class="dropdown">
+                                <button class="btn btn-outline-primary">Action <i
+                                        class="fa fa-sort-desc float-right ml-2" aria-hidden="true"></i>
+                                </button>
+                                <div class="dropdown-content cursor" style="right: 2px"
+                                     [class.dropdown-content-up]="(i + 2 == newCurriculumList.length || i + 1 == newCurriculumList.length) && newCurriculumList.length > 2 || topicListData.length >= 1">
+                                    <a (click)="correctionPage(list, list.content_type == '2' ? 'assignments' : 'assessments')"
+                                       *ngIf="viewType == 1 || viewType == 3"><i class="fa fa-users mr-1" aria-hidden="true"></i>Grading</a>
+
+                                    <a (click)="list.content_format == 3 ? PreviewText(list, 'assignments', 'student_preview') : PreviewPage(list, 'assignments', 'student_preview')"
+                                       *ngIf="viewType == 1 || viewType == 3"><i class="fa fa-address-card mr-1" aria-hidden="true"></i>Student View</a>
+
+                                    <a (click)="openTeacherVersionPdf(list)" *ngIf="list.teacher_version_path && list.teacher_version_path.length != ''">
+                                        <i class="fa fa-id-badge mr-1" aria-hidden="true"></i>Teacher Version PDF</a>
+
+                                    <a (click)="list.content_format == 1 ? PreviewPage(list, 'assignments', 'teacher_preview') :
+                                        PreviewText(list, 'assignments', 'teacher_preview')"><i class="fa fa-eye mr-1" aria-hidden="true"></i>Teacher View</a>
+
+<!--                                    <a (click)="reportDetails('Assignment', list)"-->
+<!--                                       *ngIf="viewType == '1' || viewType == 3 && manageClass"><i-->
+<!--                                            class="fa fa-file-text-o" aria-hidden="true"></i>-->
+<!--                                        Reports</a>-->
+<!--                                    <a (click)="itemsReportDetails(list)" *ngIf="viewType != '2'"><i-->
+<!--                                            class="fa fa-file-archive-o" aria-hidden="true"></i> Itemized-->
+<!--                                        Reports</a>-->
+                                    <a (click)="editAction(i, list)"
+                                       *ngIf="manageClass && viewType != '2'"><i class="fa fa-pencil mr-1" aria-hidden="true"></i>Edit content</a>
+
+                                    <a (click)="deleteAction('content', list)" *ngIf="manageClass">
+                                        <i class="fa fa-trash mr-1" aria-hidden="true"></i>Delete content</a>
+
+<!--                                    <a (click)="navigateToSATReport(list)" *ngIf="list.content_format == '3'"><i class="fa fa-inbox"></i> View Analytics</a>-->
+
+                                    <a class="child-dropdown" *ngIf="topicListData.length > 0"><i class="fa fa-arrow-left mr-1" aria-hidden="true"></i>Move to Topic
+                                        <div class="child-dropdown-content"
+                                             [class.child-dropdown-content-up]="topicListData.length >= 1">
+                                            <div class="scrollClass">
+                                                <a *ngFor="let item of topicListData"
+                                                   (click)="moveToTopics(list, i, item, 'curricullumList')">{{item.topic
+                                                    |
+                                                    titlecase}}</a>
+                                            </div>
+                                        </div>
+                                    </a>
+
+                                    <a (click)="allReports(list)"><i class="fa fa-bar-chart mr-1" aria-hidden="true"></i>Reports</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <ng-template #createTopicPopup>
+        <div class="modal-header align-items-center">
+            <h4 class="modal-title">{{topicPopupType == 'add' ? 'Create' : 'Update'}} Topic</h4>
+            <i class="fa fa-close cursor" (click)="modalRef.close()"></i>
+        </div>
+        <div class="modal-body">
+            <div>
+                <div class="row form-group">
+                    <div class="col-md-12">
+                        <label>Class Name</label>
+                    </div>
+                    <div class="col-md-12">
+                        <input class="form-control" readonly type="text" placeholder="Enter the Class Name"
+                               value="{{className}}">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group row">
+                <div class="col-md-12">
+                    <label>Topic Name</label>
+                </div>
+                <div class="col-md-12">
+                    <input class="form-control" type="text" placeholder="Enter Topic Name"
+                           [(ngModel)]="topicName">
+                </div>
+            </div>
+
+            <div class="form-group row">
+                <div class="col-md-6">
+                    <div class="row-md-12">
+                        <label>Start Date</label>
+                    </div>
+                    <div class="row-md-12">
+                        <div class="d-flex align-items-baseline">
+                            <input class="form-control" placeholder="Start Date"
+                                   [(ngModel)]="topicStartdate" name="dp"
+                                   angular-mydatepicker #dp="angular-mydatepicker" autocomplete="off"
+                                   [options]="myDpOptions1" (dateChanged)="onDateChanged($event)"
+                                   (click)="dp.toggleCalendar()">
+                            <div class="input-group-append">
+                                <button type="button" class="btn btn-primary" (click)="dp.toggleCalendar()">
+                                    <i class="fa fa-calendar-o"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="row-md-12">
+                        <label>End Date</label>
+                    </div>
+                    <div class="row-md-12">
+                        <div class="d-flex align-items-baseline">
+                            <input class="form-control" placeholder="End Date" [(ngModel)]="topicEnddate"
+                                   name="dp1"
+                                   angular-mydatepicker #dp1="angular-mydatepicker" autocomplete="off"
+                                   [options]="myDpOptions2" (click)="dp1.toggleCalendar()">
+                            <div class="input-group-append">
+                                <button (click)="dp1.toggleCalendar()" class="btn btn-primary"
+                                        type="button">
+                                    <i class="fa fa-calendar-o"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline-primary" (click)="modalRef.close()">Cancel</button>
+            <button type="button" (click)="addTopicService()"
+                    class="btn btn-primary">{{topicPopupType == 'add' ?
+                'Create' : 'Update'}} Topic
+            </button>
+        </div>
+    </ng-template>
+
+    <!-- Reports -->
+    <ng-template #reports>
+        <div class="modal-header align-items-center">
+            <h4 class="modal-title">Report</h4>
+            <i class="fa fa-close cursor" (click)="onSave()"></i>
+        </div>
+        <div class="modal-body">
+            <app-missed-work-report [classShow]="true" [showContent]="selectContent" [studentView]="false"
+                                    [timeView]="false" [contentNameValue]="contentNameValue">
+            </app-missed-work-report>
+        </div>
+    </ng-template>
+
+    <ng-template #itemsReports>
+        <div class="modal-header align-items-center">
+            <h4 class="modal-title">{{reportData.content_name | titlecase}} - Report</h4>
+            <i class="fa fa-close cursor" (click)="onSave()"></i>
+        </div>
+        <div class="modal-body">
+            <app-items-report [showContent]="'other'" [studentView]="false" [timeView]="true">
+            </app-items-report>
+        </div>
+
+    </ng-template>
+
+    <ng-template #teacherVersion>
+        <div class="modal-header align-items-center">
+            <h4 class="modal-title">Teacher Version</h4>
+            <i (click)="onSave()" class="fa fa-close cursor"></i>
+        </div>
+        <div class="modal-body">
+            <pdf-viewer [src]="pdfTeacherVersion" style="display: block;height: 100vh;"></pdf-viewer>
+        </div>
+    </ng-template>
+
+    <ng-template #assign let-c="close" let-d="dismiss">
+        <div class="modal-header">
+            <h4 class="contenttext mb-0">{{contentname}}</h4>
+        </div>
+        <div class="modal-body">
+            <form [formGroup]="contentForm">
+
+                <div class="row form-group">
+                    <div class="col-md-12">
+                        <label class="font-weight-bold">{{viewType == '2' ? 'Content Folder Name' : 'Class Name'}}</label>
+                    </div>
+                    <div class="col-md-12">
+                        <input class="form-control" readonly type="text"
+                               placeholder="Enter the Class Name"
+                               value="{{className}}">
+                    </div>
+                </div>
+
+                <div class="row form-group mb-3" *ngIf="allowScore">
+                    <div class="col-md-12">
+                        <label class="font-weight-bold">Release Score</label>
+                    </div>
+                    <div class="col-md-12">
+                        <select (change)="releaseScoreFilter($event)" class="form-control mb-1" formControlName="releaseScore">
+                            <option value="n/a" disabled>Select Response type</option>
+                            <option *ngIf="isEssay == '0'" value="0">Instructor Graded</option>
+                            <option *ngIf="isEssay == '0'" value="1">Auto Graded</option>
+                            <option value="2" *ngIf="contentFormat == '3' && isEssay == '0'">Real-Time Grading</option>
+                            <option *ngIf="isEssay == '1'" value="0">Teacher Review Only</option>
+                            <option *ngIf="isEssay == '1'" value="1">Automatic Feedback</option>
+                        </select>
+                        <span class="notes_style">(Note:
+                                <span *ngIf="contentForm.controls.releaseScore.value == '0' && isEssay == '0'">Responses will be reviewed and graded manually. Scores will be released after the final submission</span>
+                                <span *ngIf="contentForm.controls.releaseScore.value == '1' && isEssay == '0'">Responses will be graded automatically, but scores and feedback will only be released after the final submission</span>
+                                <span *ngIf="contentForm.controls.releaseScore.value == '2' && isEssay == '0'">Responses will be graded automatically and scores will be available immediately after each submission</span>
+                                <span *ngIf="contentForm.controls.releaseScore.value == '0' && isEssay == '1'">Essay will be manually reviewed by the teacher to provide feedback and scores. System generated feedback is not available</span>
+                                <span *ngIf="contentForm.controls.releaseScore.value == '1' && isEssay == '1'">Student can request for Automatic system generated feedback and score. Teacher can provide final feedback and score after the final submission</span>)</span>
+                    </div>
+                </div>
+                <div *ngIf="!checkAutoRelease" class="col-12 px-0">
+                    <p class="assign-error text-center">Auto score release is not applicable for this
+                        content</p>
+                </div>
+
+                <div *ngIf="viewType != '2' && editData.content_format == '3'" class="row form-group">
+                    <div class="col-md-2">
+                        <div class="col-12" style="position: relative; font-size: 15px; left: 0.4rem">
+                            <input type="checkbox" class="form-check-input cursor" id="workspace" formControlName="workspace">
+                            <label style="font-size: 14px" class="cursor mb-0 font-weight-bold" for="workspace">Workspace</label>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="col-12" style="position: relative; font-size: 15px; left: 0.4rem">
+                            <input type="checkbox" class="form-check-input cursor" id="feedback" formControlName="feedback">
+                            <label style="font-size: 14px" class="cursor mb-0 font-weight-bold" for="feedback">FeedBack</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div *ngIf="viewType != '2'" class="row form-group">
+                    <div class="col-md-2">
+                        <div class="row-md-12">
+                            <label class="font-weight-bold">Start Date</label>
+                        </div>
+                        <div class="row-md-12">
+                            <input class="form-control" placeholder="Start Date" formControlName="startdate"
+                                   name="dp"
+                                   angular-mydatepicker #dp="angular-mydatepicker" autocomplete="off"
+                                   [options]="myDpOptions1" (dateChanged)="onDateChanged($event)"
+                                   (click)="dp.toggleCalendar()">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="row-md-12">
+                            <label class="font-weight-bold">Start Time</label>
+                        </div>
+                        <div class="row-md-12">
+                            <ngb-timepicker [(ngModel)]="fromTime" [ngModelOptions]="{standalone: true}"
+                                            (ngModelChange)="checkTime()" [meridian]="meridian"
+                                            [spinners]="spinner"></ngb-timepicker>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="row-md-12">
+                            <label class="font-weight-bold">End Date</label>
+                        </div>
+                        <div class="row-md-12">
+                            <input class="form-control" placeholder="End Date" formControlName="enddate"
+                                   name="dp1"
+                                   angular-mydatepicker #dp1="angular-mydatepicker" autocomplete="off"
+                                   [options]="myDpOptions2" (click)="dp1.toggleCalendar()">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="row-md-12">
+                            <label class="font-weight-bold">End Time</label>
+                        </div>
+                        <div class="row-md-12">
+                            <ngb-timepicker [(ngModel)]="toTime" [ngModelOptions]="{standalone: true}"
+                                            (ngModelChange)="checkTime()" [meridian]="meridian"
+                                            [spinners]="spinner"></ngb-timepicker>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline-primary" (click)="contentClose()">Cancel</button>
+            <button class="btn btn-primary" (click)="editContentDetails()">Submit</button>
+        </div>
+    </ng-template>
+
+    <ng-template #content let-c="close" let-d="dismiss">
+        <div class="modal-header align-items-center">
+            <h4 *ngIf="calledFrom != 'multi'" class="modal-title font-weight-bold" id="modal-basic-title">
+                Delete {{deleteType == 'topic' ? 'Topic' : 'Content'}}</h4>
+            <h4 *ngIf="calledFrom == 'multi'" class="modal-title font-weight-bold" id="modal-basic1-title">
+                Delete Confirmation</h4>
+            <i class="fa fa-close cursor" (click)="modalRef.close()"></i>
+        </div>
+        <div class="modal-body">
+            <!-- Container-fluid starts-->
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-sm-12 px-0">
+                        <h5 *ngIf="calledFrom != 'multi'" class="text-center">Are you sure you want to delete this
+                             <span class="font-weight-bold">{{deleteType == 'topic' ? 'topic' : 'content'}}</span> ? </h5>
+                        <div *ngIf="calledFrom == 'multi'">
+                            <h5 *ngIf="multiTopicId.length != 0 && multiContentId.length != 0 || (multiTopicId.length != 0 && multiContentId.length == 0)">
+                                Do you wish to delete the <span class="font-weight-bold">topic and the associated content</span>?</h5>
+                            <h5 *ngIf="multiTopicId.length == 0 && multiContentId.length != 0">
+                                Do you wish to delete the <span class="font-weight-bold">selected content</span>?</h5>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Container-fluid Ends-->
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn cancel" (click)="modalRef.close()">Cancel</button>
+            <button type="button" class="btn btn-primary" (click)="calledFrom != 'multi' ? update(deleteType) : forkJoinService()">Delete
+            </button>
+        </div>
+    </ng-template>
+
+<ng-template #curriculum let-c="close" let-d="dismiss">
+        <div class="modal-header align-items-center">
+            <h4 class="modal-title font-weight-bold">Curriculum</h4>
+            <i class="fa fa-close cursor" (click)="showContentCurriculumType= '';modalRef.close()"></i>
+        </div>
+        <div class="modal-body py-3 px-1" style="background: #f5f5f578">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="card mb-0">
+                            <div class="card-body">
+                                <div class="row justify-content-center">
+                                    <div class="w-10 text-center">
+                                        <i (click)="showContentCurriculumType = 'upload'" class="fa icon_circle fa-upload color-primary cursor"></i>
+                                        <p>Upload</p>
+                                    </div>
+                                    <div class="w-10 text-center">
+                                        <i (click)="showContentCurriculumType = 'link'" class="fa icon_circle fa-link color-primary cursor"></i>
+                                        <p>Link</p>
+                                    </div>
+                                    <div class="w-10 text-center row">
+                                        <div class="col-12">
+                                            <i (click)="showContentCurriculumType = 'assign'" class="fa icon_circle fa-file-o color-primary cursor">
+                                            </i>
+                                            <span class="tickMark">&#10004;</span>
+                                        </div>
+                                        <p>Assign From Library</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 mt-3" *ngIf="showContentCurriculumType != ''">
+                        <div class="card mb-0">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-7">
+                                        <div class="col-12">
+                                            <label class="font-weight-bold">Content Type<span class="error ml-1">*</span></label>
+                                            <ng-select [items]="contentTypleList"
+                                                       bindLabel="value"
+                                                       bindValue="id"
+                                                       placeholder="Select Content"
+                                                       typeToSearchText=""
+                                                       [(ngModel)]="selectContentType"
+                                            >
+                                            </ng-select>
+                                        </div>
+                                        <div class="col-12 mt-3" *ngIf="showContentCurriculumType == 'upload'">
+                                            <div class="col-12 col-xs-12 col-sm-12 col-md-12 col-lg-12 py-2 px-0">
+                                                <h6 class="text-caption">Select file to upload</h6>
+                                                <input (change)="encodePdfFileAsURL($event)" type="file" id="uploadFileInput" multiple
+                                                       name="uploadFileInput" accept=".pdf, application/pdf" hidden>
+                                                <div (click)="openFileExplorer()" class="upload-file mt-0" for="uploadFileInput">
+                                                    <i class="fa fa-upload mr-1"></i>
+                                                    Add Attachment(s)
+                                                </div>
+                                                <p style="color: gray" class="f-12">Supported file formats is pdf</p>
+                                            </div>
+
+                                            <div class="col-12 mt-3 px-0">
+                                                <div class="row">
+                                                    <div *ngFor="let pdf of pdfpath; let ind = index" class="fileItem-input col-4 mb-4" title="{{pdf.image}}">
+                                                        <div class="fileItem" style="width: 100%; display: block;">
+                                                            <div class="col-md-12 px-0 d-flex justify-content-between">
+                                                                <div class="col-md-6 px-0">
+                                                                    <small *ngIf="selectContentType == '1'" class="badge mb-2" style="background-color: #3693b7; color: whitesmoke">Resource</small>
+                                                                    <small *ngIf="selectContentType == '2'" class="badge mb-2" style="background-color: #ca9be2; color: whitesmoke">Assignment</small>
+                                                                    <small *ngIf="selectContentType == '3'" class="badge mb-2" style="background-color: cadetblue; color: whitesmoke">Assessment</small>
+                                                                </div>
+                                                                <div class="col-md-6 px-0 d-flex justify-content-end">
+                                                                    <i class="fa fa-link"></i>
+<!--                                                                    <i class="fa fa-link f-22px" (click)="openLinkPage(f.resource_type, ind)"></i>-->
+                                                                    <i (click)="openConfirmDialog(ind, 'pdf')" class="fa fa-trash-o ml-2 error"></i>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-sm-12 px-0">
+                                                                <h5 class="d-inline">{{pdf.image + '.pdf'}}</h5>
+                                                            </div>
+                                                        </div>
+                                                        <div class="w-100 mt-2">
+                                                            <input type="text" class="form-control mx-1" [ngModelOptions]="{standalone: true}" [(ngModel)]="pdf.image" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-5">
+                                        <p style="color: #777777;;font-size: 12px !important;" class="mb-2">Class Name:
+                                            <span style="font-size: 14px" class="color-primary font-weight-bold">{{className}}</span>
+                                        </p>
+                                        <p style="color: #777777;font-size: 12px !important;" class="my-2">Class Code:
+                                            <span style="font-size: 14px" class="color-primary font-weight-bold">{{choosedData[0]?.class_code}}</span>
+                                        </p>
+                                        <div class="row form-group mt-2 mb-3">
+                                            <div class="col-md-12">
+                                                <p class="mb-0" style="color: #777777;font-size: 12px !important">Selected Students:</p>
+                                                <div class="col-md-12 d-flex align-items-center">
+                                                    <input [checked]="!showStudentList" name="studentSelection" id="allStudents" class="mr-2 cursor" type="radio" value="1" (change)="showStudentList = false">
+                                                    <label for="allStudents" class="mr-4 mb-0 cursor">All Students in selected class</label>
+                                                    <input [checked]="showStudentList" name="studentSelection" id="specificStudents" class="mr-2 cursor" type="radio" value="0" (change)="showStudentList = true">
+                                                    <label class="mr-2 mb-0 cursor" for="specificStudents">Specific Students</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-8 mt-2" *ngIf="showStudentList">
+                                                <ng-select [items]="choosedData[0]?.students"
+                                                           bindValue="id"
+                                                           bindLabel="name"
+                                                           placeholder="Select Student"
+                                                           typeToSearchText=""
+                                                           multiple="true">
+                                                </ng-select>
+                                            </div>
+                                        </div>
+
+                                        <div class="row my-2">
+                                            <p style="color: #777777;font-size: 12px !important;" class="mb-0 col-12">Start Date & Time</p>
+                                            <div class="col-6 pr-0">
+                                                <div class="d-flex align-items-baseline">
+                                                    <input style="border-top-right-radius: 0; border-bottom-right-radius: 0" class="form-control" placeholder="Start Date"
+                                                           [(ngModel)]="curriculumStartDate" name="dp"
+                                                           angular-mydatepicker #dp="angular-mydatepicker" autocomplete="off"
+                                                           [options]="myDpOptions1" (dateChanged)="onDateChanged($event)"
+                                                           (click)="dp.toggleCalendar()">
+                                                    <div class="input-group-append">
+                                                        <button style="border-top-left-radius: 0;border-bottom-left-radius: 0;
+                                                         padding: 6.5px 8px !important;" type="button" class="btn btn-primary" (click)="dp.toggleCalendar()">
+                                                            <i class="fa fa-calendar-o"></i></button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-6">
+                                                <ngb-timepicker [(ngModel)]="curriculumStartTime" [ngModelOptions]="{standalone: true}"
+                                                                [meridian]="meridian"
+                                                                [spinners]="spinner"></ngb-timepicker>
+                                            </div>
+                                        </div>
+
+                                        <div class="row my-2">
+                                            <p style="color: #777777;font-size: 12px !important;" class="mb-0 col-12">End Date & Time</p>
+                                            <div class="col-6 pr-0">
+                                                <div class="d-flex align-items-baseline">
+                                                    <input class="form-control" placeholder="End Date" [(ngModel)]="curriculumEndDate"
+                                                           name="dp1"
+                                                           angular-mydatepicker #dp1="angular-mydatepicker" autocomplete="off"
+                                                           [options]="myDpOptions2" (click)="dp1.toggleCalendar()">
+                                                    <div class="input-group-append">
+                                                        <button style="border-top-left-radius: 0;border-bottom-left-radius: 0;
+                                                         padding: 6.5px 8px !important;" (click)="dp1.toggleCalendar()" class="btn btn-primary"
+                                                                type="button">
+                                                            <i class="fa fa-calendar-o"></i></button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-6">
+                                                <ngb-timepicker [(ngModel)]="curriculumEndTime" [ngModelOptions]="{standalone: true}"
+                                                                [meridian]="meridian"
+                                                                [spinners]="spinner"></ngb-timepicker>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-12 mt-3" *ngIf="showContentCurriculumType == 'link'">
+                                        <app-other-link  id="otherLink" [titleName]="'Add Link As Content'"
+                                                         [showLink]="manageClass" [arrayValue]="[]"></app-other-link>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn cancel" (click)="showContentCurriculumType= '';modalRef.close()">Cancel</button>
+            <button *ngIf="showContentCurriculumType != ''" type="button" class="btn btn-primary" (click)="showContentCurriculumType= ''; modalRef.close()">Assign Content</button>
+        </div>
+</ng-template>
+
+    <ng-template #deleteDialog let-c="close" let-d="dismiss">
+        <div class="modal-body">
+            <!-- Container-fluid starts-->
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-md-12 my-3">
+                        <h5 class="mb-0">Are sure to delete this {{isDeleteLink ? 'Link' : 'PDF'}}?</h5>
+                    </div>
+                </div>
+            </div>
+            <!-- Container-fluid Ends-->
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-outline-primary" (click)="modalRef.close('deleteDialog')">Cancel</button>
+            <button type="button" class="btn btn-primary" (click)="isDeleteLink ? deleteLink() : deletePDf(this.selectedDeletePdf.index)">Confirm</button>
+        </div>
+    </ng-template>

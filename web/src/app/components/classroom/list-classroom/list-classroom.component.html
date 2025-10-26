@@ -1,0 +1,225 @@
+<!-- Container-fluid starts-->
+
+<div *ngIf="schoolStatus.length != 0" class="container-fluid">
+    <div class="card">
+        <div class="card-body p-4">
+            <div class="row">
+                <div class="col-4">
+                    <input (input)="onSearch($event)" class="form-control align-content-center" placeholder="Search Content Folder">
+                </div>
+                <div class="col-8 py-2 d-flex justify-content-end">
+
+                    <i class="fas fa-{{expandAll ? 'expand' : 'compress'}}-alt color-primary main_assign btn cursor mr-2" aria-hidden="true"
+                       [title]="expandAll ? 'Expand All' : 'Collapse All'" (click)="expandOrCollapseAll()"></i>
+
+                    <i *ngIf="manageContentFolder" class="fas fa-folder-plus color-primary main_assign btn cursor mr-2" aria-hidden="true" title="Add Parent Folder"
+                       (click)="addItem('0', 'parent', 'add')"></i>
+
+                    <button class="float-right btn cancel" (click)="multiAssignContent()">
+                        <i class="fa fa-users color-primary" aria-hidden="true"></i>&nbsp;Assign</button>
+
+                    <div class="dropdown px-2">
+
+                        <button class="col-12 float-right btn btn-outline-primary">{{filterType}} <i class="fa fa-sort-desc float-right pl-2" aria-hidden="true"></i></button>
+
+                        <div class="dropdown-content" style="z-index: 2; top: 38px;">
+                            <a (click)="filterType = 'Latest';getBranchList()" class="cursor">Latest</a>
+                            <a (click)="filterType = 'Oldest';getBranchList()" class="cursor">Oldest</a>
+                            <a (click)="filterType = 'A - Z';getBranchList()" class="cursor">A - Z</a>
+                            <a (click)="filterType = 'Z - A';getBranchList()" class="cursor">Z - A</a>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary pull-right" [routerLink]="'/repository/content-home'">Content Library</button>
+                </div>
+                <div class="col-md-12 my-3" style="overflow-y: scroll; max-height: 65vh">
+
+                    <div ngbAccordion *ngFor="let branchData of branchListData; let branchIndex = index; let first = first" class="folder">
+                        <div ngbAccordionItem="{{branchIndex}}" #accordion="ngbAccordionItem" [collapsed]="!branchData?.collapsed">
+                            <h2 ngbAccordionHeader>
+                                <button ngbAccordionButton class="btn btn-link d-flex justify-content-between align-items-center p-2 w-100">
+                                    <div class="d-flex align-items-center">
+                                        <i [ngStyle]="{'visibility': branchData.children.length == 0 ? 'hidden' : 'none'}" *ngIf="accordion.collapsed; else uparrow" aria-hidden="true" style="font-size: 14px" class="fa fa-caret-right"></i>
+                                        <ng-template #uparrow><i aria-hidden="true" class="fa fa-caret-down" style="font-size: 14px"></i></ng-template>
+                                        <input [ngStyle]="{'visibility': branchData.children.length == 0 ? 'hidden' : 'none'}"
+                                               (change)="checkBox($event, branchData)" type="checkbox" class="form-check-input ml-3 cursor mt-0"
+                                               (click)="preventProprgation($event)" [(ngModel)]="branchData.checked" [checked]="branchData.checked"/>
+                                        <label style="margin-left: 1.8rem" class="mb-0 cursor">{{branchData.text}}</label>
+                                    </div>
+                                    <label class="form-check-label ml-3 cursor">
+                                        <i class="fas fa-folder-plus color-primary color-primary" aria-hidden="true" title="Add" *ngIf="manageContentFolder"
+                                           (click)="addItem(branchData, 'child', 'add', $event)"></i>
+                                        <i class="fa fa-pencil ml-3 color-primary" aria-hidden="true" title="Rename Content Folder Name" *ngIf="manageContentFolder && branchData.value.split('/')[3] == '1'"
+                                           (click)="addItem(branchData, 'parent', 'edit', $event)"></i>
+                                        <i class="fa fa-trash ml-3 color-red" aria-hidden="true" title="Delete Content Folder" *ngIf="branchData.value.split('/')[3] == '1'"
+                                           (click)="batchDeletePopUp(branchData, $event)"></i>
+                                    </label>
+                                </button>
+                            </h2>
+                            <div ngbAccordionCollapse>
+                                <div ngbAccordionBody>
+                                    <ng-container *ngTemplateOutlet="expansionCategory; context: { $implicit: branchData}">
+                                    </ng-container>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div *ngIf="branchListData.length == 0">
+                        <div class="row d-flex justify-content-center list-card mt-5">
+                            <div class="col-4">
+                                <button class="nodataList">No Data Available!</button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+<div *ngIf="schoolStatus.length == 0">
+    <app-emptyschool>
+    </app-emptyschool>
+</div>
+<!-- Container-fluid Ends-->
+
+<ng-template #expansionCategory let-row>
+    <div *ngIf="row?.children">
+        <div ngbAccordion *ngFor="let data of row?.children; let index = index; let first = first;">
+
+            <div *ngIf="data.value.split('/')[1] == 'folder' || data.value.split('/')[1] == 'file'"
+                 ngbAccordionItem="{{index}}" #accordion="ngbAccordionItem" [collapsed]="!data?.collapsed">
+                <h2 ngbAccordionHeader class="classRoom">
+                    <button ngbAccordionButton style="padding-left:{{data.paddingPercentage}}% !important" class="btn btn-link d-flex align-items-center justify-content-start w-100">
+                        <div class="form-inline justify-content-between w-100 row-item py-1" [title]="data.text" *ngIf="data.value.split('/')[1] == 'folder'">
+                            <div class="form-check">
+                                <i *ngIf="accordion.collapsed && data.children.length != 0" aria-hidden="true" style="font-size: 14px" class="fa fa-caret-right"></i>
+                                <i *ngIf="!accordion.collapsed && data.children.length != 0" aria-hidden="true" style="font-size: 14px" class="fa fa-caret-down"></i>
+                                <input [ngStyle]="{'visibility': data.children.length == 0 ? 'hidden' : 'none'}"
+                                       (change)="checkBox($event, data)" type="checkbox" class="form-check-input cursor" style="margin-left: 14px"
+                                       (click)="preventProprgation($event)" [(ngModel)]="data.checked" [checked]="data.checked"/>
+                                <label class="form-check-label mx-2">
+                                    <i *ngIf="accordion.collapsed; else openFolder" aria-hidden="true"  style="font-size: 14px" class="fa fa-folder-o"></i>
+                                    <ng-template #openFolder><i aria-hidden="true" class="fa fa-folder-open-o" style="font-size: 14px"></i></ng-template>
+                                </label>
+                                <label class="form-check-label cursor font-weight-normal">{{data.text}}</label>
+                            </div>
+                            <label class="form-check-label ml-3 cursor">
+                                <i class="fas fa-folder-plus color-primary color-primary" aria-hidden="true" title="Add" *ngIf="manageContentFolder"
+                                   (click)="addItem(data, 'child', 'add', $event)"></i>
+                                <i class="fa fa-pencil ml-3 color-primary" aria-hidden="true" title="Rename Content Folder Name" *ngIf="manageContentFolder && data.value.split('/')[3] == '1'"
+                                   (click)="addItem(data, 'parent', 'edit', $event)"></i>
+                                <i class="fa fa-trash ml-3 color-red" aria-hidden="true" title="Delete Content Folder" *ngIf="data.value.split('/')[3] == '1'"
+                                   (click)="batchDeletePopUp(data, $event)"></i>
+                            </label>
+                        </div>
+
+                        <div class="form-inline justify-content-between w-100 row-item py-1" [title]="data.text" *ngIf="data.value.split('/')[1] == 'file'">
+                            <div class="form-check hoverText" [ngStyle]="{'margin-left': !data.children ? '14px' : '0'}">
+                                <input type="checkbox" class="form-check-input cursor mr-0"
+                                       [(ngModel)]="data.checked"
+                                       [disabled]="data.disabled" [indeterminate]="data.indeterminate" [checked]="data.checked"/>
+                                <label>
+                                    <i *ngIf="data.value.split('/')[2] == '1'" style="font-size:14px; color: #5f9ea0" class="fa ml-2">&#xf02d;</i>
+                                    <i *ngIf="data.value.split('/')[2] == '2'" style='font-size:14px; color: #ffbc58' class='fas ml-2'>&#xf518;</i>
+                                    <i *ngIf="data.value.split('/')[2] == '3'" style="font-size:14px;color: blue" class="fa ml-2">&#xf15c;</i>
+                                </label>
+                                <label class="cursor mx-2 hover-underline-animation" style="font-size: 14px; font-weight: normal;color: #7a7171"
+                                       (click)="previewOrEditContent(data, 'preview')">{{data.text}}</label>
+                                <label class="form-check-label">
+                                    <span style="font-size: 9px;" *ngIf="data.value.split('/')[3] == '1'" class="badge badge-danger" aria-hidden="true"
+                                       title="{{data.value.split('/')[2] == '1' ? 'Resource' : data.value.split('/')[2] == '2' ? 'Assignment' : 'Assesment'}} PDF">PDF</span>
+                                    <span style="font-size: 9px; background-color: #6c757d !important;" *ngIf="data.value.split('/')[3] == '3'" class="badge badge-secondary" aria-hidden="true"
+                                       title="{{data.value.split('/')[2] == '1' ? 'Resource' : data.value.split('/')[2] == '2' ? 'Assignment' : 'Assesment'}} Text">TEXT</span>
+                                </label>
+                            </div>
+                            <label>
+                                <i title="Preview Content" style="font-size:14px" (click)="previewOrEditContent(data, 'preview')" class="fa fa-eye cursor color-primary mr-2"></i>
+                                <i *ngIf="(roleId == '4' && manageContentFolder && data.edit_status == '1') ||
+                                    (roleId == '6' && data.edit_status != '0') || (roleId == '2' && !(schoolId != data.school_id && data.access == '3') && data.access != '4')" title="Edit Content" style="font-size:14px" (click)="previewOrEditContent(data, 'edit')" class="fa fa-pencil cursor color-primary"></i>
+                            </label>
+                        </div>
+                    </button>
+                </h2>
+
+                <div ngbAccordionCollapse>
+                    <div ngbAccordionBody>
+                        <ng-container *ngTemplateOutlet="expansionCategory; context: { $implicit: data}">
+                        </ng-container>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</ng-template>
+
+<ng-template #assignContent>
+    <app-confirm-content-assign
+        [contentDetails]="contentDetails"
+        [classData]="classDetails"
+        [multiContentId]="multiContent"
+        [isEssay]="isEssay"
+        (closePopUp)="close($event)"
+    >
+    </app-confirm-content-assign>
+</ng-template>
+
+<ng-template #addBranch let-c="close" let-d="dismiss">
+    <div class="modal-header">
+        <h4 class="col-md-11 px-2 py-1 font-weight-bold mb-0">{{calledValue == 'add' ? 'Add' : 'Rename'}} Folder</h4>
+    </div>
+    <div class="modal-body">
+        <div class="row">
+            <div class="col-md-12">
+                <form [formGroup]="branchForm" class="needs-validation user-add" novalida>
+                    <div class="form-group row">
+                        <label for="validationCustom1" class="col-xl-3 col-md-4"><span>*</span>
+                            Content Folder Name </label>
+                        <div class="col-xl-8 col-md-7">
+                            <input class="form-control" formControlName="batchname" id="validat1ionCustom1"
+                                   type="text" placeholder="Enter Content Folder Name" required="" (input)="formSubmitted = true">
+                            <em *ngIf="!branchForm.get('batchname').valid && !formSubmitted"
+                                class="error">Enter Content Folder Name</em>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer pull-right">
+        <button type="button" (click)="close('')" class="btn cancel">Cancel
+        </button>
+        <button type="button" (click)="addBranchDetails()" class="btn btn-primary">{{calledValue == 'add' ? 'Add' : 'Update'}}
+        </button>
+    </div>
+</ng-template>
+
+<ng-template #deleteBatch let-c="close" let-d="dismiss">
+    <div class="modal-header">
+        <h4 class="col-md-11 px-2 font-weight-bold mb-0">Delete Folder</h4>
+    </div>
+    <div class="modal-body">
+        <div class="row">
+            <div class="col-md-12 px-4">
+                <h5>Are you sure want to delete the <span class="color-primary font-weight-bold">{{selectedBatchForDelete.text}}</span> folder ?</h5>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer pull-right">
+        <button type="button" (click)="close('')" class="btn cancel">No
+        </button>
+        <button type="button" (click)="deleteBatchService()" class="btn btn-danger">Yes
+        </button>
+    </div>
+</ng-template>
+
+<ng-template #viewContent>
+    <div class="modal-header align-items-center">
+        <h4 class="modal-title">Preview</h4>
+        <i class="fa fa-close cursor" (click)="closePopUp()"></i>
+    </div>
+    <div class="modal-body" style="background: #f8f8f9;">
+        <app-preview (closePopUp)="closePopUp()" [calledBy]="'popUp'" [contentData]="contentData"></app-preview>
+    </div>
+</ng-template>

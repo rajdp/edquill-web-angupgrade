@@ -1,0 +1,38 @@
+<div>
+    <!--=================================
+  preloader -->
+    <div id="pre-loader" *ngIf="commondata.loader.value">
+        <img src="assets/images/pre-loader/loader-01.svg" alt="">
+    </div>
+    <div class="page-wrapper">
+        <app-header2 *ngIf="showMobView"></app-header2>
+
+        <app-header *ngIf="!showMobView" (rightSidebarEvent)="rightSidebar($event)"></app-header>
+        <div class="page-body-wrapper">
+            <div class="page-sidebar" *ngIf="!showMobView" [class.collapsed]="navServices.collapseSidebar"
+                 [class.hovered]="isHovered" (mouseenter)="onSidebarHover()" (mouseleave)="onSidebarLeave()"
+                 [class.open]="navServices.collapseSidebar">
+                <app-sidebar></app-sidebar>
+                <div class="right-sidebar" [class.show]="right_side_bar" id="right_side_bar">
+                    <app-right-sidebar></app-right-sidebar>
+                </div>
+            </div>
+            <div class="page-sidebar2" *ngIf="showMobView">
+                <app-right-sidebar-mob></app-right-sidebar-mob>
+                <div class="right-sidebar" id="right_side_bar2">
+                </div>
+            </div>
+            <div class="page-body" [class.hovered]="isHovered && !showMobView">
+                <app-breadcrumb *ngIf="hideForBreadcrumb"></app-breadcrumb>
+                <main>
+                    <router-outlet></router-outlet>
+                </main>
+            </div>
+            <footer class="footer">
+                <app-footer></app-footer>
+            </footer>
+        </div>
+    </div>
+
+    <!--<div class="btn-light custom-theme" [class.rtl]="layoutClass" (click)="clickRtl(layoutType)">{{layoutType}}</div>-->
+</div>
