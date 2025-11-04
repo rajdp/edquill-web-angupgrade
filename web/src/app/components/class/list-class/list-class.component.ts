@@ -104,6 +104,13 @@ export class ListClassComponent implements OnInit, OnDestroy {
     public className: any;
     public idForClass: any;
     public classlisthighlight: any;
+    public statusOptions = [
+        { value: '3', label: 'Active' },
+        { value: '2', label: 'Upcoming' },
+        { value: '4', label: 'Completed' },
+        { value: '1', label: 'All' },
+        { value: '6', label: 'Draft' }
+    ];
     public teacherType: any;
     public batchData: any;
     public gradeData: any;
@@ -114,7 +121,9 @@ export class ListClassComponent implements OnInit, OnDestroy {
     public settingList = [];
     public settingValue = '0';
     public allowSelect: boolean;
-    public searchClass: any;
+    public searchClass: any = '';
+    public searchStudent: any = '';
+    public searchText: any = '';
     public roleId: any;
     public userId: any;
     public schoolStatus: any;
@@ -123,7 +132,6 @@ export class ListClassComponent implements OnInit, OnDestroy {
     public classId: any = '';
     public showNotes: any;
     public notes: any = '';
-    public searchStudent: any = '';
     public editorValue: any;
     public studentShow = false;
     public teacherData: any = [];
@@ -162,6 +170,7 @@ export class ListClassComponent implements OnInit, OnDestroy {
     public showStudentEmailId = true;
     public showBulkEmailLoader = false;
     public courseListData = [];
+    public filtersExpanded = false;
 
     @ViewChild('class') AddClass: TemplateRef<any>;
     @ViewChild('reports') reports: TemplateRef<any>;
@@ -269,6 +278,75 @@ export class ListClassComponent implements OnInit, OnDestroy {
         };
     }
 
+    public get activeFilterChips(): string[] {
+        const chips: string[] = [];
+
+        const search = this.searchText?.trim();
+        if (search) {
+            chips.push(`Search: ${search}`);
+        }
+
+        const statusOption = this.statusOptions?.find(option => option.value === this.classlisthighlight);
+        if (statusOption && this.classlisthighlight && this.classlisthighlight !== '3') {
+            chips.push(`Status: ${statusOption.label}`);
+        }
+
+        if (this.selectCurriculumFolder) {
+            const folder = Array.isArray(this.batchData)
+                ? this.batchData.find(item => String(item.batch_id) === String(this.selectCurriculumFolder))
+                : null;
+            chips.push(`Folder: ${folder?.batch_name || 'Selected'}`);
+        }
+
+        if (Array.isArray(this.selectGrade) && this.selectGrade.length) {
+            const gradeIds = new Set(this.selectGrade.map((id: any) => String(id)));
+            const grades = Array.isArray(this.gradeData)
+                ? this.gradeData
+                    .filter(item => gradeIds.has(String(item.grade_id)))
+                    .map(item => item.grade_name)
+                : [];
+            chips.push(`Grades: ${grades.length ? grades.join(', ') : this.selectGrade.length}`);
+        }
+
+        if (Array.isArray(this.selectSubject) && this.selectSubject.length) {
+            const subjectIds = new Set(this.selectSubject.map((id: any) => String(id)));
+            const subjects = Array.isArray(this.subjectData)
+                ? this.subjectData
+                    .filter(item => subjectIds.has(String(item.subject_id)))
+                    .map(item => item.subject_name)
+                : [];
+            chips.push(`Subjects: ${subjects.length ? subjects.join(', ') : this.selectSubject.length}`);
+        }
+
+        if (this.selectTeacher) {
+            const teacher = Array.isArray(this.teacherData)
+                ? this.teacherData.find(item => String(item.teacher_id) === String(this.selectTeacher))
+                : null;
+            chips.push(`Teacher: ${teacher?.teacher_name || 'Selected'}`);
+        }
+
+        if (Array.isArray(this.selectCourse) && this.selectCourse.length) {
+            const courseIds = new Set(this.selectCourse.map((id: any) => String(id)));
+            const courses = Array.isArray(this.courseListData)
+                ? this.courseListData
+                    .filter(item => courseIds.has(String(item.course_id)))
+                    .map(item => item.course_name)
+                : [];
+            chips.push(`Courses: ${courses.length ? courses.join(', ') : this.selectCourse.length}`);
+        }
+
+        return chips;
+    }
+
+    public get activeAdvancedFilterCount(): number {
+        const basicPrefixes = ['Search:', 'Status:'];
+        return this.activeFilterChips.filter(chip => !basicPrefixes.some(prefix => chip.startsWith(prefix))).length;
+    }
+
+    public toggleFiltersPanel(): void {
+        this.filtersExpanded = !this.filtersExpanded;
+    }
+
     setMakeUpClassForm() {
         this.makeUpClass = this.formBuilder.group({
             toClass: [null, Validators.required],
@@ -343,7 +421,6 @@ export class ListClassComponent implements OnInit, OnDestroy {
 
     getCommentListCount() {
         const class_id = this.choosedData.map(items => items.class_id);
-        console.log(class_id, 'dada');
         if (class_id.length != 0) {
             const payload = {
                 platform: 'web',
@@ -371,7 +448,6 @@ export class ListClassComponent implements OnInit, OnDestroy {
 
     getMessageListCount() {
         const class_id = this.choosedData.map(items => items.class_id);
-        console.log(class_id, 'dada');
         if (class_id.length != 0) {
             const payload = {
                 platform: 'web',
@@ -504,7 +580,6 @@ export class ListClassComponent implements OnInit, OnDestroy {
     }
 
     deleteClassSuccess(successData) {
-        console.log(successData, 'successData');
         if (successData.IsSuccess) {
             this.toastr.success('Class deleted Successfully', 'Class');
             this.modalRef.close();
@@ -740,6 +815,7 @@ export class ListClassComponent implements OnInit, OnDestroy {
             student_search: this.searchStudent && this.searchStudent != '' ? this.searchStudent.trimStart() : '',
             course_id: this.auth.getRoleId() == '2' ? this.selectCourse : []
         };
+        
         this.classes.classesList(data).subscribe((successData) => {
                 this.classListSuccess(successData);
             },
@@ -751,27 +827,34 @@ export class ListClassComponent implements OnInit, OnDestroy {
     classListSuccess(successData) {
         if (successData.IsSuccess) {
             const temp = successData.ResponseObject;
-            if (this.searchClass.length > 0 && this.pageNo == 1) {
-                this.choosedData = successData.ResponseObject;
-            }
-            if (this.searchClass.length == 0 && this.pageNo == 1) {
+            
+            // For first page (or when filters/search change), replace the data
+            if (this.pageNo == 1) {
                 this.choosedData = successData.ResponseObject;
                 this.choosedData.forEach(element => {
                     element.checked = false;
                 });
             }
-            if (this.pageNo > 1 && temp.length > 0) {
+            // For pagination (infinite scroll), append to existing data
+            else if (this.pageNo > 1 && temp.length > 0) {
                 for (let entry of temp) {
                     this.choosedData.push(entry);
                 }
             }
+            
+            // Initialize comment and message counts
             this.choosedData.forEach(items => {
                 items.new_comments = 0;
                 items.newMessage = 0;
             });
+            
+            // Clean up existing subscriptions
             this.subs.forEach(val => val.unsubscribe());
             this.messageSubs.forEach(value => value.unsubscribe());
+            
             this.showLoader = false;
+            
+            // Load comment and message counts if there's data
             if (this.choosedData.length != 0) {
                 this.getCommentListCount();
                 this.auth.getRoleId() == '4' ? this.getMessageListCount() : '';
@@ -786,6 +869,7 @@ export class ListClassComponent implements OnInit, OnDestroy {
         this.selectTeacher = null;
         this.searchClass = '';
         this.searchStudent = '';
+        this.searchText = '';
         this.selectCurriculumFolder = null;
         this.classlisthighlight = 3;
         this.selectCourse = [];
@@ -830,6 +914,23 @@ export class ListClassComponent implements OnInit, OnDestroy {
         if (event.trim().length > 2 || event.trim().length == 0) {
             clearTimeout(this.searchTime);
             this.searchTime = setTimeout(() => {
+                this.choosedData = []; // Clear previous data
+                this.classList(this.classlisthighlight);
+                this.setSearch_Filter(this.classlisthighlight);
+            }, 1200);
+        }
+    }
+
+    updateUnifiedSearch(event) {
+        // Set both searchClass and searchStudent to the same value for unified search
+        this.searchClass = event;
+        this.searchStudent = event;
+        
+        if (event.trim().length > 2 || event.trim().length == 0) {
+            clearTimeout(this.searchTime);
+            this.searchTime = setTimeout(() => {
+                this.pageNo = 1;
+                this.choosedData = []; // Clear previous data
                 this.classList(this.classlisthighlight);
                 this.setSearch_Filter(this.classlisthighlight);
             }, 1200);
@@ -868,7 +969,18 @@ export class ListClassComponent implements OnInit, OnDestroy {
         this.modalRef = this.modalService.open(this.showInform, {size: 'sm'});
     }
 
+    openClassOverview(id, event) {
+        this.enterList(id, 'overview', event);
+    }
+
+    openStudentRoster(id, event) {
+        this.enterList(id, 'yes', event);
+    }
+
     enterList(id, type, event) {
+        if (event && typeof event !== 'string' && typeof event.stopPropagation === 'function') {
+            event.stopPropagation();
+        }
         console.log(event, 'eventtt');
         this.selectedClassid = id;
         const data = {
@@ -880,7 +992,7 @@ export class ListClassComponent implements OnInit, OnDestroy {
             grade: [this.choosedData[id].grade_id],
             teacher_id: this.auth.getRoleId() == '4' ? this.auth.getUserId() : '0'
         };
-        if (type == 'yes') {
+        if (type == 'yes' || type == 'overview') {
             // this.commondata.showLoader(true);
             this.studentShow = this.choosedData[id].class_id;
             this.classes.classDetails(data).subscribe((successData) => {
@@ -896,9 +1008,6 @@ export class ListClassComponent implements OnInit, OnDestroy {
                     element.checked = false;
                 }
             });
-            if (typeof event != 'string') {
-                event.stopPropagation();
-            }
         } else if (type == 'notes') {
             this.commondata.showLoader(true);
             this.classes.classDetails(data).subscribe((successData) => {
@@ -932,6 +1041,14 @@ export class ListClassComponent implements OnInit, OnDestroy {
                 this.studentData.sort((a, b) => a.student_name.localeCompare(b.student_name));
                 this.choosedData[this.selectedClassid].no_of_students = this.studentData.length;
                 console.log(this.studentData, 'studentData');
+            } else if (type === 'overview') {
+                this.auth.setSessionData('card-data', JSON.stringify(successData.ResponseObject));
+                this.route.navigate(['/class/overview', this.idForClass], {
+                    state: {
+                        overview: successData.ResponseObject[0],
+                        classSummary: this.choosedData[this.selectedClassid]
+                    }
+                });
             } else if (type == 'notes') {
                 this.showNotes = successData.ResponseObject[0].notes;
             } else if (['inbox', 'curriculum'].includes(type)) {
@@ -1202,18 +1319,20 @@ export class ListClassComponent implements OnInit, OnDestroy {
         const teacher_id = this.auth.getRoleId() == '4' ? this.auth.getUserId() : '0';
         data.every((items) => {
             if (items.school_id == this.auth.getSessionData('school_id')) {
-                this.searchStudent = items.studentName;
-                this.searchClass = items.className;
-                this.selectSubject = items.subject;
-                this.selectGrade = items.grade;
+                this.searchStudent = items.studentName || '';
+                this.searchClass = items.className || '';
+                this.searchText = items.className || items.studentName || '';
+                this.selectSubject = items.subject || [];
+                this.selectGrade = items.grade || [];
                 this.selectTeacher = items.teacher;
                 this.selectCurriculumFolder = items.curriculum_Folder;
-                this.classlisthighlight = items.classDateStatus;
-                this.selectCourse = items.course_id;
+                this.classlisthighlight = items.classDateStatus || '3';
+                this.selectCourse = items.course_id || [];
                 return false;
             } else {
                 this.searchClass = '';
                 this.searchStudent = '';
+                this.searchText = '';
                 this.selectGrade = [];
                 this.selectSubject = [];
                 this.selectTeacher = null;
@@ -1572,7 +1691,6 @@ export class ListClassComponent implements OnInit, OnDestroy {
     }
 
     studentListSuccess(successData) {
-        console.log(successData, 'successData');
         if (successData.IsSuccess) {
             this.allStudentList = successData.ResponseObject;
         }
@@ -1860,7 +1978,6 @@ export class ListClassComponent implements OnInit, OnDestroy {
             (successData: any) => {
                 this.courseListData = successData.IsSuccess ? successData.ResponseObject : [];
                 this.courseListData.push({course_id: '0', course_name: 'Other Classes - Without Course', status: ''});
-                console.log(this.courseListData, 'courseListData');
             },
             (error) => {
                 console.error(error, ' error');
@@ -1922,7 +2039,6 @@ export class ListClassComponent implements OnInit, OnDestroy {
     }
 
     addStudentSuccess(successData) {
-        console.log(successData, 'successData');
         if (successData.IsSuccess) {
             this.toastr.success(successData.ResponseObject, 'Student');
             this.searchStudentList(1);

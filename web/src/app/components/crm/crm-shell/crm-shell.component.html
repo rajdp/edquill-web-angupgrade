@@ -1,0 +1,18 @@
+<div class="crm-shell">
+  <div class="crm-shell__tabs">
+    <nav class="nav nav-pills">
+      <a
+        *ngFor="let tab of tabs"
+        class="nav-link"
+        [routerLink]="tab.link"
+        routerLinkActive="active"
+      >
+        <i class="bi me-2" [ngClass]="tab.icon"></i>
+        {{ tab.label }}
+      </a>
+    </nav>
+  </div>
+  <div class="crm-shell__content mt-4">
+    <router-outlet></router-outlet>
+  </div>
+</div>

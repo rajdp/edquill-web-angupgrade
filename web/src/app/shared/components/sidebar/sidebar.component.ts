@@ -14,11 +14,12 @@ import {CreatorService} from '../../service/creator.service';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { FeatherIconsComponent } from '../feather-icons/feather-icons.component';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'app-sidebar',
     standalone: true,
-    imports: [CommonModule, FormsModule, RouterModule, FeatherIconsComponent],
+    imports: [CommonModule, FormsModule, RouterModule, FeatherIconsComponent, NgbTooltipModule],
     templateUrl: './sidebar.component.html',
     styleUrls: ['./sidebar.component.scss'],
     encapsulation: ViewEncapsulation.None
@@ -116,17 +117,19 @@ export class SidebarComponent implements OnInit {
                 this.hideSchoolDropdown = false;
             }
         });
-        this.creatorService.contentView.subscribe((res: any) => {
-            this.sideBarOpened = !(res == true);
-        });
-    }
-
-    onSidebarHover() {
-        this.sideBarOpened = true;
-    }
-
-    onSidebarLeave() {
+        
+        // Set initial sidebar state based on navServices.collapseSidebar
+        // This ensures the sidebar state is synchronized with user's preference
         this.sideBarOpened = !this.navServices.collapseSidebar;
+        
+        // Subscribe to sidebar toggle events from header
+        // This keeps the sidebar state in sync when user explicitly toggles it
+        this.creatorService.contentView.subscribe((collapseState: any) => {
+            // Only update when there's an actual change (not initial empty string)
+            if (collapseState !== '') {
+                this.sideBarOpened = !collapseState;
+            }
+        });
     }
 
     removeSessionData() {

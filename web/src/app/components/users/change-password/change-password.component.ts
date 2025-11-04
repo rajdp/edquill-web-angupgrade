@@ -65,16 +65,13 @@ export class ChangePasswordComponent implements OnInit {
     if (successData.IsSuccess) {
       this.commondata.showLoader(false);
       this.toastr.success(successData.ResponseObject.message, '');
-      this.roleId = this.auth.getRoleId();
-      if (this.roleId == 2 || this.roleId == 4 || this.roleId == 6  ) {
-        this.router.navigate(['home/list-home']);
-      } else if (this.roleId == 3) {
-        this.router.navigate(['repository/content-home']);
-      }else if (this.roleId == 5){
-        // this.router.navigate(['studentlogin/list-home']);
-        this.router.navigate(['/student/dashboard']);
-      }
-    } else{
+      
+      // Reset form after successful password change
+      this.accountForm.reset();
+      
+      // No redirect - user stays on current page
+      // This provides better UX as user can continue their work
+    } else {
       this.commondata.showLoader(false);
       this.toastr.error(successData.ErrorObject, '');
     }

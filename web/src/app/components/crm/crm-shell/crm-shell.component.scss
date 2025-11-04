@@ -1,0 +1,18 @@
+.crm-shell {
+  &__tabs {
+    .nav-link {
+      margin-right: 0.5rem;
+      display: flex;
+      align-items: center;
+      padding: 0.5rem 1rem;
+      border-radius: 999px;
+      color: #495057;
+      background-color: #f8f9fa;
+
+      &.active {
+        background-color: #0d6efd;
+        color: #fff;
+      }
+    }
+  }
+}

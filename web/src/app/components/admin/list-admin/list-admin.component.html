@@ -153,7 +153,7 @@
             </div>
             <div id="batchDelete" class="category-table custom-datatable transcation-datatable user-image">
                 <div class="table-responsive">
-                    <app-table [TableType]="'Admin'" [TableArray]="listData" (clickValue)="emittedValue($event)"></app-table>
+                    <app-table [TableType]="'Admin'" [TableArray]="listData" [initialPage]="currentAdminListPage" [initialFilters]="savedAdminFilters" (clickValue)="emittedValue($event)" (pageChange)="onPageChange($event)" (filterChange)="onFilterChange($event)"></app-table>
                 </div>
             </div>
     </div>

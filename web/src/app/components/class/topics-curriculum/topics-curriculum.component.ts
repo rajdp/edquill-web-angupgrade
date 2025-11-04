@@ -139,6 +139,7 @@ export class TopicsCurriculumComponent implements OnInit, OnDestroy {
     public multiContentId = [];
     public multiTopicId = [];
     public calledFrom = 'direct';
+    private studentNameLookup = new Map<string, string>();
 
     constructor(public auth: AuthService, public assessment: AssessmentService, public router: Router, private formBuilder: FormBuilder, public route: ActivatedRoute, public newSubject: NewsubjectService,
                 public sanitizer: DomSanitizer, public config: ConfigurationService, private modalService: NgbModal, public classService: ClassService, public datePipe: DatePipe,
@@ -171,8 +172,15 @@ export class TopicsCurriculumComponent implements OnInit, OnDestroy {
             this.linkData = this.choosedData[0]?.video_link ? this.choosedData[0]?.video_link : [];
             console.log(this.choosedData[0], 'ssss');
             this.choosedData[0].students.forEach((items) => {
-                items.name = items.first_name + items.last_name;
+                const firstName = (items.first_name ?? '').trim();
+                const lastName = (items.last_name ?? '').trim();
+                const fullName = [firstName, lastName].filter(Boolean).join(' ').trim();
+                items.name = fullName || (items.name ?? '');
                 items.id = items.student_id;
+                const lookupId = `${items.student_id ?? items.id ?? ''}`.trim();
+                if (lookupId) {
+                    this.studentNameLookup.set(lookupId, items.name);
+                }
             });
             if (this.auth.getRoleId() != '2') {
                 if (this.choosedData[0]?.teacher_ids) {
@@ -190,6 +198,7 @@ export class TopicsCurriculumComponent implements OnInit, OnDestroy {
             this.className = this.choosedData.batch_name;
             this.typeName = 'Content Folder Name';
         }
+        this.buildStudentLookupFromSession();
 
         const searchValue = JSON.parse(this.auth.getSessionData(SessionConstants.classCurriculumSearch));
         console.log(searchValue, 'searchValue');
@@ -385,8 +394,10 @@ export class TopicsCurriculumComponent implements OnInit, OnDestroy {
         if (successData.IsSuccess) {
             this.curriculumList = successData.ResponseObject;
             this.resourceList = successData.ResponseObject;
-            this.curriculumList.forEach((item, index) => {
-                item.id = index + 1;
+            this.curriculumList.forEach((item) => {
+                item.individual_count = Number(item.individual_count ?? 0);
+                item.individual_students = item.individual_students ?? '';
+                item.individual_student_names = this.formatIndividualStudents(item.individual_students);
             });
             this.getTopicList();
         }
@@ -399,7 +410,7 @@ export class TopicsCurriculumComponent implements OnInit, OnDestroy {
             platform: 'web',
             role_id: this.auth.getRoleId(),
             user_id: this.auth.getUserId(),
-            class_id: [this.choosedData[0].class_id],
+            class_id: this.choosedData[0].class_id,
             timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
         };
         this.classService.topicList(data).subscribe((successData) => {
@@ -408,6 +419,147 @@ export class TopicsCurriculumComponent implements OnInit, OnDestroy {
             (error) => {
                 console.log(error);
             });
+    }
+
+    private buildStudentLookupFromSession(): void {
+        if (!this.choosedData) {
+            return;
+        }
+        const candidates = Array.isArray(this.choosedData)
+            ? this.choosedData[0]?.students ?? []
+            : this.choosedData?.students ?? [];
+        if (!Array.isArray(candidates)) {
+            return;
+        }
+        candidates.forEach((student: any) => {
+            const id = `${student?.student_id ?? student?.id ?? ''}`.trim();
+            if (!id) {
+                return;
+            }
+            const firstName = `${student?.first_name ?? ''}`.trim();
+            const lastName = `${student?.last_name ?? ''}`.trim();
+            const fallbackName = `${student?.name ?? ''}`.trim();
+            const displayName = [firstName, lastName].filter(Boolean).join(' ').trim() || fallbackName || id;
+            if (!this.studentNameLookup.has(id)) {
+                this.studentNameLookup.set(id, displayName);
+            }
+        });
+    }
+
+    private formatIndividualStudents(raw: any): string {
+        const names = this.extractStudentNames(raw);
+        if (names.length === 0) {
+            return '';
+        }
+        return Array.from(new Set(names.map((name) => name.trim()).filter(Boolean))).join(', ');
+    }
+
+    private extractStudentNames(raw: any): string[] {
+        const resolvedNames: string[] = [];
+        const seen = new Set<string>();
+
+        const addName = (name: string) => {
+            const trimmed = name.replace(/[\[\]"]/g, '').trim();
+            if (!trimmed) {
+                return;
+            }
+            if (!seen.has(trimmed)) {
+                seen.add(trimmed);
+                resolvedNames.push(trimmed);
+            }
+        };
+
+        const resolveViaLookup = (token: string) => {
+            const direct = this.studentNameLookup.get(token);
+            if (direct) {
+                addName(direct);
+                return;
+            }
+            const normalized = token.replace(/\s+/g, ' ').trim();
+            const normalizedHit = this.studentNameLookup.get(normalized);
+            if (normalizedHit) {
+                addName(normalizedHit);
+                return;
+            }
+            addName(token);
+        };
+
+        const handleToken = (token: string) => {
+            const cleaned = token.replace(/[[\]"']/g, '').trim();
+            if (!cleaned) {
+                return;
+            }
+            resolveViaLookup(cleaned);
+        };
+
+        const handleObject = (value: Record<string, any>) => {
+            const nameCandidates = [
+                value.full_name,
+                value.fullName,
+                value.display_name,
+                value.displayName,
+                value.student_name,
+                value.studentName,
+                value.name,
+                `${value.first_name ?? ''} ${value.last_name ?? ''}`,
+                `${value.firstname ?? ''} ${value.lastname ?? ''}`,
+            ];
+            const candidateName = nameCandidates.map((candidate) => (typeof candidate === 'string' ? candidate.trim() : '')).find((candidate) => candidate && candidate.length > 0);
+            if (candidateName) {
+                addName(candidateName);
+            }
+            const idCandidates = [
+                value.student_id,
+                value.studentId,
+                value.id,
+                value.ID,
+                value.user_id,
+                value.userId,
+            ].map((candidate) => (candidate || candidate === 0) ? `${candidate}`.trim() : '');
+            idCandidates.filter(Boolean).forEach(handleToken);
+        };
+
+        if (raw === null || raw === undefined) {
+            return resolvedNames;
+        }
+
+        if (Array.isArray(raw)) {
+            raw.forEach((item) => {
+                if (item === null || item === undefined) {
+                    return;
+                }
+                if (typeof item === 'object') {
+                    handleObject(item as Record<string, any>);
+                } else {
+                    handleToken(`${item}`);
+                }
+            });
+            return resolvedNames;
+        }
+
+        if (typeof raw === 'string') {
+            const trimmed = raw.trim();
+            if (!trimmed) {
+                return resolvedNames;
+            }
+            try {
+                const parsed = JSON.parse(trimmed);
+                const nestedNames = this.extractStudentNames(parsed);
+                nestedNames.forEach(addName);
+                return resolvedNames;
+            } catch {
+                trimmed.split(/[,;|]/g).forEach((fragment) => handleToken(fragment));
+                return resolvedNames;
+            }
+        }
+
+        if (typeof raw === 'object') {
+            handleObject(raw as Record<string, any>);
+            return resolvedNames;
+        }
+
+        handleToken(`${raw}`);
+        return resolvedNames;
     }
 
     viewTopicListSuccess(successData) {
@@ -1274,7 +1426,9 @@ export class TopicsCurriculumComponent implements OnInit, OnDestroy {
             user_id: this.auth.getUserId(),
             // content_id: this.deleteData.content_id,
             // class_id: this.classid,
-            class_content_id: this.calledFrom == 'direct' ? [this.deleteData.class_content_id] : this.multiContentId
+            class_content_id: this.calledFrom == 'direct'
+                ? [this.deleteData.class_content_id ?? this.deleteData.id ?? 0]
+                : this.multiContentId
         };
         this.classService.deleteContentDetail(data).subscribe((successData) => {
                 this.deleteSuccess(successData);

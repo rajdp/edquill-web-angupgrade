@@ -1,27 +1,29 @@
 @if (allow() && zoomAllowed()) {
-  <div class="internet" [ngClass]="connectivityClass()">
+  <div class="app-shell" [class.offline]="!hasInternet()">
     <router-outlet></router-outlet>
   </div>
-}
 
-@if (allow() && zoomAllowed()) {
   <div class="floating">
     <div id="meetingSDKElement"></div>
     <div id="meetingSDKChatElement"></div>
   </div>
+
+  @if (!hasInternet()) {
+    <div class="network-overlay">
+      <div class="network-banner alert alert-danger d-flex align-items-center justify-content-center gap-2">
+        <i class="bi bi-wifi-off fs-5"></i>
+        <span class="fw-semibold">Your internet connection is unstable</span>
+      </div>
+    </div>
+  }
 }
 
-<div [ngClass]="overlayClass()">
-  <div class="row w-100" style="background: red;justify-content: center;">
-    <span>Your Internet Connection is Unstable</span>
-  </div>
-</div>
-
 @if (!allow()) {
-  <div class="internet" [ngClass]="invertedConnectivityClass()">
-    <div [ngClass]="offlineOverlayClass()">
-      <div class="row w-100" style="background: red;justify-content: center;">
-        <span>Your Internet Connection is Unstable</span>
+  <div class="app-shell offline">
+    <div class="network-overlay">
+      <div class="network-banner alert alert-danger d-flex align-items-center justify-content-center gap-2">
+        <i class="bi bi-wifi-off fs-5"></i>
+        <span class="fw-semibold">Your internet connection is unstable</span>
       </div>
     </div>
   </div>

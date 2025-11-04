@@ -11,6 +11,23 @@ import {FormBuilder, FormGroup, Validators} from '@angular/forms';
 import {ValidationService} from '../../../shared/service/validation.service';
 import {EnvironmentService} from '../../../environment.service';
 import {CreatorService} from '../../../shared/service/creator.service';
+import {NestedTreeControl} from '@angular/cdk/tree';
+import {MatTreeNestedDataSource} from '@angular/material/tree';
+import {MatCheckboxChange} from '@angular/material/checkbox';
+
+interface ContentNode {
+    text: string;
+    value: string;
+    children?: ContentNode[];
+    checked?: boolean;
+    indeterminate?: boolean;
+    disabled?: boolean;
+    parent?: ContentNode | null;
+    content_type?: string;
+    content_format?: string;
+    allow_autograde?: string;
+    without_question?: string;
+}
 
 @Component({
     selector: 'app-list-classroom',
@@ -37,12 +54,18 @@ export class ListClassroomComponent implements OnInit {
     public selectedBatchForDelete: any;
     public calledValue = '';
     public addItemsData: any;
-    public expandAll = true;
-    private fullBranchListData: any;
+    public treeControl = new NestedTreeControl<ContentNode>((node) => node.children || []);
+    public dataSource = new MatTreeNestedDataSource<ContentNode>();
+    public folderNodePredicate = (_: number, node: ContentNode) => this.getNodeType(node) !== 'file';
+    public fileNodePredicate = (_: number, node: ContentNode) => this.getNodeType(node) === 'file';
+    public expandAll = false;
+    private fullBranchListData: ContentNode[] = [];
     public contentData: any = {};
     public selectedContent: any;
     public schoolId = '';
     public roleId = '';
+    // Tab management
+    public activeTab: 'library' | 'folder' = 'folder';
 
     @ViewChild('assignContent') assignContent: TemplateRef<any>;
     @ViewChild('deleteBatch') deleteBatch: TemplateRef<any>;
@@ -50,7 +73,7 @@ export class ListClassroomComponent implements OnInit {
     @ViewChild('viewContent') viewContent: TemplateRef<any>;
 
     public showLoader = true;
-    public branchListData: any = [];
+    public branchListData: ContentNode[] = [];
     public branchForm: FormGroup;
     public env = inject(EnvironmentService);
     private creatorService = inject(CreatorService);
@@ -91,6 +114,18 @@ export class ListClassroomComponent implements OnInit {
         this.auth.removeSessionData('backOption');
         this.getScreenHeight = window.innerHeight;
         this.resetForm();
+    }
+
+    switchTab(tab: 'library' | 'folder') {
+        if (this.activeTab !== tab) {
+            if (tab === 'library') {
+                // Navigate to Content Library view
+                this.route.navigate(['/repository/content-home']);
+            } else {
+                // Content Folder - stay on current page
+                this.activeTab = tab;
+            }
+        }
     }
 
     @HostListener('window:resize', ['$event'])
@@ -139,19 +174,15 @@ export class ListClassroomComponent implements OnInit {
     }
 
     branchListSuccess(successData) {
-        if (successData.IsSuccess) {
-            this.commondata.showLoader(false);
-            successData.ResponseObject.forEach((items, index) => {
-                items.checked = false;
-                this.updateArrayValue(items, 0);
-                const value = index == 0 ? 'first' : '';
-                this.updateChildrenValue(items, 'collapsed', this.expandAll, value);
-            });
-            this.showLoader = false;
-            this.fullBranchListData = successData.ResponseObject;
-            this.branchListData = successData.ResponseObject;
-            console.log(this.branchListData, 'branchListData');
+        if (!successData.IsSuccess) {
+            return;
         }
+
+        this.commondata.showLoader(false);
+        this.showLoader = false;
+        const responseNodes = (successData.ResponseObject || []) as ContentNode[];
+        this.fullBranchListData = this.cloneNodes(responseNodes);
+        this.applyTreeData(this.cloneNodes(responseNodes));
     }
 
     resetForm() {
@@ -180,29 +211,94 @@ export class ListClassroomComponent implements OnInit {
         }
     }
 
-    updateArrayValue(value, indexLevel) {
-        const index = indexLevel + 1;
-        if (value.children) {
-            value.children.forEach((items) => {
-                items.paddingPercentage = index * 1.5;
-                items.checked = false;
-                if (items.children) {
-                    this.updateArrayValue(items, index);
-                }
-            });
+    private applyTreeData(data: ContentNode[]): void {
+        this.branchListData = data || [];
+        this.initializeNodes(this.branchListData, null);
+        this.dataSource.data = this.branchListData;
+        if (this.expandAll) {
+            this.treeControl.expandAll();
+        } else {
+            this.treeControl.collapseAll();
         }
     }
 
-    preventProprgation(event) {
-        event.stopPropagation();
+    private initializeNodes(nodes: ContentNode[], parent: ContentNode | null): void {
+        nodes.forEach((node) => {
+            node.parent = parent;
+            node.checked = false;
+            node.indeterminate = false;
+            if (this.hasChildren(node)) {
+                this.initializeNodes(node.children!, node);
+            }
+        });
     }
 
-    checkBox(event, data) {
-        console.log(event, data);
-        if (data.children) {
-            data.children.forEach((items) => {
-                this.updateChildrenValue(items, 'checked', event.target.checked);
+    private cloneNodes(nodes: ContentNode[] = []): ContentNode[] {
+        return nodes.map((node) => ({
+            ...node,
+            parent: null,
+            children: node.children ? this.cloneNodes(node.children) : []
+        }));
+    }
+
+    public hasChildren(node: ContentNode): boolean {
+        return Array.isArray(node.children) && node.children.length > 0;
+    }
+
+    onFolderSelectionChange(node: ContentNode, change: MatCheckboxChange): void {
+        this.propagateSelectionToChildren(node, change.checked);
+        this.updateParentSelection(node.parent ?? null);
+    }
+
+    onFileSelectionChange(node: ContentNode, change: MatCheckboxChange): void {
+        node.checked = change.checked;
+        node.indeterminate = false;
+        this.updateParentSelection(node.parent ?? null);
+    }
+
+    private propagateSelectionToChildren(node: ContentNode, checked: boolean): void {
+        node.checked = checked;
+        node.indeterminate = false;
+        if (this.hasChildren(node)) {
+            node.children!.forEach((child) => this.propagateSelectionToChildren(child, checked));
+        }
+    }
+
+    private updateParentSelection(node: ContentNode | null): void {
+        if (!node) {
+            return;
+        }
+        if (!this.hasChildren(node)) {
+            node.indeterminate = false;
+            this.updateParentSelection(node.parent ?? null);
+            return;
+        }
+
+        const children = node.children!;
+        const allChecked = children.every((child) => child.checked);
+        const someChecked = children.some((child) => child.checked || child.indeterminate);
+
+        node.checked = allChecked;
+        node.indeterminate = !allChecked && someChecked;
+
+        this.updateParentSelection(node.parent ?? null);
+    }
+
+    private collectSelectedContent(node: ContentNode): void {
+        if (this.getNodeType(node) === 'file' && node.checked) {
+            const valueParts = node.value?.split('/') ?? [];
+            this.multiContent.push({
+                name: node.text,
+                content_id: valueParts[0],
+                content_type: node.content_type ?? valueParts[2],
+                allow_autograde: node.allow_autograde ?? '',
+                without_question: node.without_question ?? '',
+                content_format: node.content_format ?? valueParts[3]
             });
+        }
+
+        if (this.hasChildren(node)) {
+            node.children!.forEach((child) => this.collectSelectedContent(child));
         }
     }
 
@@ -220,7 +316,6 @@ export class ListClassroomComponent implements OnInit {
     }
 
     close(event) {
-        console.log(event, 'event');
         this.auth.removeSessionData('assignedForm');
         this.modalRef.close();
         if (event) {
@@ -231,39 +326,14 @@ export class ListClassroomComponent implements OnInit {
 
     multiAssignContent() {
         this.multiContent = [];
-        this.branchListData.forEach((items) => {
-            if (items.children) {
-                this.pushMultiContent(items);
-            }
-        });
-        setTimeout(() => {
-            this.multiContent = this.multiContent.filter((data, i, a) => i === a.indexOf(a.find(f => f.content_id === data.content_id)));
-            console.log(this.multiContent, 'sssss');
-            if (this.multiContent.length != 0) {
-                this.auth.setSessionData('assignedForm', this.auth.getSessionData('content_assign') ?? 'classRoom');
-                this.modalRef = this.modalService.open(this.assignContent, {size: 'xl'});
-            } else {
-                this.toastr.error('Please select content to Assign');
-            }
-        }, 500);
-    }
-
-    pushMultiContent(value) {
-        value.children.forEach((items) => {
-            if (items.value.split('/')[1] == 'file' && items.checked) {
-                this.multiContent.push({
-                    name: items.text,
-                    content_id: items.value.split('/')[0],
-                    content_type: items.content_type,
-                    allow_autograde: items.allow_autograde ?? '',
-                    without_question: items.without_question ?? '',
-                    content_format: items.content_format
-                });
-            }
-            if (items.children) {
-                this.pushMultiContent(items);
-            }
-        });
+        this.dataSource.data.forEach((node) => this.collectSelectedContent(node));
+        this.multiContent = Array.from(new Map(this.multiContent.map((item) => [item.content_id, item])).values());
+        if (this.multiContent.length != 0) {
+            this.auth.setSessionData('assignedForm', this.auth.getSessionData('content_assign') ?? 'classRoom');
+            this.modalRef = this.modalService.open(this.assignContent, {size: 'xl'});
+        } else {
+            this.toastr.error('Please select content to Assign');
+        }
     }
 
     addBranchDetails() {
@@ -418,64 +488,56 @@ export class ListClassroomComponent implements OnInit {
     //     }, delay);
     // }
 
-    async expandOrCollapseAll() {
+    expandOrCollapseAll(): void {
         this.expandAll = !this.expandAll;
-        if (!this.expandAll) {
-            for (const item of this.branchListData) {
-                await this.updateChildrenValue(item, 'collapsed', this.expandAll);
-            }
+        if (this.expandAll) {
+            this.treeControl.expandAll();
         } else {
-            this.getBranchList();
+            this.treeControl.collapseAll();
         }
     }
 
-    async updateChildrenValue(value: any, key: string, keyValue: boolean,  calledFor = ''): Promise<void> {
-        if (!value || typeof value !== 'object') return;
-
-        value[key] = key == 'collapsed' ? (calledFor != '' ? keyValue : !keyValue) : keyValue;
-
-        if (Array.isArray(value.children) && value.children.length > 0) {
-            for (const child of value.children) {
-                await this.updateChildrenValue(child, key, keyValue);
-            }
-        }
-
-        // Add a small delay (optional) to control execution speed
-        await new Promise(resolve => setTimeout(resolve, 15));
-    }
-
-    onSearch(event) {
-        const arrayValue = this.fullBranchListData;
-        if (event.target.value.trimStart() != '') {
-            this.branchListData = this.filterNestedArray(arrayValue, event.target.value);
-            console.log('Search Results:', this.branchListData);
+    onSearch(event: Event) {
+        const term = (event.target as HTMLInputElement).value.trimStart();
+        if (term) {
+            const normalizedTerm = term.toLowerCase();
+            const filtered = this.filterNestedArray(this.cloneNodes(this.fullBranchListData), normalizedTerm);
+            this.applyTreeData(filtered);
         } else {
-            this.branchListData = arrayValue;
+            this.applyTreeData(this.cloneNodes(this.fullBranchListData));
         }
     }
 
-    filterNestedArray(data: any[], searchTerm: string): any[] {
-        return data.map((item) => {
-                const type = item.value.split('/')[1]; // Determine if folder or file
-                const children = item.children ? this.filterNestedArray(item.children, searchTerm) : [];
+    private filterNestedArray(data: ContentNode[], searchTerm: string): ContentNode[] {
+        const results: ContentNode[] = [];
 
-                if (type === 'folder' && item.text.toLowerCase().includes(searchTerm.toLowerCase())) {
-                    // If the folder matches, include all its children (unfiltered)
-                    return { ...item, children: item.children || [], collapsed: true  };
-                }
+        data.forEach((item) => {
+            const type = this.getNodeType(item);
+            const childrenMatches = this.hasChildren(item) ? this.filterNestedArray(this.cloneNodes(item.children!), searchTerm) : [];
+            const labelMatches = type !== 'file' && item.text?.toLowerCase().includes(searchTerm);
 
-                if (type === 'folder' && children.length > 0) {
-                    // If folder has matching children, include the folder with filtered children
-                    return { ...item, children, collapsed: true  };
-                }
+            if (labelMatches) {
+                results.push({
+                    ...item,
+                    children: item.children ? this.cloneNodes(item.children) : []
+                });
+            } else if (type !== 'file' && childrenMatches.length > 0) {
+                results.push({
+                    ...item,
+                    children: childrenMatches
+                });
+            }
+        });
 
-                if (type === 'file') {
-                    // Files are never directly matched unless they're under a matching folder
-                    return null;
-                }
+        return results;
+    }
 
-                return null; // Exclude items that don't match
-            }).filter((item) => item !== null);
+    private getNodeType(node: ContentNode): string {
+        if (!node?.value) {
+            return '';
+        }
+        const segments = node.value.split('/');
+        return segments[1] || '';
     }
 
     previewOrEditContent(event, type) {

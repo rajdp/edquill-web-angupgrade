@@ -1,0 +1,35 @@
+// Make ng-select dropdown panels wider to show full class names
+::ng-deep .ng-dropdown-panel {
+    min-width: 400px !important; // Ensure dropdown is at least 400px wide
+    max-width: 600px !important; // Cap at 600px for very long names
+}
+
+// Prevent text truncation in dropdown options
+::ng-deep .ng-option {
+    white-space: normal !important; // Allow text wrapping
+    word-wrap: break-word !important;
+    padding: 8px 12px !important;
+    line-height: 1.4 !important;
+}
+
+// Ensure selected value shows full text in the input
+::ng-deep .ng-select .ng-select-container .ng-value-container .ng-value {
+    overflow: visible !important;
+}
+
+// Make the dropdown container itself wider if needed
+::ng-deep .ng-select {
+    min-width: 100% !important;
+}
+
+// Optional: Add tooltip on hover for truncated text in the select box
+::ng-deep .ng-select .ng-select-container {
+    cursor: pointer;
+}
+
+
+
+
+
+
+

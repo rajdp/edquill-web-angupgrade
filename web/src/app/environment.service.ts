@@ -27,7 +27,7 @@ export class EnvProperties {
 export class EnvironmentService {
     public envProperties = new EnvProperties();
     public basePath: string;
-    public mobileView = window.innerWidth <= 1100;
+    public mobileView = false;
     public envRecieved = new BehaviorSubject<boolean>(false);
 
     get env(): Environment {
@@ -48,7 +48,7 @@ export class EnvironmentService {
     }
 
     public deviceType() {
-        return window.innerWidth <= 1180 || this.deviceService.isTablet();
+        return this.deviceService.isMobile() || this.deviceService.isTablet();
     }
 
     get version(): string {
@@ -72,6 +72,7 @@ export class EnvironmentService {
             webHost: this.envProperties.webHost
         });
         
+        this.mobileView = this.deviceType();
         this.envRecieved.asObservable();
         this.envRecieved.next(true); // Set to true immediately since we're using environment files
     }
@@ -122,9 +123,8 @@ export class EnvironmentService {
         this.envRecieved.next(true);
     }
 
-    @HostListener('window:resize', ['$event'])
-    onResize(event?) {
-        this.mobileView = event.target.innerWidth <= 1100;
+    @HostListener('window:resize')
+    onResize() {
+        this.mobileView = this.deviceType();
     }
 }
-

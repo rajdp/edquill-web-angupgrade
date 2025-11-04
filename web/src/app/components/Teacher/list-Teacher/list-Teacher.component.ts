@@ -45,6 +45,8 @@ export class ListTeacherComponent implements OnInit, OnChanges {
     public filetype: any;
     public schoolId: any;
     public schoolStatus: any;
+    public currentTeacherListPage = 1; // Track current pagination page
+    public savedTeacherFilters: any = {}; // Track saved filters
     public validators = [this.must_be_email];
     public errorMessages = {
         'must_be_email': 'Please Enter a valid email format only allowed'
@@ -94,6 +96,20 @@ export class ListTeacherComponent implements OnInit, OnChanges {
 
     ngOnInit() {
         this.auth.removeSessionData('backOption');
+        // Restore saved pagination page if available
+        const savedPage = this.auth.getSessionData('teacher-list-current-page');
+        if (savedPage) {
+            this.currentTeacherListPage = parseInt(savedPage, 10);
+        }
+        // Restore saved filters if available
+        const savedFilters = this.auth.getSessionData('teacher-list-filters');
+        if (savedFilters) {
+            try {
+                this.savedTeacherFilters = JSON.parse(savedFilters);
+            } catch (e) {
+                this.savedTeacherFilters = {};
+            }
+        }
     }
 
     ngOnChanges() {
@@ -109,9 +125,28 @@ export class ListTeacherComponent implements OnInit, OnChanges {
         } else if (event.emitType == 'edit') {
             this.editAction(event.emitData);
         } else if (event.emitType == 'name') {
+            // Save current page and filters before navigating
+            this.saveStateBeforeNavigation();
             this.viewdetail = event.emitData;
             this.modalRef = this.modalService.open(this.viewDetailsContent);
         }
+    }
+
+    onPageChange(page: number) {
+        // Update current page when user changes pages
+        this.currentTeacherListPage = page;
+    }
+
+    onFilterChange(filters: any) {
+        // Update saved filters whenever filter changes in table
+        this.savedTeacherFilters = filters;
+    }
+
+    saveStateBeforeNavigation() {
+        // Save current page
+        this.auth.setSessionData('teacher-list-current-page', this.currentTeacherListPage.toString());
+        // Save current filters
+        this.auth.setSessionData('teacher-list-filters', JSON.stringify(this.savedTeacherFilters));
     }
 
     teacherList() {
@@ -147,6 +182,8 @@ export class ListTeacherComponent implements OnInit, OnChanges {
     }
 
     editAction(rows) {
+        // Save current page and filters before navigating to edit
+        this.saveStateBeforeNavigation();
         this.auth.setSessionData('UsersRedirection', 'Teacher');
         this.auth.setSessionData('editTeacher', JSON.stringify(rows));
         this.route.navigate(['/Teacher/create-Teacher/edit']);

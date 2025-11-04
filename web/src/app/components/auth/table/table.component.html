@@ -21,12 +21,22 @@
                     showMobileNumber(row[column.ApiKey]) : row[column.ApiKey]}}</span>
                 <span [title]="row[column.ApiKey]" *ngIf="column.ApiKey == 'description'">
                     {{showDescription(row[column.ApiKey])}}</span>
-                <p class="d-flex align-items-center" *ngIf="column.ApiKey == 'Actions'">
-                    <span *ngFor="let action of commonTableData[TableType].Action">
-                        <i (click)="emitValue(action.EmitValue, row)" *ngIf="action.IconType == 'font'" class="cursor {{action.IconSrc}} {{action.Class}}" [title]="action.Title"></i>
-                        <img (click)="emitValue(action.EmitValue, row)" *ngIf="action.IconType == 'img'" [src]="action.IconSrc" alt="" [title]="action.Title" class="cursor {{action.Class}}">
-                    </span>
-                </p>
+                <div class="action-dropdown-container" *ngIf="column.ApiKey == 'Actions'">
+                    <div class="dropdown-wrapper">
+                        <button class="action-menu-btn" (click)="toggleDropdown($event, row)">
+                            <i class="fa fa-ellipsis-v"></i>
+                        </button>
+                        <div class="action-dropdown" [class.show]="row.showDropdown">
+                            <a *ngFor="let action of commonTableData[TableType].Action" 
+                               class="dropdown-item" 
+                               (click)="emitValue(action.EmitValue, row); row.showDropdown = false">
+                                <i *ngIf="action.IconType == 'font'" class="{{action.IconSrc}}"></i>
+                                <img *ngIf="action.IconType == 'img'" [src]="action.IconSrc" alt="" class="action-icon">
+                                <span>{{action.Title}}</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
             </td>
         </tr>
         </tbody>

@@ -1,0 +1,914 @@
+<div id="pre-loader" class="page-loader" *ngIf="commonData.loader.value || isLoading">
+    <img src="assets/images/pre-loader/loader-01.svg" alt="">
+</div>
+
+<div class="assign-drawer card shadow-lg border-0" *ngIf="showAssignDrawer">
+    <div class="assign-drawer__header">
+        <div>
+            <h3 class="h6 mb-1">Assign from content library</h3>
+            <p class="small text-neutral-600 mb-0">Drag items onto the curriculum, then confirm details here.</p>
+        </div>
+        <button type="button" class="btn btn-sm btn-outline-secondary" (click)="closeAssignDrawer()" aria-label="Close assign drawer">
+            <i class="bi bi-x-lg"></i>
+        </button>
+    </div>
+    <div class="assign-drawer__search">
+        <input type="search"
+               class="form-control form-control-sm"
+               placeholder="Search content"
+               [value]="librarySearchTerm"
+               (input)="onLibrarySearch($any($event.target).value)">
+    </div>
+    <div class="assign-drawer__pane">
+        <div class="assign-drawer__library"
+             cdkDropList
+             [id]="libraryDropListId"
+             [cdkDropListData]="libraryItems"
+             [cdkDropListConnectedTo]="getDropConnections(libraryDropListId)"
+             cdkDropListSortingDisabled>
+            <div *ngIf="isLibraryLoading" class="assign-drawer__empty text-center">
+                <div class="spinner-border spinner-border-sm text-primary" role="status" aria-hidden="true"></div>
+                <span class="ms-2">Loading content…</span>
+            </div>
+            <div *ngIf="!isLibraryLoading && libraryLoadError" class="assign-drawer__empty text-danger text-center">
+                {{ libraryLoadError }}
+            </div>
+            <ng-container *ngIf="!isLibraryLoading && !libraryLoadError">
+                <div *ngIf="!libraryItems.length" class="assign-drawer__empty text-center">
+                    No content found. Try adjusting your search.
+                </div>
+                <div *ngFor="let libraryItem of libraryItems; trackBy: trackById"
+                     class="assign-drawer__item"
+                     cdkDrag
+                     [cdkDragData]="{ source: 'library', item: libraryItem }">
+                    <div class="assign-drawer__item-title">
+                        {{ libraryItem.content_name }}
+                    </div>
+                    <div class="assign-drawer__item-meta small text-neutral-600">
+                        <span *ngIf="libraryItem.subject_name">{{ libraryItem.subject_name }}</span>
+                        <span *ngIf="libraryItem.content_format" class="badge bg-light text-dark ms-2 text-uppercase">
+                            {{ libraryItem.content_format }}
+                        </span>
+                    </div>
+                    <div class="assign-drawer__hint small text-neutral-500">
+                        Drag this onto a topic or the curriculum list
+                    </div>
+                </div>
+            </ng-container>
+        </div>
+        <div class="assign-drawer__pending">
+            <div class="assign-drawer__pending-header">
+                <h4 class="h6 mb-0">Pending assignments ({{ pendingAssignments.length }})</h4>
+            </div>
+            <div *ngIf="!pendingAssignments.length" class="assign-drawer__empty text-center">
+                Drag content from the library onto a topic to stage it for assignment.
+            </div>
+            <div *ngFor="let draft of pendingAssignments" class="assign-drawer__pending-card">
+                <div class="assign-drawer__pending-title">
+                    {{ draft.content.content_name }}
+                </div>
+                <div class="assign-drawer__pending-meta small text-neutral-600 mb-2">
+                    Target: {{ draft.targetTopicName || 'Curriculum list' }}
+                </div>
+                <div class="mb-2">
+                    <label class="form-label small text-neutral-600 d-block">Topic</label>
+                    <select class="form-select form-select-sm" [(ngModel)]="draft.targetTopicId" (ngModelChange)="onDraftTopicChange(draft, $event)">
+                        <option value="">Curriculum list</option>
+                        <option *ngFor="let topic of topics" [value]="topic?.topic_id ?? topic?.id">
+                            {{ topic?.topic_name ?? topic?.name ?? topic?.topic }}
+                        </option>
+                    </select>
+                </div>
+                <div class="assign-drawer__date-grid">
+                    <div>
+                        <label class="form-label small text-neutral-600 d-block">Start date</label>
+                        <input type="date" class="form-control form-control-sm" [(ngModel)]="draft.startDate">
+                    </div>
+                    <div>
+                        <label class="form-label small text-neutral-600 d-block">End date</label>
+                        <input type="date" class="form-control form-control-sm" [(ngModel)]="draft.endDate">
+                    </div>
+                </div>
+                <div class="assign-drawer__options">
+                    <label class="form-check small">
+                        <input type="checkbox" class="form-check-input" [(ngModel)]="draft.allowDownload">
+                        <span class="form-check-label">Allow download</span>
+                    </label>
+                    <label class="form-check small">
+                        <input type="checkbox" class="form-check-input" [(ngModel)]="draft.allowWorkspace">
+                        <span class="form-check-label">Student workspace</span>
+                    </label>
+                    <label class="form-check small">
+                        <input type="checkbox" class="form-check-input" [(ngModel)]="draft.allowFeedback">
+                        <span class="form-check-label">Enable feedback</span>
+                    </label>
+                    <label class="form-check small">
+                        <input type="checkbox" class="form-check-input" [(ngModel)]="draft.autoReview">
+                        <span class="form-check-label">Auto grade</span>
+                    </label>
+                </div>
+                <div class="assign-drawer__actions">
+                    <button type="button"
+                            class="btn btn-sm btn-primary"
+                            [disabled]="draft.isSaving"
+                            (click)="assignDraft(draft)">
+                        <span *ngIf="draft.isSaving" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                        Assign
+                    </button>
+                    <button type="button"
+                            class="btn btn-sm btn-outline-secondary"
+                            [disabled]="draft.isSaving"
+                            (click)="removeDraft(draft.id)">
+                        Remove
+                    </button>
+                </div>
+                <div class="small text-danger mt-2" *ngIf="draft.error">{{ draft.error }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid class-overview" *ngIf="overview">
+    <section class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <div class="d-flex flex-column flex-lg-row gap-3 align-items-lg-center justify-content-between">
+                <div>
+                    <h1 class="h4 mb-1">{{ overview?.class_name || classSummary?.class_name }}</h1>
+                    <div class="text-neutral-600 small">
+                        <span *ngIf="overview?.class_code">Class code: <strong>{{ overview.class_code }}</strong></span>
+                        <span class="mx-2" *ngIf="overview?.class_code && overview?.status">•</span>
+                        <span *ngIf="overview?.status">Status: <strong>{{ overview.status | titlecase }}</strong></span>
+                    </div>
+                </div>
+                <div class="d-flex flex-wrap gap-2">
+                    <button type="button" class="btn btn-outline-secondary" (click)="router.navigate(['/class/list-class'])">
+                        <i class="bi bi-arrow-left"></i>
+                        Back to classes
+                    </button>
+                    <button type="button" class="btn btn-outline-primary" (click)="persistEditContext(); router.navigate(['/class/create-class/edit'])">
+                        <i class="bi bi-pencil-square"></i>
+                        Edit class
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="row g-4">
+        <div class="col-12 col-xl-7">
+            <div class="d-flex flex-column gap-4">
+                <section class="card shadow-sm border-0">
+                    <div class="card-header border-0 pb-0">
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                            <div>
+                                <h2 class="h6 mb-1">Curriculum</h2>
+                                <p class="small text-neutral-600 mb-0">
+                                    Track lessons, assignments, and assessments in this class.
+                                </p>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <button type="button" class="btn btn-sm btn-success d-flex align-items-center gap-1" (click)="openAssignDrawer()">
+                                    <i class="bi bi-plus-lg"></i>
+                                    Assign curriculum
+                                </button>
+                                <select class="form-select form-select-sm w-auto" [ngModel]="curriculumStatus" (ngModelChange)="onStatusChange($event)">
+                                    <option *ngFor="let option of curriculumStatusOptions" [value]="option.value">
+                                        {{ option.label }}
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="curriculum-list"
+                             cdkDropList
+                             [id]="baseDropListId"
+                             [cdkDropListData]="ungroupedCurriculum"
+                             [cdkDropListConnectedTo]="getDropConnections(baseDropListId)"
+                             (cdkDropListDropped)="onUnassignedDrop($event)">
+                            <ng-container *ngIf="hasVisibleItems(ungroupedCurriculum); else noCurriculumFallback">
+                                <ng-container *ngFor="let item of ungroupedCurriculum; trackBy: trackById">
+                                    <div class="curriculum-card"
+                                         *ngIf="matchesFilter(item)"
+                                         cdkDrag
+                                         [cdkDragData]="item"
+                                         role="button"
+                                         tabindex="0"
+                                         (click)="openHomeworkDetail(item)">
+                                        <div class="curriculum-card__header">
+                                            <div class="curriculum-card__info">
+                                                <h4 class="curriculum-card__title">{{ item.content_name }}</h4>
+                                                <div class="curriculum-card__meta"
+                                                     *ngIf="item.subject_name || item.due_date || item.content_format">
+                                                    <span class="curriculum-card__meta-item" *ngIf="item.subject_name">
+                                                        <i class="bi bi-book"></i>
+                                                        {{ item.subject_name }}
+                                                    </span>
+                                                    <span class="curriculum-card__meta-item" *ngIf="item.due_date">
+                                                        <i class="bi bi-calendar-event"></i>
+                                                        Due {{ item.due_date | date:'MMM d, y' }}
+                                                    </span>
+                                                    <span class="curriculum-card__meta-item text-uppercase" *ngIf="item.content_format">
+                                                        <i class="bi bi-ui-radios-grid"></i>
+                                                        {{ item.content_format }}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="curriculum-card__tools">
+                                                <span class="curriculum-card__status"
+                                                      [ngClass]="getCurriculumStatusClass(item)">
+                                                    {{ resolveCurriculumStatus(item) | titlecase }}
+                                                </span>
+                                                    <div ngbDropdown container="body" class="curriculum-card__dropdown"
+                                                     *ngIf="hasContentActions(item)">
+                                                        <button type="button"
+                                                                class="btn btn-sm btn-outline-secondary"
+                                                                ngbDropdownToggle
+                                                                (click)="$event.stopPropagation()">
+                                                        <i class="bi bi-three-dots"></i>
+                                                        <span class="ms-1">Actions</span>
+                                                        </button>
+                                                        <div ngbDropdownMenu (click)="$event.stopPropagation()">
+                                                            <button type="button" class="dropdown-item"
+                                                                    *ngIf="canGradeContent(item)"
+                                                                (click)="openContentGrading(item)">
+                                                            <i class="bi bi-people-fill me-2"></i>
+                                                            Grading
+                                                        </button>
+                                                        <button type="button" class="dropdown-item"
+                                                                (click)="previewContent(item, 'student')">
+                                                            <i class="bi bi-person-lines-fill me-2"></i>
+                                                            Student view
+                                                        </button>
+                                                        <button type="button" class="dropdown-item"
+                                                                (click)="previewContent(item, 'teacher')">
+                                                            <i class="bi bi-person-badge me-2"></i>
+                                                            Teacher view
+                                                        </button>
+                                                        <button type="button" class="dropdown-item"
+                                                                *ngIf="item.teacher_version_path"
+                                                                (click)="openTeacherVersionPdf(item)">
+                                                            <i class="bi bi-file-earmark-pdf me-2"></i>
+                                                            Teacher version PDF
+                                                        </button>
+                                                        <button type="button" class="dropdown-item"
+                                                                *ngIf="canManageClass"
+                                                                (click)="openEditContent(item)">
+                                                            <i class="bi bi-pencil-square me-2"></i>
+                                                            Edit content
+                                                        </button>
+                                                        <button type="button" class="dropdown-item text-danger"
+                                                                *ngIf="canManageClass"
+                                                                (click)="openDeleteContent(item)">
+                                                            <i class="bi bi-trash me-2"></i>
+                                                            Delete content
+                                                        </button>
+                                                        <div *ngIf="canMoveBetweenTopics(item)">
+                                                            <span class="dropdown-header text-muted">
+                                                                Move to topic
+                                                            </span>
+                                                            <button type="button"
+                                                                    class="dropdown-item"
+                                                                    *ngFor="let topic of topics"
+                                                                    [disabled]="isSameTopic(item, topic)"
+                                                                    (click)="moveContentToTopic(item, topic)">
+                                                                {{ topic?.topic_name || topic?.name || topic?.topic }}
+                                                            </button>
+                                                            <div *ngIf="!topics?.length" class="dropdown-item-text small text-neutral-500">
+                                                                No topics available
+                                                            </div>
+                                                            <div class="dropdown-divider"></div>
+                                                        </div>
+                                                        <button type="button" class="dropdown-item"
+                                                                (click)="openContentReports(item)">
+                                                            <i class="bi bi-bar-chart-line me-2"></i>
+                                                            Reports
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="curriculum-card__footer">
+                                            <span><i class="bi bi-arrows-move"></i> Drag to reorder</span>
+                                            <span><i class="bi bi-eye"></i> View details</span>
+                                        </div>
+                                    </div>
+                                </ng-container>
+                            </ng-container>
+                        </div>
+                        <ng-template #noCurriculumFallback>
+                            <div class="empty-state text-center py-4 text-neutral-500">
+                                No curriculum items match this filter.
+                            </div>
+                        </ng-template>
+                    </div>
+                </section>
+
+                <section class="card shadow-sm border-0" *ngIf="topicGroups.length">
+                    <div class="card-header border-0 pb-0">
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                            <div class="flex-grow-1">
+                                <h2 class="h6 mb-1">Topics</h2>
+                                <p class="small text-neutral-600 mb-0">
+                                    Review curriculum items grouped by topic. Use the filter above to focus on a specific status.
+                                </p>
+                            </div>
+                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                <button type="button" class="btn btn-sm btn-outline-primary" (click)="openAddTopic()">
+                                    <i class="bi bi-plus-circle"></i>
+                                    Add topic
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <ng-container *ngIf="topicGroups.length">
+                            <div class="topic-group" *ngFor="let group of topicGroups; trackBy: trackByTopic">
+                                <div class="topic-group__header">
+                                <div>
+                                    <h3 class="h6 mb-1">{{ group.topic_name || group.name || group.topic }}</h3>
+                                    <p class="small text-neutral-600 mb-0" *ngIf="group.description">{{ group.description }}</p>
+                                    <p class="small text-neutral-500 mb-0" *ngIf="group.normalizedStart || group.normalizedEnd">
+                                        <span *ngIf="group.normalizedStart">Start: {{ group.normalizedStart }}</span>
+                                        <span *ngIf="group.normalizedStart && group.normalizedEnd" class="mx-1">•</span>
+                                        <span *ngIf="group.normalizedEnd">End: {{ group.normalizedEnd }}</span>
+                                    </p>
+                                </div>
+                                <button type="button" class="btn btn-link btn-sm" (click)="openEditTopic(group)">
+                                    <i class="bi bi-pencil-square"></i>
+                                    Edit
+                                </button>
+                            </div>
+                                <div class="curriculum-list"
+                                     cdkDropList
+                                     [id]="group.dropListId"
+                                     [cdkDropListData]="group.items"
+                                     [cdkDropListConnectedTo]="getDropConnections(group.dropListId)"
+                                     (cdkDropListDropped)="onTopicDrop($event, group)">
+                                    <ng-container *ngFor="let item of group.items; trackBy: trackById">
+                                        <div class="curriculum-card"
+                                             *ngIf="matchesFilter(item)"
+                                             cdkDrag
+                                             [cdkDragData]="item"
+                                             role="button"
+                                             tabindex="0"
+                                             (click)="openHomeworkDetail(item)">
+                                            <div class="curriculum-card__header">
+                                                <div class="curriculum-card__info">
+                                                    <h4 class="curriculum-card__title">{{ item.content_name }}</h4>
+                                                    <div class="curriculum-card__meta"
+                                                         *ngIf="item.subject_name || item.due_date || item.content_format">
+                                                        <span class="curriculum-card__meta-item" *ngIf="item.subject_name">
+                                                            <i class="bi bi-book"></i>
+                                                            {{ item.subject_name }}
+                                                        </span>
+                                                        <span class="curriculum-card__meta-item" *ngIf="item.due_date">
+                                                            <i class="bi bi-calendar-event"></i>
+                                                            Due {{ item.due_date | date:'MMM d, y' }}
+                                                        </span>
+                                                        <span class="curriculum-card__meta-item text-uppercase" *ngIf="item.content_format">
+                                                            <i class="bi bi-ui-radios-grid"></i>
+                                                            {{ item.content_format }}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div class="curriculum-card__tools">
+                                                    <span class="curriculum-card__status"
+                                                          [ngClass]="getCurriculumStatusClass(item)">
+                                                        {{ resolveCurriculumStatus(item) | titlecase }}
+                                                    </span>
+                                                    <div ngbDropdown container="body" class="curriculum-card__dropdown"
+                                                         *ngIf="hasContentActions(item)">
+                                                        <button type="button"
+                                                                class="btn btn-sm btn-outline-secondary"
+                                                                ngbDropdownToggle
+                                                                (click)="$event.stopPropagation()">
+                                                            <i class="bi bi-three-dots"></i>
+                                                            <span class="ms-1">Actions</span>
+                                                        </button>
+                                                        <div ngbDropdownMenu (click)="$event.stopPropagation()">
+                                                            <button type="button" class="dropdown-item"
+                                                                    *ngIf="canGradeContent(item)"
+                                                                    (click)="openContentGrading(item)">
+                                                                <i class="bi bi-people-fill me-2"></i>
+                                                                Grading
+                                                            </button>
+                                                            <button type="button" class="dropdown-item"
+                                                                    (click)="previewContent(item, 'student')">
+                                                                <i class="bi bi-person-lines-fill me-2"></i>
+                                                                Student view
+                                                            </button>
+                                                            <button type="button" class="dropdown-item"
+                                                                    (click)="previewContent(item, 'teacher')">
+                                                                <i class="bi bi-person-badge me-2"></i>
+                                                                Teacher view
+                                                            </button>
+                                                            <button type="button" class="dropdown-item"
+                                                                    *ngIf="item.teacher_version_path"
+                                                                    (click)="openTeacherVersionPdf(item)">
+                                                                <i class="bi bi-file-earmark-pdf me-2"></i>
+                                                                Teacher version PDF
+                                                            </button>
+                                                            <button type="button" class="dropdown-item"
+                                                                    *ngIf="canManageClass"
+                                                                    (click)="openEditContent(item)">
+                                                                <i class="bi bi-pencil-square me-2"></i>
+                                                                Edit content
+                                                            </button>
+                                                            <button type="button" class="dropdown-item text-danger"
+                                                                    *ngIf="canManageClass"
+                                                                    (click)="openDeleteContent(item)">
+                                                                <i class="bi bi-trash me-2"></i>
+                                                                Delete content
+                                                            </button>
+                                                            <div *ngIf="canMoveBetweenTopics(item, group)">
+                                                                <span class="dropdown-header text-muted">
+                                                                    Move to topic
+                                                                </span>
+                                                                <button type="button"
+                                                                        class="dropdown-item"
+                                                                        *ngFor="let topic of topics"
+                                                                        [disabled]="isSameTopic(item, topic)"
+                                                                        (click)="moveContentToTopic(item, topic)">
+                                                                    {{ topic?.topic_name || topic?.name || topic?.topic }}
+                                                                </button>
+                                                                <div *ngIf="!topics?.length" class="dropdown-item-text small text-neutral-500">
+                                                                    No topics available
+                                                                </div>
+                                                                <div class="dropdown-divider"></div>
+                                                            </div>
+                                                            <button type="button" class="dropdown-item"
+                                                                    (click)="openContentReports(item)">
+                                                                <i class="bi bi-bar-chart-line me-2"></i>
+                                                                Reports
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="curriculum-card__footer">
+                                                <span><i class="bi bi-arrows-move"></i> Drag to reorder</span>
+                                                <span><i class="bi bi-eye"></i> View details</span>
+                                            </div>
+                                        </div>
+                                    </ng-container>
+                                    <div class="p-3 text-center text-neutral-500" *ngIf="!hasVisibleItems(group.items)">
+                                        No curriculum items match this filter for this topic. Drag items here to add them.
+                                    </div>
+                                </div>
+                            </div>
+                        </ng-container>
+                    </div>
+                </section>
+
+                <section class="card shadow-sm border-0">
+                    <div class="card-header border-0 pb-0">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <h2 class="h6 mb-1">Other Links</h2>
+                                <p class="small text-neutral-600 mb-0">
+                                    Quick access to supporting materials and external resources.
+                                </p>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-primary" (click)="openAddResourceLink()">
+                                <i class="bi bi-link-45deg"></i>
+                                Add resource link
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0" *ngIf="resourceLinks.length; else noLinks">
+                            <li class="mb-3" *ngFor="let link of resourceLinks; index as i">
+                                <a [href]="link.url || link.link || link" target="_blank" rel="noopener noreferrer">
+                                    {{ link.title || link.name || link.url || link.link || 'Resource ' + (i + 1) }}
+                                </a>
+                                <div class="small text-neutral-600" *ngIf="link.description">{{ link.description }}</div>
+                            </li>
+                        </ul>
+                        <ng-template #noLinks>
+                            <div class="empty-state text-center py-4 text-neutral-500">
+                                No additional resources yet.
+                            </div>
+                        </ng-template>
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <div class="col-12 col-xl-5">
+            <div class="d-flex flex-column gap-4">
+                <section class="card shadow-sm border-0">
+                    <div class="card-header border-0 pb-0">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <h2 class="h6 mb-1">Students</h2>
+                                <p class="small text-neutral-600 mb-0">
+                                    Current roster with quick actions to manage enrollment.
+                                </p>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-primary" (click)="openAddStudent()">
+                                <i class="bi bi-person-plus"></i>
+                                Add student
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive" *ngIf="students.length; else noStudents">
+                            <table class="table table-sm align-middle">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Student</th>
+                                        <th scope="col">Grade</th>
+                                        <th scope="col">Email</th>
+                                        <th scope="col" class="text-end">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr *ngFor="let student of students; trackBy: trackById">
+                                        <td>{{ student.displayName }}</td>
+                                        <td class="text-neutral-600 small">{{ student.gradeDisplay || '—' }}</td>
+                                        <td class="text-neutral-600 small">{{ student.email_id || student.email || '—' }}</td>
+                                        <td class="text-end">
+                                            <button type="button" class="btn btn-link btn-sm text-danger" (click)="removeStudent(student)">
+                                                <i class="bi bi-person-dash"></i>
+                                                Remove
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <ng-template #noStudents>
+                            <div class="empty-state text-center py-4 text-neutral-500">
+                                No students enrolled yet.
+                            </div>
+                        </ng-template>
+                    </div>
+                </section>
+
+                <section class="card shadow-sm border-0">
+                    <div class="card-header border-0 pb-0">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <h2 class="h6 mb-1">Homework Submissions</h2>
+                                <p class="small text-neutral-600 mb-0">
+                                    Sorted by most recent submission date.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive" *ngIf="homeworkSubmissions.length; else noHomework">
+                            <table class="table table-sm align-middle">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Student</th>
+                                        <th scope="col">Content</th>
+                                        <th scope="col">Submitted</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr *ngFor="let submission of homeworkSubmissions; trackBy: trackById" (click)="openHomeworkDetail(submission)" class="table-row-action">
+                                        <td>{{ submission.student_name || submission.displayName }}</td>
+                                        <td>{{ submission.content_name || submission.title }}</td>
+                                        <td class="text-neutral-600 small">
+                                            {{ submission.submitted_at | date:'MMM d, y, h:mm a' }}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <ng-template #noHomework>
+                            <div class="empty-state text-center py-4 text-neutral-500">
+                                No submissions yet.
+                            </div>
+                        </ng-template>
+                    </div>
+                </section>
+
+                <section class="card shadow-sm border-0">
+                    <div class="card-header border-0 pb-0">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <h2 class="h6 mb-1">Announcements</h2>
+                                <p class="small text-neutral-600 mb-0">
+                                    Keep families and students in the loop with timely updates.
+                                </p>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1"
+                                    (click)="openAnnouncementModal()">
+                                <i class="bi bi-megaphone"></i>
+                                Add
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group list-group-flush" *ngIf="announcements.length; else noAnnouncements">
+                            <div class="list-group-item py-3" *ngFor="let announcement of announcements; trackBy: trackById">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h3 class="h6 mb-1">{{ announcement.title || announcement.subject || 'Announcement' }}</h3>
+                                        <p class="mb-0 small text-neutral-600" [innerHTML]="announcement?.message || announcement?.body"></p>
+                                    </div>
+                                    <span class="small text-neutral-500">{{ announcement.created_at | date:'MMM d, y, h:mm a' }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <ng-template #noAnnouncements>
+                            <div class="empty-state text-center py-4 text-neutral-500">
+                                No announcements yet. Use the button above to post one.
+                            </div>
+                        </ng-template>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+</div>
+
+<ng-template #announcementModal>
+    <form [formGroup]="announcementForm" (ngSubmit)="submitAnnouncement()">
+        <div class="modal-header">
+            <h2 class="modal-title h5 mb-0">New Announcement</h2>
+            <button type="button" class="btn-close" aria-label="Close" (click)="closeAnnouncementModal()"></button>
+        </div>
+        <div class="modal-body">
+            <div class="mb-3">
+                <label class="form-label">Message<span class="text-danger">*</span></label>
+                <textarea class="form-control" rows="4" formControlName="message" placeholder="Share an update with the class"></textarea>
+            </div>
+            <div class="text-danger small" *ngIf="announcementFormErrors">{{ announcementFormErrors }}</div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" (click)="closeAnnouncementModal()" [disabled]="isPostingAnnouncement">
+                Cancel
+            </button>
+            <button type="submit" class="btn btn-primary" [disabled]="isPostingAnnouncement">
+                <span *ngIf="isPostingAnnouncement" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                Post
+            </button>
+        </div>
+    </form>
+</ng-template>
+
+<ng-template #teacherVersionModal>
+    <div class="modal-header">
+        <h2 class="modal-title h5 mb-0">Teacher Version</h2>
+        <button type="button" class="btn-close" aria-label="Close" (click)="teacherVersionModalRef?.close()"></button>
+    </div>
+    <div class="modal-body">
+        <div *ngIf="teacherVersionUrl; else noTeacherVersionFile">
+            <pdf-viewer [src]="teacherVersionUrl"
+                        [render-text]="true"
+                        [original-size]="false"
+                        style="display: block; height: 70vh;">
+            </pdf-viewer>
+        </div>
+        <ng-template #noTeacherVersionFile>
+            <div class="text-center text-neutral-500 py-4">
+                Unable to display the teacher version file.
+            </div>
+        </ng-template>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" (click)="teacherVersionModalRef?.close()">Close</button>
+    </div>
+</ng-template>
+
+<ng-template #editContentModal>
+    <div class="modal-header">
+        <h2 class="modal-title h5 mb-0">Edit Content Schedule</h2>
+        <button type="button" class="btn-close" aria-label="Close" (click)="editContentModalRef?.dismiss()"></button>
+    </div>
+    <form [formGroup]="editContentForm" (ngSubmit)="saveContentEdits()">
+        <div class="modal-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Start date</label>
+                    <input type="date" class="form-control" formControlName="startDate">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">End date</label>
+                    <input type="date" class="form-control" formControlName="endDate">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Start time</label>
+                    <input type="time" class="form-control" formControlName="startTime">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">End time</label>
+                    <input type="time" class="form-control" formControlName="endTime">
+                </div>
+            </div>
+            <div class="mt-3" *ngIf="allowScore">
+                <label class="form-label">Release score</label>
+                <select class="form-select"
+                        formControlName="autoReview"
+                        (change)="onAutoReviewChange($any($event.target).value)">
+                    <option value="0">{{ isEssay === '1' ? 'Teacher review only' : 'Instructor graded' }}</option>
+                    <option value="1" *ngIf="isEssay === '0'">Auto graded</option>
+                    <option value="1" *ngIf="isEssay === '1'">Automatic feedback</option>
+                    <option value="2" *ngIf="contentFormat === '3' && isEssay === '0'">Real-time grading</option>
+                </select>
+                <div class="mt-2 small text-muted" *ngIf="checkAutoRelease; else autoReleaseNotAvailable">
+                    <span *ngIf="editContentForm.value.autoReview === '0' && isEssay === '0'">
+                        Responses are graded manually. Scores release after final submission.
+                    </span>
+                    <span *ngIf="editContentForm.value.autoReview === '1' && isEssay === '0'">
+                        Responses are auto graded. Scores release after final submission.
+                    </span>
+                    <span *ngIf="editContentForm.value.autoReview === '2' && isEssay === '0'">
+                        Responses are auto graded. Scores release immediately after submission.
+                    </span>
+                    <span *ngIf="editContentForm.value.autoReview === '0' && isEssay === '1'">
+                        Essays are reviewed manually. System feedback is not available.
+                    </span>
+                    <span *ngIf="editContentForm.value.autoReview === '1' && isEssay === '1'">
+                        Students can request automatic system feedback before teacher review.
+                    </span>
+                </div>
+                <ng-template #autoReleaseNotAvailable>
+                    <div class="text-danger small mt-2">
+                        Auto score release is not available for this content.
+                    </div>
+                </ng-template>
+            </div>
+            <div class="row g-3 mt-3" *ngIf="showWorkspaceOptions">
+                <div class="col-md-6">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="editAllowWorkspace" formControlName="allowWorkspace">
+                        <label class="form-check-label" for="editAllowWorkspace">Enable workspace</label>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="editAllowFeedback" formControlName="allowFeedback">
+                        <label class="form-check-label" for="editAllowFeedback">Enable feedback</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button"
+                    class="btn btn-outline-secondary"
+                    (click)="editContentModalRef?.dismiss()"
+                    [disabled]="isSavingContentEdit">
+                Cancel
+            </button>
+            <button type="submit" class="btn btn-primary" [disabled]="isSavingContentEdit">
+                <span *ngIf="isSavingContentEdit" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                Save changes
+            </button>
+        </div>
+    </form>
+</ng-template>
+
+<ng-template #deleteContentModal>
+    <div class="modal-header">
+        <h2 class="modal-title h5 mb-0">Delete Content</h2>
+        <button type="button" class="btn-close" aria-label="Close" (click)="deleteContentModalRef?.dismiss()"></button>
+    </div>
+    <div class="modal-body">
+        <p class="mb-0">
+            Are you sure you want to remove
+            <strong>{{ pendingDeleteContent?.content_name || 'this content' }}</strong>
+            from the class curriculum?
+        </p>
+    </div>
+    <div class="modal-footer">
+        <button type="button"
+                class="btn btn-outline-secondary"
+                (click)="deleteContentModalRef?.dismiss()"
+                [disabled]="isDeletingContent">
+            Cancel
+        </button>
+        <button type="button"
+                class="btn btn-danger"
+                (click)="confirmDeleteContent()"
+                [disabled]="isDeletingContent">
+            <span *ngIf="isDeletingContent" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+            Delete
+        </button>
+    </div>
+</ng-template>
+
+<ng-template #addStudentModal>
+    <div class="modal-header">
+        <h2 class="modal-title h5 mb-0">Add Student</h2>
+        <button type="button" class="btn-close" aria-label="Close" (click)="closeAddStudentModal()"></button>
+    </div>
+    <div class="modal-body">
+        <p class="small text-neutral-600 mb-4">
+            Select existing students to enroll in this class. Use the student module to create new student profiles.
+        </p>
+
+        <div class="mb-3">
+            <label class="form-label">Grade (optional)</label>
+            <ng-select
+                [items]="addStudentGrades"
+                bindLabel="grade_name"
+                bindValue="grade_id"
+                [multiple]="true"
+                [loading]="isGradeListLoading"
+                placeholder="Select grade(s)"
+                [(ngModel)]="selectedAddStudentGrades"
+                (ngModelChange)="onAddStudentGradesChanged($event)">
+            </ng-select>
+            <div class="form-text" *ngIf="!addStudentGrades.length && !isGradeListLoading">
+                No grades available for this school.
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Students<span class="text-danger">*</span></label>
+            <ng-select
+                [items]="studentOptions"
+                bindLabel="displayLabel"
+                bindValue="student_id"
+                [multiple]="true"
+                [loading]="isStudentListLoading"
+                [disabled]="isStudentListLoading"
+                placeholder="Select students"
+                notFoundText="No students match your search."
+                [searchFn]="studentSearchFn"
+                appendTo="body"
+                [(ngModel)]="selectedStudentIds"
+                (ngModelChange)="onSelectedStudentIdsChange($event)">
+                <ng-template ng-option-tmp let-item="item">
+                    <div class="d-flex flex-column">
+                        <span class="fw-semibold">{{ item.displayLabel }}</span>
+                        <small class="text-muted" *ngIf="item.grade_name">{{ item.grade_name }}</small>
+                        <small class="text-muted" *ngIf="item.email_id">{{ item.email_id }}</small>
+                    </div>
+                </ng-template>
+            </ng-select>
+            <div class="form-text" *ngIf="studentOptions.length">
+                Selected students will be added as {{ studentAddedType === '0' ? 'regular' : 'make-up' }} participants.
+            </div>
+            <div class="text-muted small mt-2" *ngIf="isStudentListLoading">
+                Loading students...
+            </div>
+            <div class="text-danger small mt-2" *ngIf="addStudentLoadError">{{ addStudentLoadError }}</div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label d-block">Class Type</label>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" id="addStudentRegular" value="0" [(ngModel)]="studentAddedType">
+                <label class="form-check-label" for="addStudentRegular">Regular</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" id="addStudentMakeup" value="1" [(ngModel)]="studentAddedType">
+                <label class="form-check-label" for="addStudentMakeup">Make-up</label>
+            </div>
+        </div>
+
+        <div class="mb-3" *ngIf="studentAddedType === '1'">
+            <label class="form-label">Effective Date<span class="text-danger">*</span></label>
+            <input type="date" class="form-control" [(ngModel)]="effectiveStartDate">
+        </div>
+
+        <div class="text-danger small" *ngIf="addStudentError">{{ addStudentError }}</div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" (click)="closeAddStudentModal()" [disabled]="isSubmittingStudents">
+            Cancel
+        </button>
+        <button type="button" class="btn btn-primary" (click)="submitSelectedStudents()" [disabled]="isSubmittingStudents || !selectedStudentIds.length">
+            <span *ngIf="isSubmittingStudents" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+            Add students
+        </button>
+    </div>
+</ng-template>
+
+<ng-template #createTopicModal>
+    <div class="modal-header">
+        <h2 class="modal-title h5 mb-0">Create Topic</h2>
+        <button type="button" class="btn-close" aria-label="Close" (click)="closeTopicModal()"></button>
+    </div>
+    <form [formGroup]="topicForm" (ngSubmit)="submitTopic()">
+        <div class="modal-body">
+            <div class="mb-3">
+                <label class="form-label">Topic Name<span class="text-danger">*</span></label>
+                <input type="text" class="form-control" formControlName="name" placeholder="Enter topic name">
+                <div class="text-danger small" *ngIf="topicForm.controls.name.invalid && (topicForm.controls.name.dirty || topicForm.controls.name.touched)">
+                    Topic name is required.
+                </div>
+            </div>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Start Date</label>
+                    <input type="date" class="form-control" formControlName="startDate">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">End Date</label>
+                    <input type="date" class="form-control" formControlName="endDate">
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" (click)="closeTopicModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary">{{ isEditingTopic ? 'Update Topic' : 'Save Topic' }}</button>
+        </div>
+    </form>
+</ng-template>

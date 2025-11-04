@@ -27,9 +27,11 @@ import {DragDropModule} from '@angular/cdk/drag-drop';
 import { TopicsCurriculumComponent } from './topics-curriculum/topics-curriculum.component';
 import { NgbAccordionModule } from '@ng-bootstrap/ng-bootstrap';
 import {CourseScheduleAddComponent} from './course-schedule-add/course-schedule-add.component'
+import {ClassOverviewComponent} from './class-overview/class-overview.component';
+import {DatePipe} from '@angular/common';
 
 @NgModule({
-  declarations: [ListClassComponent, AddClassComponent, SubmitClassComponent, ViewAssignComponent, TopicsCurriculumComponent, CourseScheduleAddComponent],
+  declarations: [ListClassComponent, AddClassComponent, SubmitClassComponent, ViewAssignComponent, TopicsCurriculumComponent, CourseScheduleAddComponent, ClassOverviewComponent],
     imports: [
         CommonModule,
         NgbModule,
@@ -57,6 +59,6 @@ import {CourseScheduleAddComponent} from './course-schedule-add/course-schedule-
         DragDropModule,
         NgbAccordionModule
     ],
-    providers: [TitleCasePipe]
+    providers: [TitleCasePipe, DatePipe]
 })
 export class ClassModule { }

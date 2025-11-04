@@ -14,11 +14,20 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { FeatherIconsComponent } from '../feather-icons/feather-icons.component';
 import { ToggleFullscreenDirective } from '../../directives/fullscreen.directive';
+import { NgbDropdownModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'app-header',
     standalone: true,
-    imports: [CommonModule, FormsModule, RouterModule, FeatherIconsComponent, ToggleFullscreenDirective],
+    imports: [
+        CommonModule,
+        FormsModule,
+        RouterModule,
+        FeatherIconsComponent,
+        ToggleFullscreenDirective,
+        NgbDropdownModule,
+        NgbTooltipModule
+    ],
     templateUrl: './header.component.html',
     styleUrls: ['./header.component.scss']
 })
@@ -62,19 +71,21 @@ export class HeaderComponent implements OnInit {
         this.imgUrl = this.config.getimgUrl();
         this.roleid = this.auth.getRoleId();
         this.overallData = this.auth.getSessionData('school_id');
-        this.creatorService.contentView.subscribe((res: any) => {
-            if (res == true) {
-                this.open = true;
-                this.navServices.collapseSidebar = true;
-            } else if (res != true || res == '' || res == null) {
-                this.open = false;
-                this.navServices.collapseSidebar = false;
-            }
-            this.name = this.auth.getSessionData('firstname') + ' ' + this.auth.getSessionData('lastname');
-            setTimeout(() => {
-                this.cdr.detectChanges();
-            }, 0);
-        });
+        // Removed automatic sidebar control subscription to prevent auto-hide/show behavior
+        // this.creatorService.contentView.subscribe((res: any) => {
+        //     if (res == true) {
+        //         this.open = true;
+        //         this.navServices.collapseSidebar = true;
+        //     } else if (res != true || res == '' || res == null) {
+        //         this.open = false;
+        //         this.navServices.collapseSidebar = false;
+        //     }
+        //     this.name = this.auth.getSessionData('firstname') + ' ' + this.auth.getSessionData('lastname');
+        //     setTimeout(() => {
+        //         this.cdr.detectChanges();
+        //     }, 0);
+        // });
+        this.name = this.auth.getSessionData('firstname') + ' ' + this.auth.getSessionData('lastname');
         if (this.roleid != 3){
             this.newsubject.allowChange.subscribe((params) => {
                 this.allowSelect = !(params != '' && params != false);

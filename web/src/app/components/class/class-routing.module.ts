@@ -6,6 +6,7 @@ import {SubmitClassComponent} from './submit-class/submit-class.component';
 import {ViewAssignComponent} from './view-assign/view-assign.component';
 import {TopicsCurriculumComponent} from './topics-curriculum/topics-curriculum.component';
 import {CourseScheduleAddComponent} from './course-schedule-add/course-schedule-add.component'
+import {ClassOverviewComponent} from './class-overview/class-overview.component';
 
 const routes: Routes = [
   {
@@ -51,6 +52,14 @@ const routes: Routes = [
           title: 'Class',
           status: true,
           secondtitle: 'Create Topics'
+        }
+      },
+      {
+        path: 'overview/:id',
+        component: ClassOverviewComponent,
+        data: {
+          title: 'Class Overview',
+          breadcrumb: 'Class Overview'
         }
       },
       {

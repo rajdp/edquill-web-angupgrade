@@ -1,131 +1,163 @@
 <!-- Container-fluid starts-->
-<div id="pre-loader" *ngIf="commondata.loader.value">
+<div id="pre-loader" class="page-loader" *ngIf="commondata.loader.value">
     <img src="assets/images/pre-loader/loader-01.svg" alt="">
 </div>
 
-<div class="container-fluid" *ngIf="schoolStatus?.length != 0">
-    <div id="custom-pdf-loader-editor" *ngIf="showLoader">
+<div class="class-page container-fluid py-3" *ngIf="schoolStatus?.length != 0">
+    <div id="custom-pdf-loader-editor" class="page-loader page-loader--inline" *ngIf="showLoader">
         <img src="assets/images/pre-loader/loader-01.svg" alt="">
     </div>
-    <div class="row">
-        <div class="group-btn col-12 col-lg-9 mt-2 classDisable">
-            <button type="button" [ngClass]="{'active1': classlisthighlight == '3'}" class="btn btn-outline-primary ml-0"
-                    (click)="pageNo = 1;choosedData = [];setSearch_Filter(3);classList(3)">Active
-            </button>
-            <button type="button" [ngClass]="{'active1': classlisthighlight == '2'}" class="btn btn-outline-primary"
-                    (click)="pageNo = 1;choosedData = [];setSearch_Filter(2);classList(2)">Upcoming
-            </button>
-            <button type="button" [ngClass]="{'active1': classlisthighlight == '4'}" class="btn btn-outline-primary"
-                    (click)="pageNo = 1;choosedData = [];setSearch_Filter(4);classList(4)">Completed
-            </button>
-            <button type="button" [ngClass]="{'active1': classlisthighlight == '1'}" class="btn btn-outline-primary"
-                    (click)="pageNo = 1;choosedData = [];setSearch_Filter(1);classList(1)">All
-            </button>
-            <button type="button" [ngClass]="{'active1': classlisthighlight == '6'}" class="btn btn-outline-primary"
-                    (click)="pageNo = 1;choosedData = [];setSearch_Filter(6);classList(6)">Draft
-            </button>
-        </div>
-        <div class="col-12 col-lg-3 mt-2">
-            <div class="row">
-                <div class="col-12">
-                    <button type="button" *ngIf="manageClass" class="btn btn-primary pull-right" [routerLink]="['/class/create-class/add']">Add Class</button>
+
+    <section class="card shadow-sm border-0 class-filters-card mb-3">
+        <div class="card-header border-0 pb-0">
+            <div class="d-flex flex-wrap align-items-start justify-content-between gap-2">
+                <div>
+                    <h2 class="h5 mb-1">Class Library</h2>
+                    <p class="text-neutral-600 small mb-0">
+                        Filter sessions by status, grade, subject, and roster to jump into the right class quickly.
+                    </p>
                 </div>
+                <button
+                    type="button"
+                    *ngIf="manageClass"
+                    class="btn btn-primary d-flex align-items-center gap-2"
+                    [routerLink]="['/class/create-class/add']">
+                    <i class="bi bi-plus-circle"></i>
+                    Add Class
+                </button>
             </div>
         </div>
-    </div>
-    <div class="row mt-3">
-        <div *ngIf="teacherType != 1 || auth.getRoleId() == '2' || auth.getRoleId() == '6'"
-             class="col-12 col-sm-6 col-lg-2 align-self-center">
-            <ng-select [items]="batchData"
-                       bindLabel="batch_name"
-                       bindValue="batch_id"
-                       [(ngModel)]="selectCurriculumFolder"
-                       placeholder="Select Content Folder"
-                       typeToSearchText=""
-                       (change)="pageNo = 1;setSearch_Filter(classlisthighlight);classList(classlisthighlight)">
-            </ng-select>
-        </div>
-        <div class="col-12 col-sm-6 col-lg-2 align-self-center">
-            <ng-select [items]="gradeData"
-                       bindLabel="grade_name"
-                       bindValue="grade_id"
-                       [(ngModel)]="selectGrade"
-                       placeholder="Select Grade"
-                       typeToSearchText=""
-                       multiple="true"
-                       (change)="pageNo = 1;setSearch_Filter(classlisthighlight);classList(classlisthighlight)">
-            </ng-select>
-        </div>
-        <div class="col-12 col-sm-6 col-lg-2 align-self-center">
-            <ng-select [items]="subjectData"
-                       bindLabel="subject_name"
-                       bindValue="subject_id"
-                       [(ngModel)]="selectSubject"
-                       placeholder="Select Subject"
-                       typeToSearchText=""
-                       multiple="true"
-                       (change)="pageNo = 1;setSearch_Filter(classlisthighlight);classList(classlisthighlight)">
-            </ng-select>
-        </div>
-        <div class="col-12 col-sm-6 col-lg-3 align-self-center">
-            <div class="pull-right">
-                <div class="input-group">
-                    <input type="text" class="form-control" style="height:40px" size="50" placeholder="Search Class"
-                           [(ngModel)]="searchClass" (input)="pageNo = 1;updateFilter(searchClass, 'searchClass')">
-                    <div class="input-group-append">
-                        <button class="btn btn-primary" type="submit"><i class="fa fa-search" aria-hidden="true"></i>
-                        </button>
+        <div class="card-body">
+            <div class="filter-toolbar d-flex flex-wrap gap-3 align-items-end">
+                <div class="filter-toolbar__item">
+                    <label class="form-label text-neutral-600 small fw-semibold mb-1">Status</label>
+                    <ng-select class="filter-select"
+                               [items]="statusOptions"
+                               bindLabel="label"
+                               bindValue="value"
+                               [(ngModel)]="classlisthighlight"
+                               placeholder="Select status"
+                               [clearable]="false"
+                               appendTo="body"
+                               (change)="pageNo = 1;choosedData = [];setSearch_Filter(classlisthighlight);classList(classlisthighlight)">
+                    </ng-select>
+                </div>
+                <div class="filter-toolbar__item flex-grow-1">
+                    <label class="form-label text-neutral-600 small fw-semibold mb-1">Search</label>
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text"
+                               class="form-control"
+                               placeholder="Search class or student"
+                               [(ngModel)]="searchText"
+                               (input)="pageNo = 1; updateUnifiedSearch(searchText)">
+                    </div>
+                </div>
+                <div class="filter-toolbar__actions d-flex align-items-center gap-2 ms-auto">
+                    <button type="button"
+                            class="btn btn-outline-secondary d-inline-flex align-items-center gap-2"
+                            (click)="resetSearch()">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                        Reset
+                    </button>
+                    <button type="button"
+                            class="btn btn-light d-inline-flex align-items-center gap-2"
+                            (click)="toggleFiltersPanel()"
+                            [attr.aria-expanded]="filtersExpanded">
+                        <i class="bi" [ngClass]="filtersExpanded ? 'bi-chevron-up' : 'bi-sliders'"></i>
+                        {{ filtersExpanded ? 'Hide filters' : 'Advanced filters' }}
+                        <span *ngIf="activeAdvancedFilterCount"
+                              class="badge bg-primary text-white">
+                            {{ activeAdvancedFilterCount }}
+                        </span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="filter-summary mt-3" *ngIf="!filtersExpanded && activeFilterChips.length">
+                <span class="filter-chip" *ngFor="let chip of activeFilterChips">
+                    <i class="bi bi-funnel-fill me-1"></i>{{ chip }}
+                </span>
+            </div>
+
+            <div class="advanced-filters mt-3" *ngIf="filtersExpanded">
+                <div class="row g-3 align-items-end">
+                    <div *ngIf="teacherType != 1 || auth.getRoleId() == '2' || auth.getRoleId() == '6'"
+                         class="col-12 col-md-6 col-xl-3">
+                        <label class="form-label text-neutral-600 small fw-semibold">Content folder</label>
+                        <ng-select class="filter-select"
+                                   [items]="batchData"
+                                   bindLabel="batch_name"
+                                   bindValue="batch_id"
+                                   [(ngModel)]="selectCurriculumFolder"
+                                   placeholder="Select content folder"
+                                   typeToSearchText=""
+                                   (change)="pageNo = 1;choosedData = [];setSearch_Filter(classlisthighlight);classList(classlisthighlight)">
+                        </ng-select>
+                    </div>
+                    <div class="col-12 col-md-6 col-xl-3">
+                        <label class="form-label text-neutral-600 small fw-semibold">Grade</label>
+                        <ng-select class="filter-select"
+                                   [items]="gradeData"
+                                   bindLabel="grade_name"
+                                   bindValue="grade_id"
+                                   [(ngModel)]="selectGrade"
+                                   placeholder="Select grade"
+                                   typeToSearchText=""
+                                   multiple="true"
+                                   (change)="pageNo = 1;choosedData = [];setSearch_Filter(classlisthighlight);classList(classlisthighlight)">
+                        </ng-select>
+                    </div>
+                    <div class="col-12 col-md-6 col-xl-3">
+                        <label class="form-label text-neutral-600 small fw-semibold">Subject</label>
+                        <ng-select class="filter-select"
+                                   [items]="subjectData"
+                                   bindLabel="subject_name"
+                                   bindValue="subject_id"
+                                   [(ngModel)]="selectSubject"
+                                   placeholder="Select subject"
+                                   typeToSearchText=""
+                                   multiple="true"
+                                   (change)="pageNo = 1;choosedData = [];setSearch_Filter(classlisthighlight);classList(classlisthighlight)">
+                        </ng-select>
+                    </div>
+                    <div class="col-12 col-md-6 col-xl-3" *ngIf="auth.getRoleId() != '4' && classlisthighlight != '6'">
+                        <label class="form-label text-neutral-600 small fw-semibold">Teacher</label>
+                        <ng-select class="filter-select"
+                                   [items]="teacherData"
+                                   bindLabel="teacher_name"
+                                   bindValue="teacher_id"
+                                   [(ngModel)]="selectTeacher"
+                                   placeholder="Select Teacher"
+                                   typeToSearchText=""
+                                   (change)="pageNo = 1;choosedData = [];setSearch_Filter(classlisthighlight); classList(classlisthighlight)">
+                        </ng-select>
+                    </div>
+                    <div class="col-12 col-md-6 col-xl-3" *ngIf="(auth.getRoleId() != '4' && classlisthighlight != '6') || auth.getRoleId() == '2'">
+                        <label class="form-label text-neutral-600 small fw-semibold">Course</label>
+                        <ng-select [(ngModel)]="selectCourse" [multiple]="true"
+                                   placeholder="Select Course" (change)="pageNo = 1;choosedData = [];setSearch_Filter(classlisthighlight); classList(classlisthighlight)">
+                            <ng-option *ngFor="let item of courseListData;" [value]="item.course_id">
+                                <div [title]="item.course_name">{{item.course_name}}
+                                    <span class="badge badge-success" *ngIf="item.status == 'A'">Approved</span>
+                                    <span class="badge badge-warning" *ngIf="item.status == 'P'">Ready for review</span>
+                                    <span class="badge badge-secondary" *ngIf="item.status == 'D'">Draft</span>
+                                    <span class="badge badge-info" *ngIf="item.status == 'R'">Rework</span>
+                                    <span class="badge badge-danger" *ngIf="item.status == 'C'">Cancelled</span></div>
+                            </ng-option>
+                        </ng-select>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-12 col-sm-6 col-lg-3 align-self-center">
-            <div class="pull-right">
-                <div class="input-group">
-                    <input (input)="pageNo = 1;updateFilter(searchStudent, 'searchStudent')" [(ngModel)]="searchStudent"
-                           class="form-control" placeholder="Search Student" size="50" style="height:40px" type="text">
-                    <div class="input-group-append">
-                        <button class="btn btn-primary" type="submit"><i aria-hidden="true" class="fa fa-search"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="row mt-3" *ngIf="(auth.getRoleId() != '4' && classlisthighlight != '6') || auth.getRoleId() == '2'">
-        <div class="col-12 col-sm-6 col-lg-3" *ngIf="auth.getRoleId() != '4' && classlisthighlight != '6'">
-            <ng-select [items]="teacherData"
-                       bindLabel="teacher_name"
-                       bindValue="teacher_id"
-                       [(ngModel)]="selectTeacher"
-                       placeholder="Select Teacher"
-                       typeToSearchText=""
-                       (change)="pageNo = 1;setSearch_Filter(classlisthighlight); classList(classlisthighlight)">
-            </ng-select>
-        </div>
-        <div class="col-12 col-sm-6 col-lg-5">
-            <ng-select [(ngModel)]="selectCourse" [multiple]="true"
-                       placeholder="Select Course" (change)="pageNo = 1;setSearch_Filter(classlisthighlight); classList(classlisthighlight)">
-                <ng-option *ngFor="let item of courseListData;" [value]="item.course_id">
-                    <div [title]="item.course_name">{{item.course_name}}
-                        <span class="badge badge-success" *ngIf="item.status == 'A'">Approved</span>
-                        <span class="badge badge-warning" *ngIf="item.status == 'P'">Ready for review</span>
-                        <span class="badge badge-secondary" *ngIf="item.status == 'D'">Draft</span>
-                        <span class="badge badge-info" *ngIf="item.status == 'R'">Rework</span>
-                        <span class="badge badge-danger" *ngIf="item.status == 'C'">Cancelled</span></div>
-                </ng-option>
-            </ng-select>
-        </div>
-        <div class="col-4 text-right">
-            <button (click)="resetSearch()" class="btn cancel"><i class="fa fa-close mr-1"></i>Reset Filter</button>
-        </div>
-    </div>
-    <div class="row d-flex justify-content-center list-card mt-5" *ngIf="choosedData ==''">
+    </section>
+    
+    <div class="row d-flex justify-content-center list-card mt-5" *ngIf="choosedData.length == 0 && !showLoader">
         <div class="col-4">
             <button class="nodataList">No Data Available!</button>
         </div>
     </div>
-    <section class="row scrollPanel4 list-card mt-3" *ngIf="choosedData!=''">
+    <section class="row scrollPanel4 list-card mt-3" *ngIf="choosedData.length > 0">
         <div class="col-12">
             <div class="row"
                  infiniteScroll
@@ -138,7 +170,7 @@
                 <div class="col-md-12 d-flex flex-column justify-content-center">
                     <div class="card class-card class-hover w-99" *ngFor="let list of choosedData; let i = index">
                         <div class="card-body">
-                            <div class="row p-2 cursor" (click)="enterList(i, 'yes', $event)">
+                            <div class="row p-2 cursor" (click)="openClassOverview(i, $event)">
                                 <div class="col-7">
                                     <h4 class="t-period">
                                         <small class="badge badge-success mr-2" *ngIf="list.status == '1' && teacherType != '0'"><i
@@ -164,7 +196,8 @@
                                         <span class="font-weight-bold">Class Code: </span> <span
                                             class="t-name font-weight-bold">{{list.class_code}}</span> &nbsp; <small
                                             class="badge badge-pill badge-info cursor"
-                                            style="font-size: 12px">{{list.no_of_students - 0}}
+                                            style="font-size: 12px"
+                                            (click)="openStudentRoster(i, $event)">{{list.no_of_students - 0}}
                                         Student{{list.no_of_students > 1 ? 's' : ''}}</small><br/>
                                         <span class="font-weight-bold">Teacher Assigned: </span> <span
                                             class="t-name font-weight-bold">{{list.teacher_name}}</span>
@@ -920,7 +953,7 @@
                     <textarea class="form-control" rows="3" formControlName="message" placeholder="Message" maxlength="500"></textarea>
                 </div>
                 <div class="col-12 mt-3">
-                    <pre class="m-0" style="color: black; word-wrap: break-word;">{{studentEmailForm.controls.message.value}}</pre>
+                    <p class="mt-1 mb-0" style="color: black">{{studentEmailForm.controls.message.value}}</p>
                     <p class="mt-{{studentEmailForm.controls.message.value != '' ? '3' : '1'}} mb-0" style="color: black">You have been invited by <strong>{{auth.getSessionData('school_name')}}</strong> to join a class: <strong>{{selectClassData.class_code}}</strong> - <strong>{{selectClassData.class_name}}</strong></p>
                     <p class="mt-3 mb-0" style="color: black">Please click the below link to join the class</p>
                     <a class="m-0 color-primary" [href]="env.envProperties.envURL + '#/auth/login/studentRegister/'+ selectClassData.class_code" target="_blank">{{env.envProperties.envURL + '#/auth/login/studentRegister/'+ selectClassData.class_code}}</a>

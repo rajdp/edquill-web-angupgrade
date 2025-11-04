@@ -204,7 +204,7 @@
                     </form>
                 </div>
             </div>
-            <div class="row mt-4">
+            <div class="row mt-4" *ngIf="false">
                 <div class="col-md-12 col-12 mb-2">
                     <label style="font-size: 18px" class="font-weight-bold color-primary">Contact Details</label>
                 </div>
@@ -368,53 +368,268 @@
             </div>
 
             <div class="row mt-4">
+                <div class="col-md-12 col-12 mb-2 d-flex justify-content-between align-items-center">
+                    <label style="font-size: 18px" class="font-weight-bold color-primary mb-0">Guardian Contacts</label>
+                    <div class="btn-group-sm">
+                        <button class="btn btn-outline-primary mr-2" *ngIf="!guardianEdit" (click)="startGuardianEdit()">Edit</button>
+                        <button class="btn btn-outline-secondary mr-2" *ngIf="guardianEdit" (click)="cancelGuardianEdit()">Cancel</button>
+                        <button class="btn btn-primary" *ngIf="guardianEdit" (click)="saveGuardianContacts()" [disabled]="guardianSaving">
+                            <span *ngIf="guardianSaving" class="spinner-border spinner-border-sm mr-1" role="status" aria-hidden="true"></span>
+                            Save
+                        </button>
+                    </div>
+                </div>
+                <div class="col-12" *ngIf="guardiansLoading">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="sr-only">Loading...</span>
+                        </div>
+                        <p class="mt-2 mb-0">Loading guardian contacts...</p>
+                    </div>
+                </div>
+                <div class="col-12" *ngIf="!guardiansLoading">
+                    <form [formGroup]="guardianForm">
+                        <div class="row" formArrayName="contacts">
+                            <div class="col-md-6 mb-3" *ngFor="let contact of guardianContactsArray.controls; let i = index" [formGroupName]="i">
+                                <div class="card h-100">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <div>
+                                            Contact {{ i + 1 }}
+                                            <span class="badge badge-info ml-2" *ngIf="contact.get('is_primary')?.value">Primary</span>
+                                        </div>
+                                        <span class="badge badge-light" *ngIf="!guardianEdit && !hasGuardianContent(contact.value)">Not Set</span>
+                                    </div>
+                                    <div class="card-body">
+                                        <ng-container *ngIf="guardianEdit; else guardianView">
+                                            <div class="form-group">
+                                                <label>First Name</label>
+                                                <input class="form-control" formControlName="first_name" placeholder="First name">
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Last Name</label>
+                                                <input class="form-control" formControlName="last_name" placeholder="Last name">
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Email</label>
+                                                <input class="form-control" formControlName="email" placeholder="name@example.com">
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Phone</label>
+                                                <input class="form-control" formControlName="phone" placeholder="+1 555 123 4567">
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Relationship</label>
+                                                <input class="form-control" formControlName="relationship" placeholder="Parent / Guardian">
+                                            </div>
+                                            <div class="form-group mb-0">
+                                                <label>Preferred Channel</label>
+                                                <select class="form-control" formControlName="communication_preference">
+                                                    <option value="both">SMS &amp; Email</option>
+                                                    <option value="email">Email Only</option>
+                                                    <option value="sms">SMS Only</option>
+                                                </select>
+                                            </div>
+                                        </ng-container>
+                                        <ng-template #guardianView>
+                                            <dl class="row mb-0">
+                                                <dt class="col-sm-5">Name</dt>
+                                                <dd class="col-sm-7">{{ formatGuardianName(contact) || '-' }}</dd>
+                                                <dt class="col-sm-5">Email</dt>
+                                                <dd class="col-sm-7">{{ formatGuardianEmail(contact) }}</dd>
+                                                <dt class="col-sm-5">Phone</dt>
+                                                <dd class="col-sm-7">{{ formatGuardianPhone(contact) }}</dd>
+                                                <dt class="col-sm-5">Relationship</dt>
+                                                <dd class="col-sm-7">{{ contact.get('relationship')?.value || '-' }}</dd>
+                                                <dt class="col-sm-5">Preferred Channel</dt>
+                                                <dd class="col-sm-7">{{ formatCommunicationPreference(contact.get('communication_preference')?.value) }}</dd>
+                                            </dl>
+                                        </ng-template>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="row mt-4">
+                <div class="col-md-12 col-12 mb-2">
+                    <label style="font-size: 18px" class="font-weight-bold">Activated Subjects</label>
+                </div>
+                <div class="col-12" *ngIf="subjectSummaries.length > 0; else noSubjectSummary">
+                    <div class="table-responsive student-profile" style="overflow-y: auto; max-height: 50vh">
+                        <table class="table table-bordered">
+                            <thead style="background: #cdd9f6">
+                            <th style="position: sticky; top: 0;background: #cdd9f6">Subject</th>
+                            <th style="position: sticky; top: 0;background: #cdd9f6">Active Classes</th>
+                            <th style="position: sticky; top: 0;background: #cdd9f6">Past Classes</th>
+                            <th style="position: sticky; top: 0;background: #cdd9f6">Last Activated</th>
+                            <th style="position: sticky; top: 0;background: #cdd9f6">Subject Fee</th>
+                            <th style="position: sticky; top: 0;background: #cdd9f6">Deposit Amount</th>
+                            </thead>
+                            <tbody>
+                            <tr *ngFor="let subject of subjectSummaries">
+                                <td class="text-capitalize font-weight-bold">{{subject.subject_name}}</td>
+                                <td>{{subject.activeClasses}}</td>
+                                <td>{{subject.pastClasses}}</td>
+                                <td>{{subject.lastActivated ? (subject.lastActivated | customDateFormat) : '-'}}</td>
+                                <td>{{subject.fee_display}}</td>
+                                <td>{{subject.deposit_display}}</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <ng-template #noSubjectSummary>
+                    <div class="col-12">
+                        <div class="alert alert-light border text-muted mb-0">
+                            No subjects have been activated for this student yet.
+                        </div>
+                    </div>
+                </ng-template>
+            </div>
+            <div class="row mt-4">
                 <div class="col-md-12 col-12 mb-2">
                     <label style="font-size: 18px" class="font-weight-bold">Class Details</label>
                 </div>
 
-                <div class="col-md-12 col-12 table-responsive student-profile" style="overflow-y: auto; max-height: 70vh">
-                    <table class="table table-bordered">
-                        <thead style="background: #cdd9f6">
+                <div class="col-lg-6 col-12 mb-3">
+                    <div class="table-responsive student-profile" style="overflow-y: auto; max-height: 70vh">
+                        <label class="font-weight-bold d-block mb-2">Active Classes</label>
+                        <table class="table table-bordered">
+                            <thead style="background: #cdd9f6">
+                            <th style="position: sticky; top: 0;background: #cdd9f6">Subject</th>
+                            <th style="position: sticky; top: 0;background: #cdd9f6">Class Name</th>
+                            <th style="position: sticky; top: 0;background: #cdd9f6">Class Code</th>
+                            <th style="position: sticky; top: 0;background: #cdd9f6">Start Date</th>
+                            <th style="position: sticky; top: 0;background: #cdd9f6">Joined Date</th>
+                            <th style="position: sticky; top: 0;background: #cdd9f6">Notify Contact</th>
+                            <th style="position: sticky; top: 0;background: #cdd9f6">Action</th>
+                            </thead>
+                            <tbody>
+                            <tr *ngIf="activeClasses.length == 0" class="text-center">
+                                <td colspan="7">
+                                    <span class="color-primary">No active classes</span>
+                                </td>
+                            </tr>
+                            <tr *ngFor="let classData of activeClasses">
+                                <td style="vertical-align: middle">{{classData.subject != '' ? classData.subject : '-'}}</td>
+                                <td style="vertical-align: middle" class="color-primary">
+                                    <span class="font-weight-bold cursor" (click)="viewClassDetails(classData)">{{classData.class_name}}</span>
+                                </td>
+                                <td style="vertical-align: middle">{{classData.class_code}}</td>
+                                <td style="vertical-align: middle">{{classData.start_date | customDateFormat}}</td>
+                                <td style="vertical-align: middle">{{classData.joining_date | customDateFormat}}</td>
+                                <td (click)="classData.showText = false" class="color-primary cursor" style="vertical-align: middle">
+                                    <span *ngIf="classData.showText" class="font-weight-bold">{{classData.notify_status == '0' ? 'No' : 'Yes'}}</span>
+                                    <select (change)="studentNotifyStatus(classData, $event.target.value)" *ngIf="!classData.showText" class="form-control" [value]="classData.notify_status">
+                                        <option value="1">Yes</option>
+                                        <option value="0">No</option>
+                                    </select>
+                                </td>
+                                <td style="vertical-align: middle">
+                                    <img alt="" class="mx-2" style="width:23px" src="assets/images/icons/report.png" title="Report" (click)="getStudentFullDetail(classData)">
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="col-lg-6 col-12 mb-3">
+                    <div class="table-responsive student-profile" style="overflow-y: auto; max-height: 70vh">
+                        <label class="font-weight-bold d-block mb-2">Past Classes</label>
+                        <table class="table table-bordered">
+                            <thead style="background: #cdd9f6">
+                            <th style="position: sticky; top: 0;background: #cdd9f6">Subject</th>
+                            <th style="position: sticky; top: 0;background: #cdd9f6">Class Name</th>
+                            <th style="position: sticky; top: 0;background: #cdd9f6">Class Code</th>
+                            <th style="position: sticky; top: 0;background: #cdd9f6">Start Date</th>
+                            <th style="position: sticky; top: 0;background: #cdd9f6">Dropped / Ended</th>
+                            <th style="position: sticky; top: 0;background: #cdd9f6">Action</th>
+                            </thead>
+                            <tbody>
+                            <tr *ngIf="pastClasses.length == 0" class="text-center">
+                                <td colspan="6">
+                                    <span class="color-primary">No past classes</span>
+                                </td>
+                            </tr>
+                            <tr *ngFor="let classData of pastClasses">
+                                <td style="vertical-align: middle">{{classData.subject != '' ? classData.subject : '-'}}</td>
+                                <td style="vertical-align: middle" class="color-primary">
+                                    <span class="font-weight-bold cursor" (click)="viewClassDetails(classData)">{{classData.class_name}}</span>
+                                </td>
+                                <td style="vertical-align: middle">{{classData.class_code}}</td>
+                                <td style="vertical-align: middle">{{classData.start_date | customDateFormat}}</td>
+                                <td style="vertical-align: middle">
+                                    {{classData.drafted_date != '0000-00-00' ? (classData.drafted_date | customDateFormat) : (classData.end_date | customDateFormat)}}
+                                </td>
+                                <td style="vertical-align: middle">
+                                    <img alt="" class="mx-2" style="width:23px" src="assets/images/icons/report.png" title="Report" (click)="getStudentFullDetail(classData)">
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
 
-                        <th style="position: sticky; top: 0;background: #cdd9f6">Subject</th>                            
-                        <th style="position: sticky; top: 0;background: #cdd9f6">Class Name</th>
-                        <th style="position: sticky; top: 0;background: #cdd9f6">Class Code</th>
-                        <th style="position: sticky; top: 0;background: #cdd9f6">Start Date</th>
-                        <th style="position: sticky; top: 0;background: #cdd9f6">End Date</th>
-                        <th style="position: sticky; top: 0;background: #cdd9f6">Joined Date</th>
-                        <th style="position: sticky; top: 0;background: #cdd9f6">Dropped Date</th>
-                        <th style="position: sticky; top: 0;background: #cdd9f6">Notify Contact</th>
-                        <th style="position: sticky; top: 0;background: #cdd9f6">Action</th>
-                        </thead>
-                        <tbody>
-                        <tr *ngIf="studentFullClassListData.length == 0" class="text-center">
-                            <td colspan="12">
-                                <span class="color-primary">No Data Available!</span>
-                            </td>
-                        </tr>
-                        <tr *ngFor="let classData of studentFullClassListData;">
-
-                            <td style="vertical-align: middle">{{classData.subject != '' ? classData.subject : '-'}}</td>                            
-                            <td style="vertical-align: middle" class="color-primary">
-                                <span class="font-weight-bold">{{classData.class_name}}</span></td>
-                            <td style="vertical-align: middle">{{classData.class_code}}</td>
-                            <td style="vertical-align: middle">{{classData.start_date | customDateFormat}}</td>
-                            <td style="vertical-align: middle">{{classData.end_date | customDateFormat}}</td>
-                            <td style="vertical-align: middle">{{classData.joining_date | customDateFormat}}</td>
-                            <td style="vertical-align: middle">{{classData.drafted_date != '0000-00-00' ? (classData.drafted_date | customDateFormat) : '-'}}</td>
-                            <td (click)="classData.showText = false" class="color-primary cursor" style="vertical-align: middle">
-                                <span *ngIf="classData.showText" class="font-weight-bold">{{classData.notify_status == '0' ? 'No' : 'Yes'}}</span>
-                                <select (change)="studentNotifyStatus(classData, $event.target.value)" *ngIf="!classData.showText" class="form-control" [value]="classData.notify_status">
-                                    <option value="1">Yes</option>
-                                    <option value="0">No</option>
-                                </select>
-                            </td>
-                            <td style="vertical-align: middle">
-                                <img alt="" class="mx-2" style="width:23px" src="assets/images/icons/report.png" title="Report" (click)="getStudentFullDetail(classData)">
-                            </td>
-                        </tr>
-                        </tbody>
-                    </table>
+            <div class="row mt-4">
+                <div class="col-md-12 col-12 mb-2">
+                    <label style="font-size: 18px" class="font-weight-bold">Fee Overview</label>
+                </div>
+                <div class="col-12">
+                    <div class="border rounded p-3 student-profile">
+                        <div *ngIf="loadingFeeOverview" class="text-muted d-flex align-items-center">
+                            <span class="spinner-border spinner-border-sm mr-2"></span>Loading fee overview...
+                        </div>
+                        <div *ngIf="!loadingFeeOverview && feeOverview">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <h6 class="font-weight-bold">Active Assignments</h6>
+                                    <div *ngIf="feeOverview.assignments?.length; else noAssignments">
+                                        <div class="mb-3 border rounded p-2" *ngFor="let assignment of feeOverview.assignments">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span class="font-weight-bold">{{assignment.plan?.name || 'Plan'}}</span>
+                                                <span class="badge" [ngClass]="assignment.balance && assignment.balance > 0 ? 'bg-warning text-dark' : 'bg-success'">
+                                                    Balance: ${{assignment.balance | number:'1.2-2'}}
+                                                </span>
+                                            </div>
+                                            <div class="text-muted small">
+                                                Expected: ${{assignment.expected | number:'1.2-2'}} · Paid: ${{(assignment.paid || 0) | number:'1.2-2'}}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <ng-template #noAssignments>
+                                        <div class="text-muted small">No fee plans assigned.</div>
+                                    </ng-template>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <h6 class="font-weight-bold">Recent Payments</h6>
+                                    <div *ngIf="feeOverview.payments?.length; else noPayments">
+                                        <div class="mb-2 border rounded p-2" *ngFor="let payment of feeOverview.payments | slice:0:5">
+                                            <div class="d-flex justify-content-between">
+                                                <span>${{payment.amount | number:'1.2-2'}}</span>
+                                                <span class="text-muted small">{{payment.payment_date | date}}</span>
+                                            </div>
+                                            <div class="text-muted small">{{payment.payment_method || 'Unspecified method'}}</div>
+                                        </div>
+                                    </div>
+                                    <ng-template #noPayments>
+                                        <div class="text-muted small">No payments recorded yet.</div>
+                                    </ng-template>
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="d-flex flex-wrap justify-content-between align-items-center">
+                                <div class="font-weight-bold">Total Paid: ${{feeOverview.total_paid | number:'1.2-2'}}</div>
+                                <div class="badge" [ngClass]="feeOverview.overall_balance > 0 ? 'bg-danger' : 'bg-success'">
+                                    Outstanding Balance: ${{feeOverview.overall_balance | number:'1.2-2'}}
+                                </div>
+                            </div>
+                        </div>
+                        <div *ngIf="!loadingFeeOverview && !feeOverview" class="text-muted">
+                            {{feeOverviewError || 'No fee records available for this student yet.'}}
+                        </div>
+                    </div>
                 </div>
             </div>
 

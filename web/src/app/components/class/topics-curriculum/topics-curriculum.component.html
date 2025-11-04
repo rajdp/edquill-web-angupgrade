@@ -137,6 +137,9 @@
                                             Delete Topic</a></li>
                                     </ul>
                                 </div>
+                                <div class="col-12 px-0 mt-1" *ngIf="item.all_student == '0' && item.individual_count > 0">
+                                    <small class="text-muted">Assigned to: {{item.individual_student_names || item.individual_students}}</small>
+                                </div>
                             </div>
                         </button>
                     </div>
@@ -203,6 +206,9 @@
                                                             </span>
                                                                 </p>
                                                             </div>
+                                                        </div>
+                                                        <div class="col-12 px-0 mt-1" *ngIf="list.all_student == '0' && list.individual_count > 0">
+                                                            <small class="text-muted">Assigned to: {{list.individual_student_names || list.individual_students}}</small>
                                                         </div>
                                                     </div>
                                                     <div class="col-6 d-flex justify-content-end mt-2">
@@ -318,6 +324,9 @@
                                     </p>
                                 </div>
                             </div>
+                        </div>
+                        <div class="col-12 px-0 mt-1" *ngIf="list.all_student == '0' && list.individual_count > 0">
+                            <small class="text-muted">Assigned to: {{list.individual_student_names || list.individual_students}}</small>
                         </div>
                         <div class="col-6 d-flex justify-content-end mt-2">
                             <div class="dropdown">

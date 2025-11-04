@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, HostListener, inject, OnInit, ChangeDetectorRef, NgZone, ApplicationRef } from '@angular/core';
+import { Component, HostListener, inject, OnInit, ChangeDetectorRef, NgZone, ApplicationRef, ChangeDetectionStrategy } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavService } from '../../service/nav.service';
 import { trigger, transition, useAnimation } from '@angular/animations';
 import { bounce, zoomOut, zoomIn, fadeIn, bounceIn } from 'ng-animate';
@@ -32,21 +33,25 @@ import { RouterModule } from '@angular/router';
     FooterComponent
   ],
   templateUrl: './content-layout.component.html',
-  styleUrls: ['./content-layout.component.scss']
+  styleUrls: ['./content-layout.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ContentLayoutComponent implements OnInit {
   public allowDashboard: any;
-  public right_side_bar: boolean;
+  public right_side_bar: boolean = false;
   public layoutType: string = 'RTL';
   public layoutClass: boolean = false;
   public imgUrl: string;
   public profile: any;
   isHovered = false;
   public showMobView = false;
+  public hideForBreadcrumb: boolean = true; // Initialize as property instead of getter
   public creatorService = inject(CreatorService);
   @HostListener('window:resize', ['$event'])
   onResize(event){
     this.showMobView = this.env.deviceType();
+    this.updateHideForBreadcrumb(); // Update breadcrumb visibility when view changes
+    this.cdr.markForCheck();
   }
   constructor(public navServices: NavService, public env: EnvironmentService,
               public auth: AuthService, public commondata: CommonDataService, public config: ConfigurationService,
@@ -54,15 +59,18 @@ export class ContentLayoutComponent implements OnInit {
     this.imgUrl = this.config.getimgUrl();
     this.profile = this.auth.getSessionData('profile_url');
     this.showMobView = this.env.deviceType();
-    this.creatorService.contentView.subscribe((res: any) => {
-      this.ngZone.runOutsideAngular(() => {
-        setTimeout(() => {
-          this.ngZone.run(() => {
-            this.isHovered = !(res == true);
-            this.auth.setSideBarOpened(this.isHovered);
-          });
-        }, 0);
-      });
+    // Removed automatic sidebar control subscription to prevent auto-hide/show behavior
+    // this.creatorService.contentView.subscribe((res: any) => {
+    //   // Use proper change detection to avoid assertion errors
+    //   this.ngZone.run(() => {
+    //     this.isHovered = !(res == true);
+    //     this.auth.setSideBarOpened(this.isHovered);
+    //     this.cdr.markForCheck(); // Use markForCheck for OnPush strategy to avoid infinite loops
+    //   });
+    // });
+
+    this.commondata.loader.pipe(takeUntilDestroyed()).subscribe(() => {
+      this.cdr.markForCheck();
     });
   }
 
@@ -70,6 +78,7 @@ export class ContentLayoutComponent implements OnInit {
     if (this.navServices.collapseSidebar) {
       this.isHovered = true;
       this.auth.setSideBarOpened(true);
+      this.cdr.markForCheck();
     }
   }
 
@@ -77,11 +86,13 @@ export class ContentLayoutComponent implements OnInit {
     if (this.navServices.collapseSidebar) {
       this.isHovered = false;
       this.auth.setSideBarOpened(false);
+      this.cdr.markForCheck();
     }
   }
 
   public rightSidebar($event) {
     this.right_side_bar = $event;
+    this.cdr.markForCheck();
   }
 
   public clickRtl(val) {
@@ -94,17 +105,22 @@ export class ContentLayoutComponent implements OnInit {
       this.layoutClass = false;
       this.layoutType = 'RTL';
     }
+    this.cdr.markForCheck();
   }
 
   ngOnInit() {
-    // this.commondata.showLoader(true);
-    // Initialize allowDashboard here to avoid ExpressionChangedAfterItHasBeenCheckedError
+    // Initialize properties to avoid ExpressionChangedAfterItHasBeenCheckedError
     this.allowDashboard = this.auth.getSessionData('default_password');
+    this.right_side_bar = false; // Initialize to prevent undefined state
+    this.layoutClass = false; // Initialize to prevent undefined state
+    
+    // Calculate hideForBreadcrumb value
+    this.updateHideForBreadcrumb();
   }
 
-  get hideForBreadcrumb() {
+  private updateHideForBreadcrumb() {
     const url = window.location.href;
-    return !this.showMobView && (!url.includes('student/dashboard') && !url.includes('report/report') &&
+    this.hideForBreadcrumb = !this.showMobView && (!url.includes('student/dashboard') && !url.includes('report/report') &&
         !url.includes('studentlogin/answering') && !url.includes('sat-report'));
   }
 

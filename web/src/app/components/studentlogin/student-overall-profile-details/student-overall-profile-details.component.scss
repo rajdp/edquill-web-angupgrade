@@ -19,3 +19,12 @@ student-profile {
     color: #8F008AFF !important;
   }
 }
+
+.cursor {
+  cursor: pointer;
+  
+  &:hover {
+    text-decoration: underline;
+    opacity: 0.8;
+  }
+}

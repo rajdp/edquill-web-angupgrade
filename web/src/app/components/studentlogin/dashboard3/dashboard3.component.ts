@@ -32,7 +32,7 @@ export class Dashboard3Component implements OnInit, OnDestroy{
     public globalAnnouncementList = [];
     public toastr = inject(ToastrService);
     public buttonName = [{name: 'In-Progress', id: '2', count: '0', className: 'inProgress_button', badge_class: 'badge-warning', active: true},
-        {name: 'Upcoming', id: '4', count: '0', className: 'upcoming_button ml-2', badge_class: 'badge-info', active: false},
+        {name: 'Upcoming', id: '1', count: '0', className: 'upcoming_button ml-2', badge_class: 'badge-info', active: false},
         {name: 'Completed', id: '3', count: '0', className: 'completed_button ml-2', badge_class: 'badge-success', active: false}];
 
     public overdueTask = [];
@@ -192,10 +192,39 @@ export class Dashboard3Component implements OnInit, OnDestroy{
             response_type: 'SSE'
         };
 
-        const classService = this.sseClient.stream('student/classList', { keepAlive: true, reconnectionDelay: 10000,
+        // Fetch class list immediately on load
+        this.fetchClassList(payload);
+
+        // Then fetch every 60 seconds (60000ms)
+        const classListInterval = setInterval(() => {
+            this.fetchClassList(payload);
+        }, 60000);
+
+        // Store interval reference for cleanup
+        this.subscriptions.push({
+            unsubscribe: () => clearInterval(classListInterval)
+        } as any);
+
+        // Fetch curriculum list immediately on load
+        this.fetchCurriculumList(payload);
+
+        // Then fetch every 60 seconds (60000ms)
+        const curriculumListInterval = setInterval(() => {
+            this.fetchCurriculumList(payload);
+        }, 60000);
+
+        // Store interval reference for cleanup
+        this.subscriptions.push({
+            unsubscribe: () => clearInterval(curriculumListInterval)
+        } as any);
+    }
+
+    fetchClassList(payload: any) {
+        const classService = this.sseClient.stream('student/classList', { keepAlive: false, reconnectionDelay: 0,
             responseType: 'event' }, {body: payload}, 'POST').subscribe((event) => {
             if (event.type === 'error') {
                 const errorEvent = event as ErrorEvent;
+                console.error('Class list error:', errorEvent);
             } else if (event.type == 'message') {
                 const messageEvent = event as MessageEvent;
                 const classListData = JSON.parse(messageEvent.data);
@@ -205,7 +234,8 @@ export class Dashboard3Component implements OnInit, OnDestroy{
                 this.classData = JSON.stringify(classListData.classList ?? []);
                 this.buttonName.forEach(button => button.count = '0');
                 classListData.classList.forEach(item => {
-                    const button = this.buttonName.find(btn => btn.id === item.status);
+                    // Use classDate_status which is returned by the backend
+                    const button = this.buttonName.find(btn => btn.id === item.classDate_status);
                     if (button) {
                         button.count = (parseInt(button.count) + 1).toString();
                     }
@@ -239,7 +269,8 @@ export class Dashboard3Component implements OnInit, OnDestroy{
                         items.subject_name = item.subject_name;
                         items.grade_name = item.grade_name;
                         items.class_details = item;
-                        if (items.slotday === dayMap[todayDate] && item.status == '2') {
+                        // Use classDate_status instead of status
+                        if (items.slotday === dayMap[todayDate] && item.classDate_status == '2') {
                             this.scheduleData.push(items);
                         }
                     });
@@ -247,7 +278,8 @@ export class Dashboard3Component implements OnInit, OnDestroy{
                 console.log(this.scheduleData, 'schedule');
                 this.filteredClassData = [];
                 this.filteredClassData = classListData.classList.filter((value) => {
-                    return value.status == this.selectedButtonForClass;
+                    // Use classDate_status instead of status
+                    return value.classDate_status == this.selectedButtonForClass;
                 });
 
                 this.recentUpdate.forEach((item) => {
@@ -273,13 +305,18 @@ export class Dashboard3Component implements OnInit, OnDestroy{
                 console.log(this.recentUpdate, 'res');
             }
         });
+        
+        this.subscriptions.push(classService);
+    }
 
-        const curriculumPayload = payload;
+    fetchCurriculumList(payload: any) {
+        const curriculumPayload = {...payload};
         delete curriculumPayload.type;
-        const curriculumService = this.sseClient.stream('student/curriculumList', { keepAlive: true, reconnectionDelay: 10000,
+        const curriculumService = this.sseClient.stream('student/curriculumList', { keepAlive: false, reconnectionDelay: 0,
             responseType: 'event' }, {body: curriculumPayload}, 'POST').subscribe((event) => {
             if (event.type === 'error') {
                 const errorEvent = event as ErrorEvent;
+                console.error('Curriculum list error:', errorEvent);
             } else if (event.type == 'message') {
                 const messageEvent = event as MessageEvent;
                 const curriculumListData = JSON.parse(messageEvent.data);
@@ -305,8 +342,8 @@ export class Dashboard3Component implements OnInit, OnDestroy{
                 this.overdueTask = this.overdueTask.slice(0 , 10);
             }
         });
-
-        this.subscriptions.push(classService, curriculumService);
+        
+        this.subscriptions.push(curriculumService);
     }
 
     updateClassData(id) {
@@ -314,7 +351,8 @@ export class Dashboard3Component implements OnInit, OnDestroy{
         this.buttonName.forEach(items => items.active = items.id == id);
         const classData = JSON.parse(this.classData);
         this.filteredClassData = classData.filter((value) => {
-            return value.status == id;
+            // Use classDate_status instead of status
+            return value.classDate_status == id;
         });
     }
 

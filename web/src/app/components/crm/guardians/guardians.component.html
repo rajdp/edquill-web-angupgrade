@@ -1,0 +1,201 @@
+<div class="row g-4">
+  <div class="col-lg-5">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">{{ guardianForm.value.id ? 'Edit Guardian' : 'Add Guardian' }}</h5>
+        <button type="button" class="btn btn-sm btn-outline-secondary" (click)="resetForm()">
+          <i class="bi bi-arrow-counterclockwise me-1"></i>
+          Reset
+        </button>
+      </div>
+      <div class="card-body">
+        <form [formGroup]="guardianForm" (ngSubmit)="submitGuardian()">
+          <div class="mb-3">
+            <label class="form-label">First Name *</label>
+            <input class="form-control" formControlName="first_name" placeholder="Jane" />
+            <div class="invalid-feedback d-block" *ngIf="guardianForm.get('first_name')?.touched && guardianForm.get('first_name')?.invalid">
+              First name is required
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Last Name</label>
+            <input class="form-control" formControlName="last_name" placeholder="Doe" />
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Email</label>
+              <input class="form-control" formControlName="email" placeholder="jane@example.com" type="email" />
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Phone</label>
+              <input class="form-control" formControlName="phone" placeholder="+1 555 123 4567" />
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Relationship</label>
+              <input class="form-control" formControlName="relationship" placeholder="Mother / Father / Guardian" />
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Communication Preference</label>
+              <select class="form-select" formControlName="communication_preference">
+                <option value="both">SMS & Email</option>
+                <option value="email">Email Only</option>
+                <option value="sms">SMS Only</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Notes</label>
+            <textarea class="form-control" formControlName="notes" rows="2" placeholder="Internal notes (visible to staff only)"></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Linked Students</label>
+            <ng-select
+              [items]="students"
+              bindLabel="full_name"
+              bindValue="id"
+              formControlName="student_ids"
+              [multiple]="true"
+              placeholder="Select students"
+            >
+              <ng-template ng-label-tmp let-item="item">
+                {{ item.first_name }} {{ item.last_name }}
+              </ng-template>
+              <ng-template ng-option-tmp let-item="item">
+                <div class="d-flex flex-column">
+                  <span>{{ item.first_name }} {{ item.last_name }}</span>
+                  <small class="text-muted">{{ item.email }}</small>
+                </div>
+              </ng-template>
+            </ng-select>
+            <small class="text-muted d-block mt-2">
+              Select students this guardian should be linked to
+            </small>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Primary Student</label>
+            <select class="form-select" formControlName="primary_student_id">
+              <option value="">Select primary contact student</option>
+              <option *ngFor="let studentId of guardianForm.value.student_ids" [value]="studentId">
+                {{ getStudentName(studentId) }}
+              </option>
+            </select>
+            <small class="text-muted d-block mt-1">
+              Primary student will receive billing and urgent notifications.
+            </small>
+          </div>
+
+          <div class="d-grid">
+            <button class="btn btn-primary" type="submit" [disabled]="saving">
+              <span *ngIf="saving" class="spinner-border spinner-border-sm me-2"></span>
+              {{ guardianForm.value.id ? 'Update Guardian' : 'Create Guardian' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <h5 class="mb-0">Guardian Directory</h5>
+        <div class="input-group input-group-sm search-group">
+          <input
+            class="form-control"
+            placeholder="Search by name, email, phone..."
+            [(ngModel)]="filters.search"
+            name="guardianSearch"
+            (keyup.enter)="search()"
+          />
+          <button class="btn btn-outline-secondary" type="button" (click)="clearSearch()">Clear</button>
+          <button class="btn btn-primary" type="button" (click)="search()">Search</button>
+        </div>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead>
+              <tr>
+                <th>Guardian</th>
+                <th>Contact</th>
+                <th>Linked Students</th>
+                <th class="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let guardian of guardians">
+                <td>
+                  <div class="fw-semibold">
+                    {{ guardian.first_name }} {{ guardian.last_name }}
+                  </div>
+                  <div class="text-muted small">
+                    {{ guardian.relationship || '—' }}
+                  </div>
+                </td>
+                <td>
+                  <div>{{ guardian.email || '—' }}</div>
+                  <div class="text-muted small">{{ guardian.phone || '—' }}</div>
+                  <div class="text-muted small text-uppercase">
+                    Prefers: {{ guardian.communication_preference || 'both' }}
+                  </div>
+                </td>
+                <td>
+                  <div *ngIf="guardian.students?.length; else noStudents">
+                    <div
+                      class="badge bg-light text-dark me-1 mb-1"
+                      *ngFor="let student of guardian.students"
+                    >
+                      {{ student.student_name || getStudentName(student.student_id) }}
+                      <span *ngIf="student.is_primary" class="ms-1 text-primary">(Primary)</span>
+                      <button
+                        class="btn btn-link btn-sm text-danger ms-1 p-0 align-baseline"
+                        type="button"
+                        (click)="removeGuardian(guardian, student.student_id)"
+                        ngbTooltip="Unlink guardian"
+                      >
+                        <i class="bi bi-x-circle"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <ng-template #noStudents>
+                    <span class="text-muted small">Not linked to any students yet</span>
+                  </ng-template>
+                </td>
+                <td class="text-end">
+                  <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-primary" (click)="editGuardian(guardian)">
+                      <i class="bi bi-pencil-square me-1"></i>Edit
+                    </button>
+                    <button class="btn btn-outline-danger" (click)="removeGuardian(guardian)">
+                      <i class="bi bi-trash me-1"></i>Delete
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <tr *ngIf="!guardians.length && !loading">
+                <td colspan="4" class="text-center py-4 text-muted">
+                  No guardians found. Use the form to add a new contact.
+                </td>
+              </tr>
+              <tr *ngIf="loading">
+                <td colspan="4" class="text-center py-4">
+                  <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

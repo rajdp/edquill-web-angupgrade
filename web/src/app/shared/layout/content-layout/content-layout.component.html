@@ -1,38 +1,46 @@
-<div>
-    <!--=================================
-  preloader -->
-    <div id="pre-loader" *ngIf="commondata.loader.value">
-        <img src="assets/images/pre-loader/loader-01.svg" alt="">
-    </div>
-    <div class="page-wrapper">
-        <app-header2 *ngIf="showMobView"></app-header2>
+<div class="app-shell enterprise-layout">
+  <div id="pre-loader" *ngIf="commondata.loader.value">
+    <img src="assets/images/pre-loader/loader-01.svg" alt="Loading" />
+  </div>
 
-        <app-header *ngIf="!showMobView" (rightSidebarEvent)="rightSidebar($event)"></app-header>
-        <div class="page-body-wrapper">
-            <div class="page-sidebar" *ngIf="!showMobView" [class.collapsed]="navServices.collapseSidebar"
-                 [class.hovered]="isHovered" (mouseenter)="onSidebarHover()" (mouseleave)="onSidebarLeave()"
-                 [class.open]="navServices.collapseSidebar">
-                <app-sidebar></app-sidebar>
-                <div class="right-sidebar" [class.show]="right_side_bar" id="right_side_bar">
-                    <app-right-sidebar></app-right-sidebar>
-                </div>
-            </div>
-            <div class="page-sidebar2" *ngIf="showMobView">
-                <app-right-sidebar-mob></app-right-sidebar-mob>
-                <div class="right-sidebar" id="right_side_bar2">
-                </div>
-            </div>
-            <div class="page-body" [class.hovered]="isHovered && !showMobView">
-                <app-breadcrumb *ngIf="hideForBreadcrumb"></app-breadcrumb>
-                <main>
-                    <router-outlet></router-outlet>
-                </main>
-            </div>
-            <footer class="footer">
-                <app-footer></app-footer>
-            </footer>
+  @if (showMobView) {
+    <app-header2></app-header2>
+  } @else {
+    <app-header (rightSidebarEvent)="rightSidebar($event)"></app-header>
+  }
+
+  <div class="app-shell__body" [class.with-collapsed-sidebar]="navServices.collapseSidebar && !showMobView">
+    @if (!showMobView) {
+      <div
+        class="app-shell__sidebar"
+        [class.is-collapsed]="navServices.collapseSidebar"
+        [class.is-hovered]="isHovered"
+        (mouseenter)="onSidebarHover()"
+        (mouseleave)="onSidebarLeave()"
+      >
+        <app-sidebar></app-sidebar>
+        <aside class="app-shell__right-rail" [class.show]="right_side_bar">
+          <app-right-sidebar></app-right-sidebar>
+        </aside>
+      </div>
+    } @else {
+      <div class="app-shell__sidebar app-shell__sidebar--mobile">
+        <app-right-sidebar-mob></app-right-sidebar-mob>
+      </div>
+    }
+
+    <div class="app-shell__content" [class.hovered]="isHovered && !showMobView">
+      <main class="app-main">
+        <div class="app-main__container container-fluid">
+          <router-outlet></router-outlet>
         </div>
-    </div>
+      </main>
 
-    <!--<div class="btn-light custom-theme" [class.rtl]="layoutClass" (click)="clickRtl(layoutType)">{{layoutType}}</div>-->
+      <footer class="app-footer">
+        <div class="app-footer__inner">
+          <app-footer></app-footer>
+        </div>
+      </footer>
+    </div>
+  </div>
 </div>

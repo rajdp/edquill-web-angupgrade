@@ -1,139 +1,123 @@
-<div (mouseenter)="onSidebarHover()" (mouseleave)="onSidebarLeave()">
-  <div class="main-header-left d-none d-lg-block">
-    <div class="logo-wrapper d-flex justify-content-center" *ngIf="sideBarOpened">
-      <img (click)="navigateToDefaultPages()" alt="" class="blur-up lazyloaded" src="assets/images/{{logo}}" style="width: auto; height: 34px;">
+<aside
+  class="app-sidebar custom-scrollbar"
+  [class.is-collapsed]="!sideBarOpened"
+>
+  <div class="sidebar-header">
+    <button class="btn btn-icon btn-outline-primary sidebar-nav-toggle d-lg-none" type="button" (click)="navServices.collapseSidebar = !navServices.collapseSidebar">
+      <i class="bi bi-x-lg"></i>
+    </button>
+    <div class="sidebar-user-card">
+      <span class="sidebar-avatar">
+        <img
+          *ngIf="profile && !listCheck"
+          [src]="imgUrl + '/' + profile"
+          alt="Profile image"
+        />
+        <img
+          *ngIf="profile && listCheck"
+          [src]="profile"
+          alt="Profile image"
+        />
+        <span *ngIf="!profile" class="sidebar-avatar__placeholder">
+          <i class="bi bi-person-fill"></i>
+        </span>
+      </span>
+      <div class="sidebar-user-info" *ngIf="sideBarOpened">
+        <span class="sidebar-user-name">{{ name }}</span>
+      </div>
     </div>
   </div>
-  <div class="sidebar custom-scrollbar">
-    <div class="sidebar-user text-center">
-      <div>
-        <img class="img-60 rounded-circle" *ngIf="profile == '' || profile == null " src="assets/images/ristaschool/school-default.png"  alt="">
-        <img class="img-60 rounded-circle" *ngIf="(profile != '' && profile != null) && !listCheck"  src="{{imgUrl +'/'+ profile}}"  alt="">
-        <img class="img-60 rounded-circle" *ngIf="profile != '' && listCheck" [src]="profile"  alt="">
-      </div>
-<!--      <h6 class="mt-2 f-14" *ngIf="['3', '6'].includes(role) && sideBarOpened">{{name}}</h6>-->
-<!--      <h6 class="f-12" *ngIf="role == 6 && sideBarOpened">({{corporateCode}})</h6>-->
-<!--      <div class="row" *ngIf="['2', '4', '5'].indexOf(role) > -1 && sideBarOpened">-->
-<!--        <select *ngIf="schoolName.length > 1" [disabled]="!allowSelect" class="form-control w-75 mt-3 ml-4" (change)="schoolChangeList($event.target.value)" [(ngModel)]="sclName">-->
-<!--          <option *ngFor="let school of schoolName" [value]="school.school_id">{{school.name}}</option>-->
-<!--        </select>-->
-<!--        <h6 *ngIf="schoolName.length == 1" class="contenttext col-12 mt-3">{{schoolName[0].name}}</h6>-->
-<!--      </div>-->
-<!--      <div *ngIf="overallData != '' && sideBarOpened">-->
-<!--        <div class="row" *ngIf="role == 6 && !hideSchoolDropdown">-->
-<!--          <select *ngIf="schoolName.length > 1" [disabled]="!allowSelect" class="form-control w-75 mt-3 ml-4" (change)="schoolChangeList($event.target.value)" [(ngModel)]="sclName">-->
-<!--            <option *ngFor="let school of schoolName; let i = index"  [value]="school.school_id">{{school.name}}</option>-->
-<!--          </select>-->
-<!--          <h6 *ngIf="schoolName.length == 1" class="contenttext col-12 mt-3">{{schoolName[0].name}}</h6>-->
-<!--        </div>-->
-<!--      </div>-->
-    </div>
-    <ul class="sidebar-menu" (click)="removeSessionData()">
-      <li *ngFor="let menuItem of menuItems; let i = index" [ngClass]="{active: menuItem.active}">
-        <!-- Sub -->
-        <a href="javascript:void(0)" class="sidebar-header" *ngIf="menuItem.type === 'sub'"
-           (click)="toggletNavActive(menuItem , 'sub')">
-          <app-feather-icons [icon]="menuItem.icon"></app-feather-icons><span *ngIf="sideBarOpened">{{menuItem.title}}<span
-                class="badge badge-{{menuItem.badgeType}} ml-3"
-                *ngIf="menuItem.badgeType">{{menuItem.badgeValue}}</span></span>
-          <i class="fa fa-angle-right pull-right" *ngIf="menuItem.children"></i>
-        </a>
-        <!-- Link -->
-        <a [routerLink]="!menuItem.type ? null : [menuItem.path]" routerLinkActive="active" class="sidebar-header"
-           [ngStyle]="{'color': menuItem.active ? '#8F008A' : ''}"  [ngClass]="{active: menuItem.active}" *ngIf="menuItem.type === 'link'" (click)="toggletNavActive(menuItem, 'link')">
-          <app-feather-icons *ngIf="menuItem.title != 'Announcements'" [icon]="menuItem.icon"></app-feather-icons>
-          <i style="font-size: 14px" *ngIf="menuItem.title == 'Announcements'" class="fa fa-bullhorn"></i>
-          <span *ngIf="sideBarOpened" [ngStyle]="{'margin-left': menuItem.title == 'Announcements' ? '6px' : ''}">{{menuItem.title}}<span
-                  class="badge badge-{{menuItem.badgeType}} ml-3"
-                  *ngIf="menuItem.badgeType">{{menuItem.badgeValue}}</span></span>
-          <i class="fa fa-angle-right pull-right" *ngIf="menuItem.children"></i>
-        </a>
-        <!-- External Link -->
-        <!--      <a href="{{ !menuItem.type ? null : menuItem.path }}" class="sidebar-header" *ngIf="menuItem.type === 'extLink'">-->
-        <!--        <app-feather-icons [icon]="menuItem.icon"></app-feather-icons><span>{{menuItem.title}}<span-->
-        <!--            class="badge badge-{{menuItem.badgeType}} ml-3"-->
-        <!--            *ngIf="menuItem.badgeType">{{menuItem.badgeValue}}</span></span>-->
-        <!--        <i class="fa fa-angle-right pull-right" *ngIf="menuItem.children"></i>-->
-        <!--      </a>-->
-        <!-- External Tab Link -->
-        <!--      <a href="{{ !menuItem.type ? null : menuItem.path }}" target="_blank" class="sidebar-header"-->
-        <!--        *ngIf="menuItem.type === 'extTabLink'">-->
-        <!--        <app-feather-icons [icon]="menuItem.icon"></app-feather-icons><span>{{menuItem.title}}<span-->
-        <!--            class="badge badge-{{menuItem.badgeType}} ml-3"-->
-        <!--            *ngIf="menuItem.badgeType">{{menuItem.badgeValue}}</span></span>-->
-        <!--        <i class="fa fa-angle-right pull-right" *ngIf="menuItem.children"></i>-->
-        <!--      </a>-->
-        <!-- 2nd Level Menu -->
-        <ul class="sidebar-submenu" [ngClass]="{'menu-open': menuItem.active, 'menu-close': !menuItem.active }"
-            *ngIf="menuItem.children && sideBarOpened">
-          <li *ngFor="let childrenItem of menuItem.children; let childIndex = index" [ngClass]="{active: childrenItem.active}">
-            <!-- Sub -->
-            <a href="javascript:void(0)" *ngIf="childrenItem.type === 'sub'"
-               routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
-              <i class="fa fa-{{childrenItem.icon}} pr-2"></i>
-              <span> {{childrenItem.title}} <span class="badge badge-{{childrenItem.badgeType}} pull-right"
-                                                  *ngIf="childrenItem.badgeType">{{childrenItem.badgeValue}}</span> </span>
-              <i class="fa fa-angle-down pull-right" *ngIf="childrenItem.children"></i>
+
+  <nav class="sidebar-navigation" (click)="removeSessionData()">
+    <ul class="nav flex-column">
+      @for (menuItem of menuItems; track menuItem.title) {
+        <li class="nav-item" [class.active]="menuItem.active">
+          @if (menuItem.type === 'link') {
+            <a
+              class="nav-link"
+              [routerLink]="[menuItem.path]"
+              routerLinkActive="active"
+              (click)="toggletNavActive(menuItem, 'link')"
+              [ngbTooltip]="sideBarOpened ? null : menuItem.title"
+              placement="right"
+            >
+              <span class="nav-icon">
+                <app-feather-icons [icon]="menuItem.icon"></app-feather-icons>
+              </span>
+              <span class="nav-text" *ngIf="sideBarOpened">
+                {{ menuItem.title }}
+                @if (menuItem.badgeType) {
+                  <span class="badge ms-2" [ngClass]="'badge-' + menuItem.badgeType">
+                    {{ menuItem.badgeValue }}
+                  </span>
+                }
+              </span>
             </a>
-            <!-- Link -->
-            <a style="display:contents;" [routerLink]="!childrenItem.type ? null : [childrenItem.path]" *ngIf="childrenItem.type === 'link'"
-               routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" (click)="toggleSubMenu(childrenItem, menuItem, childIndex)">
-              <i class="fa fa-{{childrenItem.icon}} pr-2"></i><span>{{childrenItem.title}} <span
-                    class="badge badge-{{childrenItem.badgeType}} pull-right"
-                    *ngIf="childrenItem.badgeType">{{childrenItem.badgeValue}}</span></span>
-              <i class="fa fa-angle-down pull-right" *ngIf="childrenItem.children"></i>
-            </a>
-            <!-- External Link -->
-            <a href="{{ !childrenItem.type ? null : childrenItem.path }}" *ngIf="childrenItem.type === 'extLink'"
-               routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
-              <i class="fa fa-{{childrenItem.icon}} pr-2"></i><span>{{childrenItem.title}} <span
-                    class="badge badge-{{childrenItem.badgeType}} pull-right"
-                    *ngIf="childrenItem.badgeType">{{childrenItem.badgeValue}}</span></span>
-              <i class="fa fa-angle-down pull-right" *ngIf="childrenItem.children"></i>
-            </a>
-            <!-- External Tab Link -->
-            <a href="{{ !childrenItem.type ? null : childrenItem.path }}" target="_blank"
-               *ngIf="childrenItem.type === 'extTabLink'">
-              <i class="fa fa-{{childrenItem.icon}} pr-2"></i><span>{{childrenItem.title}} <span
-                    class="badge badge-{{childrenItem.badgeType}} pull-right"
-                    *ngIf="childrenItem.badgeType">{{childrenItem.badgeValue}}</span></span>
-              <i class="fa fa-angle-down pull-right" *ngIf="childrenItem.children"></i>
-            </a>
-            <!-- 3rd Level Menu -->
-            <ul class="sidebar-submenu" *ngIf="childrenItem.children">
-              <li *ngFor="let childrenSubItem of childrenItem.children">
-                <!-- Link -->
-                <a [routerLink]="!childrenSubItem.type ? null : [childrenSubItem.path]"
-                   *ngIf="childrenSubItem.type === 'link'" routerLinkActive="active"
-                   [routerLinkActiveOptions]="{exact: true}">
-                  <i class="fa fa-{{childrenSubItem.icon}} pr-2"></i><span> {{childrenSubItem.title}} <span
-                        class="badge badge-{{childrenSubItem.badgeType}} pull-right"
-                        *ngIf="childrenSubItem.badgeType">{{childrenSubItem.badgeValue}}</span> </span>
-                </a>
-                <!-- External Link -->
-                <a href="{{ !childrenSubItem.type ? null : childrenSubItem.path }}"
-                   *ngIf="childrenSubItem.type === 'extLink'" routerLinkActive="active"
-                   [routerLinkActiveOptions]="{exact: true}">
-                  <i class="fa fa-{{childrenSubItem.icon}} pr-2"></i><span>{{childrenSubItem.title}} <span
-                        class="badge badge-{{childrenSubItem.badgeType}} pull-right"
-                        *ngIf="childrenSubItem.badgeType">{{childrenSubItem.badgeValue}}</span></span>
-                </a>
-                <!-- External Tab Link -->
-                <a href="{{ !childrenSubItem.type ? null : childrenSubItem.path }}" target="_blank"
-                   *ngIf="childrenSubItem.type === 'extTabLink'">
-                  <i class="fa fa-{{childrenSubItem.icon}} pr-2"></i><span>{{childrenSubItem.title}} <span
-                        class="badge badge-{{childrenSubItem.badgeType}} pull-right"
-                        *ngIf="childrenSubItem.badgeType">{{childrenSubItem.badgeValue}}</span></span>
-                </a>
-              </li>
-            </ul>
-          </li>
-        </ul>
-      </li>
-      <div class="mt-2">
-        <p *ngIf="sideBarOpened">Version : {{version}}</p>
-        <p class="text-center" style="font-size: 12px" *ngIf="!sideBarOpened">{{version}}</p>
-      </div>
+          } @else if (menuItem.type === 'sub') {
+            <button
+              class="nav-link nav-link--toggle"
+              type="button"
+              (click)="toggletNavActive(menuItem, 'sub')"
+              [attr.aria-expanded]="menuItem.active"
+            >
+              <span class="nav-icon">
+                <app-feather-icons [icon]="menuItem.icon"></app-feather-icons>
+              </span>
+              <span class="nav-text" *ngIf="sideBarOpened">
+                {{ menuItem.title }}
+                <i class="bi ms-auto" [ngClass]="menuItem.active ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+              </span>
+            </button>
+            @if (menuItem.children) {
+              <ul class="nav flex-column sub-menu" [class.show]="menuItem.active && sideBarOpened">
+                @for (childrenItem of menuItem.children; track childrenItem.title; let childIndex = $index) {
+                  <li class="nav-item" [class.active]="childrenItem.active">
+                    <a
+                      class="nav-link"
+                      [routerLink]="[childrenItem.path]"
+                      routerLinkActive="active"
+                      [routerLinkActiveOptions]="{ exact: true }"
+                      (click)="toggleSubMenu(childrenItem, menuItem, childIndex)"
+                    >
+                      <i class="bi bi-dot nav-icon"></i>
+                      <span class="nav-text">
+                        {{ childrenItem.title }}
+                        @if (childrenItem.badgeType) {
+                          <span class="badge ms-2" [ngClass]="'badge-' + childrenItem.badgeType">
+                            {{ childrenItem.badgeValue }}
+                          </span>
+                        }
+                      </span>
+                    </a>
+                    @if (childrenItem.children) {
+                      <ul class="nav flex-column sub-menu sub-menu--nested">
+                        @for (childrenSubItem of childrenItem.children; track childrenSubItem.title) {
+                          <li class="nav-item">
+                            <a
+                              class="nav-link"
+                              [routerLink]="[childrenSubItem.path]"
+                              routerLinkActive="active"
+                              [routerLinkActiveOptions]="{ exact: true }"
+                            >
+                              <i class="bi bi-caret-right-fill nav-icon"></i>
+                              <span class="nav-text">{{ childrenSubItem.title }}</span>
+                            </a>
+                          </li>
+                        }
+                      </ul>
+                    }
+                  </li>
+                }
+              </ul>
+            }
+          }
+        </li>
+      }
     </ul>
+  </nav>
+
+  <div class="sidebar-footer" *ngIf="version">
+    <span class="sidebar-footer__label" *ngIf="sideBarOpened">Version</span>
+    <span class="sidebar-footer__value">{{ version }}</span>
   </div>
-</div>
+</aside>

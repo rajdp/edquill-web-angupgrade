@@ -4,12 +4,13 @@ import {
     TemplateRef,
     ViewChild,
     OnDestroy,
-    ChangeDetectorRef
+    ChangeDetectorRef,
+    HostListener
 } from '@angular/core';
 import {AuthService} from '../../../shared/service/auth.service';
 import {AssessmentService} from '../../../shared/service/assessment.service';
 import {ActivatedRoute, Router} from '@angular/router';
-import {DomSanitizer} from '@angular/platform-browser';
+import {DomSanitizer, SafeUrl} from '@angular/platform-browser';
 import {ConfigurationService} from '../../../shared/service/configuration.service';
 import {ModalDismissReasons, NgbModal, NgbModalRef} from '@ng-bootstrap/ng-bootstrap';
 import {ClassService} from '../../../shared/service/class.service';
@@ -35,6 +36,13 @@ import {dateOptions, timeZone} from '../../../shared/data/config';
 })
 
 export class ContentHomeComponent implements OnInit, OnDestroy {
+    private suppressDocumentClick = false;
+    private readonly thumbnailFallbacks: Record<string, string> = {
+        '1': 'assets/images/ristaschool/resource.png',
+        '2': 'assets/images/ristaschool/option-writing-checkbox-concepts-survey.png',
+        '3': 'assets/images/ristaschool/assessment.png',
+        default: 'assets/images/ristaschool/resource.png'
+    };
     public setDate = new Date().toLocaleString('en-US', {timeZone: timeZone.location});
     myDpOptions: IAngularMyDpOptions = {
         dateRange: false,
@@ -103,19 +111,27 @@ export class ContentHomeComponent implements OnInit, OnDestroy {
     public type: any;
     public noofquestions: any;
     public totalpoints: any;
-    public description: any;
+    public description: any = '';
     public subjectname: any;
     public highlight: any;
     public submitType: any;
     public cclist: any;
     public showIcon: boolean;
     public exactSearch: boolean = false;
+    public filtersExpanded = false;
     public contentUserId: any;
     public open: boolean;
     public pageNo: any = 1;
     public totalRecords: any;
     public threshhold: any;
     public choosedData: any;
+    // Pagination properties
+    public itemsPerPage: number = 10;
+    public totalPages: number = 0;
+    public paginationPages: number[] = [];
+    public showPagination: boolean = true;
+    // Tab management
+    public activeTab: 'library' | 'folder' = 'library';
     public className: any;
     public classid: any;
     public contentName: any;
@@ -147,7 +163,7 @@ export class ContentHomeComponent implements OnInit, OnDestroy {
     public studentData: any;
     public classDropDown: boolean;
     public schoolListDetails: any;
-    public selector: string = '.scrollPanel';
+    public selector: string = '.content-results-wrapper';
     public tagname: any;
     public browseAllAssign: boolean;
     public resourcetype: boolean;
@@ -172,6 +188,8 @@ export class ContentHomeComponent implements OnInit, OnDestroy {
     public searchTime: any;
     public allowScore: boolean;
     public releaseGrade: any;
+    public isLoading: boolean = false;
+    public sortListSubscription: any;
     public schoolStatus: any;
     public clearSession = true;
     public contentAssign = '';
@@ -308,6 +326,90 @@ export class ContentHomeComponent implements OnInit, OnDestroy {
         this.auth.removeSessionData('readonly_startdate');
     }
 
+    public get activeFilterChips(): string[] {
+        const chips: string[] = [];
+
+        const search = this.searchKey?.trim();
+        if (search) {
+            chips.push(`Search: ${search}`);
+        }
+
+        const libraryMap: Record<string, string> = {
+            '0': 'Entire Library',
+            '1': 'Resource',
+            '2': 'Assignment',
+            '3': 'Assessment'
+        };
+        if (this.libraryselection && this.libraryselection !== '0') {
+            chips.push(`Library: ${libraryMap[this.libraryselection] || 'Selected'}`);
+        }
+
+        const sortMap: Record<string, string> = {
+            'AZ': 'A - Z',
+            'ZA': 'Z - A',
+            '-1': 'Popularity',
+            '0': 'Recent'
+        };
+        if (this.sortfilter && this.sortfilter !== '0') {
+            chips.push(`Sort: ${sortMap[this.sortfilter] || 'Custom'}`);
+        }
+
+        if (this.selectAuthored === 'active2') {
+            chips.push('Authored by me');
+        }
+
+        if (this.selectDraft === 'active2') {
+            chips.push('My drafts');
+        }
+
+        if (this.exactSearch) {
+            chips.push('Exact search');
+        }
+
+        if (Array.isArray(this.gradeid) && this.gradeid.length) {
+            const gradeIds = new Set(this.gradeid.map((id: any) => String(id)));
+            const grades = Array.isArray(this.gradeData)
+                ? this.gradeData
+                    .filter(item => gradeIds.has(String(item.grade_id)))
+                    .map(item => item.grade_name)
+                : [];
+            chips.push(`Grades: ${grades.length ? grades.join(', ') : this.gradeid.length}`);
+        }
+
+        if (Array.isArray(this.subjectid) && this.subjectid.length) {
+            const subjectIds = new Set(this.subjectid.map((id: any) => String(id)));
+            const subjects = Array.isArray(this.subjectData)
+                ? this.subjectData
+                    .filter(item => subjectIds.has(String(item.subject_id)))
+                    .map(item => item.subject_name)
+                : [];
+            chips.push(`Subjects: ${subjects.length ? subjects.join(', ') : this.subjectid.length}`);
+        }
+
+        if (Array.isArray(this.tagid) && this.tagid.length) {
+            const tagIds = new Set(this.tagid.map((id: any) => String(id)));
+            const tags = Array.isArray(this.tagData)
+                ? this.tagData
+                    .filter(item => tagIds.has(String(item.tag_id)))
+                    .map(item => item.tag_name)
+                : [];
+            chips.push(`Tags: ${tags.length ? tags.join(', ') : this.tagid.length}`);
+        }
+
+        return chips;
+    }
+
+    public get activeAdvancedFilterCount(): number {
+        const ignoredMarkers = ['Search:', 'Library:', 'Sort:', 'Authored by me', 'My drafts', 'Exact search'];
+        return this.activeFilterChips.filter(chip =>
+            !ignoredMarkers.some(marker => chip === marker || chip.startsWith(marker))
+        ).length;
+    }
+
+    public toggleFiltersPanel(): void {
+        this.filtersExpanded = !this.filtersExpanded;
+    }
+
     ngOnInit(): void {
         this.allowDropDown = false;
         this.newSubject.allowSchoolChange(this.allowDropDown);
@@ -429,6 +531,22 @@ export class ContentHomeComponent implements OnInit, OnDestroy {
         this.direction = 'up';
     }
 
+    loadNextPage() {
+        this.pageNo++;
+        this.sortlist();
+        // Scroll to top of content list
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    loadPreviousPage() {
+        if (this.pageNo > 1) {
+            this.pageNo--;
+            this.contentdata = []; // Clear current data
+            this.sortlist();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    }
+
     sortExact() {
         this.pageNo = 1;
         if (this.searchKey != '') {
@@ -441,10 +559,11 @@ export class ContentHomeComponent implements OnInit, OnDestroy {
         this.searchKey = event;
         clearTimeout(this.searchTime);
         this.searchTime = setTimeout(() => {
+            this.contentdata = []; // Clear existing data for new search
+            this.pageNo = 1;
             this.sortlist();
             this.setSearch_Filter();
-        }, 1200);
-        this.pageNo = 1;
+        }, 500); // Reduced from 1200ms to 500ms for better responsiveness
     }
 
     onDateChanged1(event: any): void {
@@ -1069,7 +1188,12 @@ export class ContentHomeComponent implements OnInit, OnDestroy {
             this.studentid = '';
         } else if (allstudent == '0') {
             this.allStudent = '0';
-            this.studentid = this.linkform.controls.specificstudent.value;
+            const selectedIds = Array.isArray(this.linkform.controls.specificstudent.value)
+                ? this.linkform.controls.specificstudent.value
+                    .map((id: any) => id != null ? `${id}`.trim() : '')
+                    .filter((id: string) => id.length > 0)
+                : [];
+            this.studentid = selectedIds;
         }
         if (this.auth.getSessionData('resourceAccess') == 'true') {
             if (this.auth.getSessionData('batchassign') == '1' || this.auth.getSessionData('batchassign') == '3') {
@@ -1093,9 +1217,11 @@ export class ContentHomeComponent implements OnInit, OnDestroy {
             this.end = this.endDate;
         }
 
+        const hasSpecificSelection = this.allStudent === '0' && Array.isArray(this.studentid) && this.studentid.length > 0;
+
         if (this.classid != null || this.batchid != null) {
             if ((this.allStudent == '0' && this.studentData.length != 0) || this.allStudent == '1') {
-                if ((this.allStudent == '0' && this.studentid != '' && this.studentid != null) || this.allStudent == '1') {
+                if (hasSpecificSelection || this.allStudent == '1') {
                     if (this.dateValidation == true) {
                         let classDetails = [];
                         if (this.linkform.controls.typeSelection.value == '1' || this.resourcetype) {
@@ -1347,6 +1473,9 @@ export class ContentHomeComponent implements OnInit, OnDestroy {
     }
 
     sortlist() {
+        // Show loading indicator
+        this.isLoading = true;
+        
         const data = {
             platform: 'web',
             role_id: this.auth.getRoleId(),
@@ -1355,8 +1484,8 @@ export class ContentHomeComponent implements OnInit, OnDestroy {
             sort_by: this.sortfilter,
             content_user_id: this.contentUserId,
             type: this.typeid,
-            page: this.pageNo,
-            record_per_page: '12',
+            page_no: this.pageNo,  // ✅ Fixed: was 'page', backend expects 'page_no'
+            records_per_page: this.itemsPerPage,  // ✅ Fixed: was 'record_per_page', backend expects 'records_per_page'
             library: this.libraryselection,
             filter: this.filterselection,
             tags: this.tagid,
@@ -1365,57 +1494,228 @@ export class ContentHomeComponent implements OnInit, OnDestroy {
             exact_search: this.exactSearch == true ? 1 : 0,
             search_name: this.searchKey
         };
+        
+        console.log('🔍 PAGINATION DEBUG - Request Parameters:', {
+            pageNo: this.pageNo,
+            page_no: data.page_no,
+            records_per_page: data.records_per_page,
+            itemsPerPage: this.itemsPerPage,
+            fullData: data
+        });
+        
+        // Cancel any pending requests
+        if (this.sortListSubscription) {
+            this.sortListSubscription.unsubscribe();
+        }
+        
         if (this.auth.getRoleId() == '6') {
             data['corporate_id'] = this.auth.getSessionData('corporate_id');
-            this.creatorService.sortmasterlist(data).subscribe((successData) => {
+            this.sortListSubscription = this.creatorService.sortmasterlist(data).subscribe((successData) => {
                     this.sortListSuccess(successData);
+                    this.isLoading = false;
                 },
                 (error) => {
                     console.error(error, 'error_slotList');
+                    this.isLoading = false;
                 });
         } else {
-            this.creatorService.sortmasterlist(data).subscribe((successData) => {
+            this.sortListSubscription = this.creatorService.sortmasterlist(data).subscribe((successData) => {
                     this.sortListSuccess(successData);
+                    this.isLoading = false;
                 },
                 (error) => {
                     console.error(error, 'error_slotList');
+                    this.isLoading = false;
                 });
         }
     }
 
     sortListSuccess(successData) {
+        console.log('📦 PAGINATION DEBUG - Response received:', {
+            IsSuccess: successData.IsSuccess,
+            itemsReturned: successData.ResponseObject?.length || 0,
+            currentPage: this.pageNo,
+            currentContentDataLength: this.contentdata.length
+        });
+        
         if (successData.IsSuccess) {
             let temp = successData.ResponseObject;
-            if (this.searchKey.length > 0 && this.pageNo == 1) {
+            
+            console.log('✅ PAGINATION DEBUG - Processing response:', {
+                tempLength: temp.length,
+                pageNo: this.pageNo,
+                willReplace: this.pageNo == 1,
+                willAppend: this.pageNo > 1 && temp.length > 0
+            });
+            
+            // For pagination: replace data on page 1, append on subsequent pages (for infinite scroll)
+            if (this.pageNo == 1) {
                 this.contentdata = successData.ResponseObject;
-                // this.totalRecords = 0;
-
-            }
-            if (this.searchKey.length == 0 && this.pageNo == 1) {
-                this.contentdata = successData.ResponseObject;
-                // this.totalRecords = 0;
-            }
-
-            if (this.pageNo > 1 && temp.length > 0) {
+                console.log('🔄 PAGINATION DEBUG - Replaced data, new length:', this.contentdata.length);
+            } else if (this.pageNo > 1 && temp.length > 0) {
+                // Only append if using infinite scroll
                 for (let entry of temp) {
                     this.contentdata.push(entry);
                 }
+                console.log('➕ PAGINATION DEBUG - Appended data, new length:', this.contentdata.length);
             }
 
+            // Process each item
             for (let i = 0; i < this.contentdata.length; i++) {
                 this.contentdata[i].checked = this.contentdata[i].checked ? this.contentdata[i].checked : false;
+                this.contentdata[i].showDropdown = false; // Initialize dropdown state
                 if (this.contentdata[i].status == '1') {
                     this.contentdata[i].details = 'Published';
                 } else if (this.contentdata[i].status == '5') {
                     this.contentdata[i].details = 'Draft';
                 }
             }
+            
+            // Update pagination calculations
+            // Note: Backend returns items per page, we estimate total pages based on whether we got a full page
+            if (temp.length < this.itemsPerPage) {
+                // This is the last page
+                this.totalPages = this.pageNo;
+                console.log('📄 PAGINATION DEBUG - Last page detected, totalPages:', this.totalPages);
+            } else if (temp.length === this.itemsPerPage) {
+                // There might be more pages
+                this.totalPages = this.pageNo + 1; // At least one more
+                console.log('📄 PAGINATION DEBUG - More pages likely, totalPages:', this.totalPages);
+            }
+            
             this.totalRecords = this.contentdata.length;
             this.threshhold = this.totalRecords - 2;
             this.contentdatabackup = this.contentdata;
+            this.updatePaginationPages();
+            
+            console.log('🎯 PAGINATION DEBUG - Final state:', {
+                totalRecords: this.totalRecords,
+                totalPages: this.totalPages,
+                currentPage: this.pageNo,
+                paginationPages: this.paginationPages,
+                showPagination: this.showPagination,
+                itemsPerPage: this.itemsPerPage
+            });
+            
             this.cdr.detectChanges();
+        } else {
+            console.log('❌ PAGINATION DEBUG - Response not successful');
         }
         this.cdr.detectChanges();
+    }
+    
+    updatePaginationPages() {
+        // Generate array of page numbers for pagination controls
+        const maxPagesToShow = 5;
+        const pages: number[] = [];
+        
+        if (this.totalPages <= maxPagesToShow) {
+            // Show all pages
+            for (let i = 1; i <= this.totalPages; i++) {
+                pages.push(i);
+            }
+        } else {
+            // Show subset with current page in middle
+            let startPage = Math.max(1, this.pageNo - 2);
+            let endPage = Math.min(this.totalPages, startPage + maxPagesToShow - 1);
+            
+            // Adjust if we're near the end
+            if (endPage - startPage < maxPagesToShow - 1) {
+                startPage = Math.max(1, endPage - maxPagesToShow + 1);
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                pages.push(i);
+            }
+        }
+        
+        this.paginationPages = pages;
+    }
+    
+    goToPage(page: number) {
+        if (page >= 1 && page <= this.totalPages && page !== this.pageNo) {
+            this.pageNo = page;
+            this.contentdata = []; // Clear current data for clean page load
+            this.sortlist();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    }
+    
+    goToFirstPage() {
+        this.goToPage(1);
+    }
+    
+    goToLastPage() {
+        this.goToPage(this.totalPages);
+    }
+    
+    switchTab(tab: 'library' | 'folder') {
+        if (this.activeTab !== tab) {
+            console.log('📑 Switching to tab:', tab);
+            
+            if (tab === 'folder') {
+                // Navigate to Content Folder view (classroom/folder organization)
+                this.router.navigate(['/classroom/list-classroom']);
+            } else {
+                // Content Library - stay on current page and reload if needed
+                this.activeTab = tab;
+                if (this.contentdata.length === 0) {
+                    this.contentdata = [];
+                    this.pageNo = 1;
+                    this.sortlist();
+                }
+            }
+        }
+    }
+
+    toggleDropdown(index: number) {
+        // Close all other dropdowns
+        this.contentdata.forEach((item, i) => {
+            if (i !== index) {
+                item.showDropdown = false;
+            }
+        });
+        
+        // Toggle the clicked dropdown
+        this.contentdata[index].showDropdown = !this.contentdata[index].showDropdown;
+        
+        // Prevent document click handler from immediately closing the dropdown
+        this.suppressDocumentClick = true;
+        setTimeout(() => {
+            this.suppressDocumentClick = false;
+        }, 100);
+        
+        this.cdr.detectChanges();
+    }
+
+    closeDropdown(index: number) {
+        if (this.contentdata && this.contentdata[index]) {
+            this.contentdata[index].showDropdown = false;
+            this.cdr.detectChanges();
+        }
+    }
+    
+    @HostListener('document:click', ['$event'])
+    onDocumentClick(event: MouseEvent) {
+        if (this.suppressDocumentClick) {
+            return;
+        }
+        const target = event.target as HTMLElement;
+        // Don't close dropdown if clicking on the dropdown button or dropdown menu
+        if (!target.closest('.content-card__dropdown-toggle') && 
+            !target.closest('.dropdown-content') && 
+            !target.closest('.dropdown')) {
+            let shouldDetect = false;
+            this.contentdata.forEach(item => {
+                if (item.showDropdown) {
+                    item.showDropdown = false;
+                    shouldDetect = true;
+                }
+            });
+            if (shouldDetect) {
+                this.cdr.detectChanges();
+            }
+        }
     }
     
     listDetails(event, type) {
@@ -1440,54 +1740,71 @@ export class ContentHomeComponent implements OnInit, OnDestroy {
     detailsSuccess(successData, event, type) {
         if (successData.IsSuccess) {
             this.detailData = successData.ResponseObject;
+            console.log('detailsSuccess - event:', event, 'type:', type, 'previewType:', this.previewType);
+            console.log('detailsSuccess - content_type:', event.content_type, 'content_format:', event.content_format);
+            console.log('detailsSuccess - API response content_type:', this.detailData.content_type);
+            
+            // Use content_type from API response if not available in event
+            const contentType = event.content_type || this.detailData.content_type;
+            
             if (this.previewType == 'edit') {
                 // this.auth.setSessionData('save-Question', JSON.stringify(this.detailData));
-                if (event.content_type == '1') {
+                if (contentType == '1') {
                     if (type == 'addPdf') {
+                        console.log('Navigating to repository/add-resources/edit');
                         this.router.navigate(['repository/add-resources/edit']);
                     } else if (type == 'addText') {
+                        console.log('Navigating to content-text-resource/text-resource/edit');
                         this.router.navigate(['content-text-resource/text-resource/edit']);
                     }
-                } else if (event.content_type == '2') {
+                } else if (contentType == '2') {
                     this.auth.setSessionData('upload-type', 'assignment');
                     if (type == 'addPdf') {
+                        console.log('Navigating to repository/create-assessment/edit');
                         this.router.navigate(['repository/create-assessment/edit']);
                     } else if (type == 'addText') {
                         this.auth.setSessionData('textType', 'assignment');
+                        console.log('Navigating to content-text-resource/text-assignment/edit');
                         this.router.navigate(['content-text-resource/text-assignment/edit']);
                     }
-                } else if (event.content_type == '3') {
+                } else if (contentType == '3') {
                     this.auth.setSessionData('upload-type', 'assessment');
                     if (type == 'addPdf') {
+                        console.log('Navigating to repository/create-assessment/edit');
                         this.router.navigate(['repository/create-assessment/edit']);
                     } else if (type == 'addText') {
                         this.auth.setSessionData('textType', 'assessment');
+                        console.log('Navigating to content-text-resource/text-assignment/edit');
                         this.router.navigate(['content-text-resource/text-assignment/edit']);
                     }
                 }
             } else if (this.previewType == 'pdf') {
                 this.auth.setSessionData('preview', 'repository');
-                if (type == '1') {
+                // Use content_type from API response if type is undefined
+                const previewType = type || contentType;
+                if (previewType == '1') {
                     this.auth.setSessionData('preview_page', 'create_resources');
-                    this.router.navigate(['repository/preview']);
-                } else if (type == '2') {
+                    this.router.navigate(['/repository/preview']);
+                } else if (previewType == '2') {
                     this.auth.setSessionData('preview_page', 'create_assignments');
-                    this.router.navigate(['repository/preview']);
-                } else if (type == '3') {
+                    this.router.navigate(['/repository/preview']);
+                } else if (previewType == '3') {
                     this.auth.setSessionData('preview_page', 'create_assessments');
-                    this.router.navigate(['repository/preview']);
+                    this.router.navigate(['/repository/preview']);
                 }
             } else if (this.previewType == 'text') {
                 this.auth.setSessionData('preview', 'repository');
-                if (type == '1') {
+                // Use content_type from API response if type is undefined
+                const previewType = type || contentType;
+                if (previewType == '1') {
                     this.auth.setSessionData('preview_page', 'text_resources');
-                    this.router.navigate(['repository/preview']);
-                } else if (type == '2') {
+                    this.router.navigate(['/repository/preview']);
+                } else if (previewType == '2') {
                     this.auth.setSessionData('preview_page', 'text_assignments');
-                    this.router.navigate(['repository/preview']);
-                } else if (type == '3') {
+                    this.router.navigate(['/repository/preview']);
+                } else if (previewType == '3') {
                     this.auth.setSessionData('preview_page', 'text_assessments');
-                    this.router.navigate(['repository/preview']);
+                    this.router.navigate(['/repository/preview']);
                 }
             }
         }
@@ -1796,7 +2113,7 @@ export class ContentHomeComponent implements OnInit, OnDestroy {
     }
 
     editAction(event, type, modelOpen) {
-        console.log(event, 'eventEdit');
+        console.log('editAction called with:', event, 'type:', type, 'modelOpen:', modelOpen);
         this.clearSession = false;
         if (modelOpen == '1') {
             this.modalRef.close('detailsTemplate');
@@ -1811,6 +2128,7 @@ export class ContentHomeComponent implements OnInit, OnDestroy {
     }
 
     PreviewPage(event, type) {
+        console.log('PreviewPage called with:', event, 'type:', type);
         this.clearSession = false;
         this.previewType = 'pdf';
         this.auth.setSessionData('editresources', JSON.stringify(event));
@@ -1818,10 +2136,41 @@ export class ContentHomeComponent implements OnInit, OnDestroy {
     }
 
     PreviewText(event, type) {
+        console.log('PreviewText called with:', event, 'type:', type);
         this.clearSession = false;
         this.previewType = 'text';
         this.auth.setSessionData('editresources', JSON.stringify(event));
         this.listDetails(event, type);
+    }
+
+    getContentThumbnail(content: any): SafeUrl | string {
+        return this.buildThumbnail(content?.profile_url, content?.content_type);
+    }
+
+    getDetailThumbnail(): SafeUrl | string {
+        return this.buildThumbnail(this.profileurl, this.contentType);
+    }
+
+    private buildThumbnail(path: string | null | undefined, type: any): SafeUrl | string {
+        const fallbackKey = type !== undefined && type !== null ? type.toString() : 'default';
+        const fallback = this.thumbnailFallbacks[fallbackKey] || this.thumbnailFallbacks.default;
+
+        if (!path) {
+            return fallback;
+        }
+
+        const absoluteUrl = this.normalizeAssetPath(path);
+        return this.sanitizer.bypassSecurityTrustUrl(absoluteUrl);
+    }
+
+    private normalizeAssetPath(path: string): string {
+        if (/^https?:\/\//i.test(path)) {
+            return encodeURI(path);
+        }
+
+        const base = (this.webhost || '').replace(/\/+$/, '');
+        const sanitizedPath = path.replace(/^\/+/, '');
+        return encodeURI(`${base}/${sanitizedPath}`);
     }
 
     encodePdfFileAsURL(event: any, type) {
@@ -1899,15 +2248,23 @@ export class ContentHomeComponent implements OnInit, OnDestroy {
         }
     }
 
-    checkValue(eve) {
-        if (eve.target.checked == true) {
+    checkValue(event: Event) {
+        const target = event?.target as HTMLInputElement | null;
+        if (target?.checked) {
+            this.linkform.controls.radio.patchValue('0', {emitEvent: false});
             this.listStudent = true;
+            if (!Array.isArray(this.linkform.controls.specificstudent.value)) {
+                this.linkform.controls.specificstudent.patchValue([]);
+            }
         }
     }
 
-    checkValue1(eve) {
-        if (eve.target.checked == true) {
+    checkValue1(event: Event) {
+        const target = event?.target as HTMLInputElement | null;
+        if (target?.checked) {
+            this.linkform.controls.radio.patchValue('1', {emitEvent: false});
             this.listStudent = false;
+            this.linkform.controls.specificstudent.patchValue([]);
         }
     }
 

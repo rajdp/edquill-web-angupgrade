@@ -63,6 +63,8 @@ export class ListAdminComponent implements OnInit, OnChanges {
     public passwordValid: boolean;
     public message: any;
     public schoolStatus: any;
+    public currentAdminListPage = 1; // Track current pagination page
+    public savedAdminFilters: any = {}; // Track saved filters
 
     @ViewChild('bulkmodal') bulkContent: TemplateRef<any>;
     @ViewChild('emailmodal') emailContent: TemplateRef<any>;
@@ -129,6 +131,20 @@ export class ListAdminComponent implements OnInit, OnChanges {
     };
 
     ngOnInit() {
+        // Restore saved pagination page if available
+        const savedPage = this.auth.getSessionData('admin-list-current-page');
+        if (savedPage) {
+            this.currentAdminListPage = parseInt(savedPage, 10);
+        }
+        // Restore saved filters if available
+        const savedFilters = this.auth.getSessionData('admin-list-filters');
+        if (savedFilters) {
+            try {
+                this.savedAdminFilters = JSON.parse(savedFilters);
+            } catch (e) {
+                this.savedAdminFilters = {};
+            }
+        }
     }
 
     ngOnChanges() {
@@ -156,9 +172,28 @@ export class ListAdminComponent implements OnInit, OnChanges {
         } else if (event.emitType == 'edit') {
             this.editAction(event.emitData);
         } else if (event.emitType == 'name') {
+            // Save current page and filters before navigating
+            this.saveStateBeforeNavigation();
             this.viewdetail = event.emitData;
             this.modalRef = this.modalService.open(this.viewDetailsContent);
         }
+    }
+
+    onPageChange(page: number) {
+        // Update current page when user changes pages
+        this.currentAdminListPage = page;
+    }
+
+    onFilterChange(filters: any) {
+        // Update saved filters whenever filter changes in table
+        this.savedAdminFilters = filters;
+    }
+
+    saveStateBeforeNavigation() {
+        // Save current page
+        this.auth.setSessionData('admin-list-current-page', this.currentAdminListPage.toString());
+        // Save current filters
+        this.auth.setSessionData('admin-list-filters', JSON.stringify(this.savedAdminFilters));
     }
 
     listAdmin(type) {
@@ -233,7 +268,9 @@ export class ListAdminComponent implements OnInit, OnChanges {
     }
 
     editAction(rows) {
-        this.auth.setSessionData('editAdmin', JSON.stringify(rows.data));
+        // Save current page and filters before navigating to edit
+        this.saveStateBeforeNavigation();
+        this.auth.setSessionData('editAdmin', JSON.stringify(rows.data || rows));
         this.route.navigate(['/admin/create-admin/edit']);
         this.close();
     }

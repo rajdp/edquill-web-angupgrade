@@ -262,7 +262,7 @@ export class NavService {
                                     {
                                         title: 'Class Report',
                                         icon: 'file-text',
-                                        imgePath: 'assets/images/mob-side-icon/class-report.png',
+                                        imgePath: 'assets/images/mob-side-icon/report_card.png',
                                         path: '/report/assessment-summary',
                                         type: 'link',
                                         active: false
@@ -270,7 +270,7 @@ export class NavService {
                                     {
                                         title: 'Grade Report',
                                         icon: 'file-text-o',
-                                        imgePath: 'assets/images/mob-side-icon/student-report.png',
+                                        imgePath: 'assets/images/mob-side-icon/report_card.png',
                                         path: '/report/grade-report',
                                         type: 'link',
                                         active: false
@@ -282,6 +282,14 @@ export class NavService {
                                     // 	title: 'Student Report', icon: 'clipboard', imgePath: 'assets/images/mob-side-icon/studentReport.png', path: '/report/student-grade-summary', type: 'link', active: false
                                     // }
                                 ],
+                            },
+                            {
+                                path: '/Teacher/availability',
+                                title: 'Teacher Availability',
+                                icon: 'clock',
+                                imgePath: 'assets/images/mob-side-icon/holiday.png',
+                                type: 'link',
+                                active: false
                             },
 
 
@@ -298,7 +306,7 @@ export class NavService {
                                 ]
                             },
 
-                            {title: 'Orders', icon: 'list', type: 'link', active: false, path: '/orders/list'},
+                            {title: 'Self Enrollments', icon: 'list', type: 'link', active: false, path: '/orders/list'},
 
                             // {
                             // 	title: 'Users', icon: 'users', type: 'sub', active: false, children: [
@@ -381,6 +389,7 @@ export class NavService {
                                 if (index !== -1) this.MENUITEMS.splice(index, 1);
                             });
                         }
+                        this.MENUITEMS = this.withCrmMenu(this.MENUITEMS);
                         this.items = new BehaviorSubject<Menu[]>(this.MENUITEMS);
                     });
 
@@ -485,7 +494,7 @@ export class NavService {
                         // 	{
                         // 		title: 'Reports', icon: 'pie-chart', type: 'sub', active: false, children: [
                         // 			{
-                        // 				title: 'Class Report', icon: 'clipboard', imgePath: 'assets/images/mob-side-icon/class-report.png', path: '/report/assessment-summary', type: 'link', active: false
+                        // 				title: 'Class Report', icon: 'clipboard', imgePath: 'assets/images/mob-side-icon/report_card.png', path: '/report/assessment-summary', type: 'link', active: false
                         // 			},
                         // 			// {
                         // 			// 	title: 'Missed Work Report', icon: 'clipboard', imgePath: 'assets/images/mob-side-icon/classReport.png', path: '/report/missed-work-report', type: 'link', active: false
@@ -515,6 +524,14 @@ export class NavService {
                             // 		badgeType: 'primary',
                             // 		active: false
                             // },
+                            {
+                                path: '/Teacher/availability',
+                                title: 'Availability',
+                                icon: 'clock',
+                                imgePath: 'assets/images/mob-side-icon/holiday.png',
+                                type: 'link',
+                                active: false
+                            },
                             {
                                 path: '/class/list-class',
                                 title: 'Class',
@@ -586,7 +603,7 @@ export class NavService {
                                     {
                                         title: 'Class Report',
                                         icon: 'file-text',
-                                        imgePath: 'assets/images/mob-side-icon/class-report.png',
+                                        imgePath: 'assets/images/mob-side-icon/report_card.png',
                                         path: '/report/assessment-summary',
                                         type: 'link',
                                         active: false
@@ -728,9 +745,11 @@ export class NavService {
                         // }
                     }
                     this.onResize();
-                    if (this.screenWidth < 991) {
-                        this.collapseSidebar = true;
-                    }
+                    this.MENUITEMS = this.withCrmMenu(this.MENUITEMS);
+                    this.MENUITEMS = this.withCrmMenu(this.MENUITEMS);
+                    this.MENUITEMS = this.withCrmMenu(this.MENUITEMS);
+                    this.MENUITEMS = this.withCrmMenu(this.MENUITEMS);
+                    this.MENUITEMS = this.withCrmMenu(this.MENUITEMS);
                     this.items = new BehaviorSubject<Menu[]>(this.MENUITEMS);
                 });
             } else if (this.roleId == 3 || this.roleId == '3') {
@@ -831,7 +850,7 @@ export class NavService {
                             active: false
                         },
                         // {
-                        // 	path: '/studentlogin/enrollclass', title: 'Enroll Class', icon: 'clipboard', imgePath: 'assets/images/mob-side-icon/student-report.png', type: 'link', active: false
+                        // 	path: '/studentlogin/enrollclass', title: 'Enroll Class', icon: 'clipboard', imgePath: 'assets/images/mob-side-icon/report_card.png', type: 'link', active: false
                         // }
                     ];
                     this.items = new BehaviorSubject<Menu[]>(this.MENUITEMS);
@@ -1033,6 +1052,7 @@ export class NavService {
                         },
                     ];
                 }
+                this.MENUITEMS = this.withCrmMenu(this.MENUITEMS);
                 this.items = new BehaviorSubject<Menu[]>(this.MENUITEMS);
             } else if (this.roleId == '7' || this.roleId == 7) {
                 this.roleId = '7';
@@ -1049,6 +1069,7 @@ export class NavService {
                         },
                     ];
                 }
+                this.MENUITEMS = this.withCrmMenu(this.MENUITEMS);
                 this.items = new BehaviorSubject<Menu[]>(this.MENUITEMS);
             }
         });
@@ -1074,5 +1095,24 @@ export class NavService {
         this.screenWidth = window.innerWidth;
     }
 
+    private withCrmMenu(items: Menu[]): Menu[] {
+        if (!items || items.some(menu => menu.path === '/crm/guardians' || menu.title === 'CRM')) {
+            return items;
+        }
 
+        const crmMenu: Menu = {
+            title: 'CRM',
+            icon: 'users',
+            type: 'sub',
+            active: false,
+            children: [
+                { path: '/crm/guardians', title: 'Guardians', icon: 'user-plus', type: 'link', active: false },
+                { path: '/crm/fees', title: 'Fees', icon: 'dollar-sign', type: 'link', active: false },
+                { path: '/crm/notifications', title: 'Notifications', icon: 'bell', type: 'link', active: false },
+                { path: '/crm/reports', title: 'Report Cards', icon: 'file-text', type: 'link', active: false }
+            ]
+        };
+
+        return [...items, crmMenu];
+    }
 }

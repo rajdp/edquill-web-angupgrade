@@ -1,0 +1,39 @@
+.compact-breadcrumb {
+  .page-header {
+    padding: 0.5rem 0;
+    margin-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  }
+
+  h5 {
+    font-size: 1.125rem;
+    color: #333;
+  }
+
+  .breadcrumb {
+    padding: 0;
+    font-size: 0.875rem;
+    
+    .breadcrumb-item {
+      padding: 0;
+      
+      a {
+        color: #7F3486;
+        transition: color 0.2s ease;
+        
+        &:hover {
+          color: darken(#7F3486, 10%);
+        }
+        
+        i {
+          font-size: 1rem;
+        }
+      }
+      
+      &.small {
+        font-size: 0.813rem;
+      }
+    }
+  }
+}
+

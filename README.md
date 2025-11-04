@@ -12,3 +12,6 @@ phase2testbuild => this branch going to production build ..need to pull code fro
 
 phase2buildnew => => development team can work for phase2 realted bugs and small issue in this branch ..
 
+
+#product requirements
+- Teacher Availability Scheduling PRD (`teacheravailability.md`)

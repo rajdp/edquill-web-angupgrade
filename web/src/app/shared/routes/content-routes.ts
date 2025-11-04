@@ -143,6 +143,13 @@ export const content: Routes = [
         }
     },
     {
+        path: 'crm',
+        loadChildren: () => import('../../components/crm/crm.module').then(m => m.CrmModule),
+        data: {
+            breadcrumb: 'CRM'
+        }
+    },
+    {
         path: 'handwriting',
         loadChildren: () => import('../../components/handwriting/handwriting.module').then(m => m.HandwritingModule),
         data: {

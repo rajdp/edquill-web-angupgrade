@@ -5,8 +5,8 @@ export const environment = {
   // CI4 Backend - Testing
   apiHost: 'http://localhost:8888/rista_ci4/public/',
   webHost: 'http://localhost:8211',
-  imgUrl: 'http://localhost:8888/rista',
-  version: '5.9.11',
+  imgUrl: 'http://localhost:8888/rista_ci4/public',
+  version: '6.0.0',
   showStudent: true,
   sessionPrefix: 'rista_',
   envName: 'LOCAL - CI4'  // Added CI4 marker to verify which config is loaded

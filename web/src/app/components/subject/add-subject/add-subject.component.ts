@@ -50,6 +50,8 @@ export class AddSubjectComponent implements OnInit {
         this.subjectform = this.formBuilder.group({
             name: ['', Validators.required],
             description: '',
+            fee_amount: ['', Validators.pattern(/^\d+(\.\d{1,2})?$/)],
+            deposit_amount: ['', Validators.pattern(/^\d+(\.\d{1,2})?$/)],
             status: ['', Validators.required],
             schoolId: '',
         });
@@ -62,6 +64,8 @@ export class AddSubjectComponent implements OnInit {
             this.subject_id = this.editData.subject_id;
             this.subjectform.controls.name.patchValue(this.editData.subject_name);
             this.subjectform.controls.description.patchValue(this.editData.description);
+            this.subjectform.controls.fee_amount.patchValue(this.formatAmountForForm(this.editData.fee_amount));
+            this.subjectform.controls.deposit_amount.patchValue(this.formatAmountForForm(this.editData.deposit_amount));
             const status = this.editData.status;
             this.subjectform.controls.status.patchValue(status == 'Active' ? 1 : status == 'Suspended' ? 2 : status == 'Disengaged' ? 3 : 4);
             this.subjectform.controls.schoolId.patchValue(this.editData.school_name);
@@ -71,6 +75,8 @@ export class AddSubjectComponent implements OnInit {
             this.newSubject.allowSchoolChange(this.allowSelect);
             this.subjectform.controls.name.patchValue('');
             this.subjectform.controls.description.patchValue('');
+            this.subjectform.controls.fee_amount.patchValue('');
+            this.subjectform.controls.deposit_amount.patchValue('');
             this.subjectform.controls.status.patchValue('1');
             if (this.roleid == '2') {
                 this.subjectform.controls.schoolId.patchValue(this.auth.getSessionData('school_name'));
@@ -102,6 +108,8 @@ export class AddSubjectComponent implements OnInit {
                 user_id: this.auth.getUserId(),
                 subject_name: this.subjectform.controls.name.value,
                 description: this.subjectform.controls.description.value,
+                fee_amount: this.sanitizeAmountInput(this.subjectform.controls.fee_amount.value),
+                deposit_amount: this.sanitizeAmountInput(this.subjectform.controls.deposit_amount.value),
                 status: this.subjectform.controls.status.value,
                 school_id: this.auth.getSessionData('school_id'),
                 subject_id: this.subject_id ? this.subject_id : '',
@@ -140,6 +148,28 @@ export class AddSubjectComponent implements OnInit {
 
     public numberPattern(event: any) {
         this.validationService.numberValidate1(event);
+    }
+
+    private sanitizeAmountInput(rawValue: any): string | null {
+        if (rawValue === null || rawValue === undefined || rawValue === '') {
+            return null;
+        }
+        const numericValue = Number(rawValue);
+        if (isNaN(numericValue)) {
+            return null;
+        }
+        return numericValue.toFixed(2);
+    }
+
+    private formatAmountForForm(amount: any): string {
+        if (amount === null || amount === undefined || amount === '') {
+            return '';
+        }
+        const numericValue = Number(amount);
+        if (isNaN(numericValue)) {
+            return '';
+        }
+        return numericValue.toFixed(2);
     }
 
     schoolList() {

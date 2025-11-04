@@ -4,7 +4,7 @@ export const environment = {
   apiHost: 'https://dev.edquill.com/rista/api/index.php/v1/',
   webHost: 'https://dev.edquill.com/web',
   imgUrl: 'https://dev.edquill.com/rista',
-  version: '5.9.11',
+  version: '6.0.0',
   showStudent: true,
   sessionPrefix: 'rista_',
   envName: 'DEV'

@@ -1,727 +1,368 @@
-<!-- Container-fluid starts-->
-<!--<ng-template #content let-c="close" let-d="dismiss">-->
-<!--    <div class="modal-header">-->
-<!--        <h4 class="modal-title" id="modal-basic-title">Change Password</h4>-->
-<!--        &lt;!&ndash;<button type="button" class="close" aria-label="Close" (click)="d('Cross click')">&ndash;&gt;-->
-<!--        &lt;!&ndash;<span aria-hidden="true">&times;</span>&ndash;&gt;-->
-<!--        &lt;!&ndash;</button>&ndash;&gt;-->
-<!--    </div>-->
-<!--    <div class="modal-body">-->
-<!--        &lt;!&ndash; Container-fluid starts&ndash;&gt;-->
-<!--        <div class="container-fluid">-->
-<!--            <div class="row">-->
-<!--                <div class="col-sm-12">-->
-
-<!--                    <form [formGroup]="accountForm" class="needs-validation user-add" novalida>-->
-
-<!--                        <div class="form-group row">-->
-<!--                            <label for="validationCustom0" class="col-md-12 mb-2"><span>*</span>-->
-<!--                                Password</label>-->
-<!--                            <div class="col-md-12">-->
-<!--                                <input class="form-control " formControlName="password" id="validationCustom0"-->
-<!--                                       type="password" required="">-->
-<!--                                <em class="error" *ngIf="!accountForm.get('password').valid && (accountForm.get('password').dirty || accountForm.get('password').touched)">Password is required</em>-->
-<!--                            </div>-->
-<!--                        </div>-->
-<!--                        <div class="form-group row">-->
-<!--                            <label for="validationCustom1" class="col-md-12 mb-2"><span>*</span>-->
-<!--                                Confirm Password</label>-->
-<!--                            <div class="col-md-12">-->
-<!--                                <input class="form-control" formControlName="confirmPassword" id="validationCustom1"-->
-<!--                                       type="password" required="">-->
-<!--                                <em class="error" *ngIf="!accountForm.get('confirmPassword').valid && (accountForm.get('confirmPassword').dirty || accountForm.get('confirmPassword').touched)">Confirm Password is required</em>-->
-<!--                            </div>-->
-<!--                        </div>-->
-<!--                    </form>-->
-
-<!--                </div>-->
-<!--            </div>-->
-<!--        </div>-->
-
-<!--        &lt;!&ndash; Container-fluid Ends&ndash;&gt;-->
-
-<!--    </div>-->
-<!--    <div class="modal-footer">-->
-<!--        <button type="button" class="btn btn-outline-dark" (click)="changePassword()">Submit</button>-->
-<!--    </div>-->
-<!--</ng-template>-->
-
-
-<div class="container-fluid">
-    <div class="row" *ngIf="functionCalled">
-<!--        <div class="col-xl-3 col-md-6 xl-50">-->
-<!--            <div class="card o-hidden widget-cards">-->
-<!--                <div class="bg-warning card-body">-->
-<!--                    <div class="media static-top-widget row">-->
-<!--                        <div class="icons-widgets col-4">-->
-<!--                            <div class="align-self-center text-center">-->
-<!--                                &lt;!&ndash;                                <app-feather-icons [icon]="'navigation'" class="font-warning"></app-feather-icons>&ndash;&gt;-->
-<!--                                &lt;!&ndash;                                <img src="">&ndash;&gt;-->
-<!--                                <img src="assets/images/school1.png" alt=""  style="width: 100%"  title="">-->
-<!--                            </div>-->
-<!--                        </div>-->
-<!--                        <div class="media-body col-8"><span class="m-0">School</span>-->
-<!--                            <h3 class="mb-0"><span class="counter">{{overallList.schools}}</span><small> This Month</small></h3>-->
-<!--                        </div>-->
-<!--                    </div>-->
-<!--                </div>-->
-<!--            </div>-->
-<!--        </div>-->
-        <div class="col-12 col-xl-4 col-md-4">
-            <div class="card o-hidden  widget-cards">
-                <div class="bg-secondary card-body">
-                    <div class="media static-top-widget row">
-                        <div class="icons-widgets col-4">
-                            <div class="align-self-center text-center">
-                                <!--                                <app-feather-icons [icon]="'box'" class="font-secondary"></app-feather-icons>-->
-                                <img src="assets/images/teacher1.png" alt=""  style="width: 100%"  title="">
-
-                            </div>
-                        </div>
-                        <div class="media-body col-8"><span class="m-0">Teachers</span>
-                            <h3 class="mb-0 pl-4"><span class="counter">{{overallList?.teachers}}</span></h3>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-12 col-xl-4 col-md-4">
-            <div class="card o-hidden widget-cards">
-                <div class="bg-primary card-body">
-                    <div class="media static-top-widget row">
-                        <div class="icons-widgets col-4">
-                            <div class="align-self-center text-center">
-                                <!--                                <app-feather-icons [icon]="'message-square'" class="font-primary"></app-feather-icons>-->
-                                <img src="assets/images/student1.png" alt=""  style="width: 100%"  title="">
-
-                            </div>
-                        </div>
-                        <div class="media-body col-8"><span class="m-0">Students</span>
-                            <h3 class="mb-0 pl-4"><span class="counter">{{overallList?.students}}</span></h3>
-
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-12 col-xl-4 col-md-4">
-            <div class="card o-hidden widget-cards">
-                <div class="bg-danger card-body">
-                    <div class="media static-top-widget row">
-                        <div class="icons-widgets col-4">
-                            <div class="align-self-center text-center">
-                                <img src="assets/images/content1.png" alt=""  style="width: 100%"  title="">
-
-                            </div>
-                        </div>
-                        <div class="media-body col-8"><span class="m-0">Content Creator</span>
-                            <h3 class="mb-0 pl-5"><span class="counter">{{overallList?.contentcreator}}</span></h3>
-
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-12 xl-100 mt-3">
-            <div class="card">
-                <div class="card-header">
-                    <h5>Growth Chart</h5>
-                </div>
-                <div class="card-body">
-                    <!--                    <div class="market-chart">-->
-                    <div id="chart" *ngIf="chartOptions?.series?.length > 0; else noChartData">
-                        <apx-chart
-                                [series]="chartOptions.series"
-                                [chart]="chartOptions.chart"
-                                [dataLabels]="chartOptions.dataLabels"
-                                [plotOptions]="chartOptions.plotOptions"
-                                [yaxis]="chartOptions.yaxis"
-                                [legend]="chartOptions.legend"
-                                [fill]="chartOptions.fill"
-                                [stroke]="chartOptions.stroke"
-                                [tooltip]="chartOptions.tooltip"
-                                [xaxis]="chartOptions.xaxis"
-                        ></apx-chart>
-                    </div>
-                    <ng-template #noChartData>
-                        <div class="text-center py-5">
-                            <i class="fa fa-chart-bar fa-3x text-muted mb-3"></i>
-                            <p class="text-muted">Loading chart data...</p>
-                        </div>
-                    </ng-template>
-                    <!--                    </div>-->
-
-                </div>
-            </div>
-        </div>
-        <!-- Institution Data section hidden - redundant with top counts -->
-        <div class="col-xl-12 xl-100 mt-3" *ngIf="false">
-            <div class="card">
-                <div class="card-header">
-                    <h5>Institution Data</h5>
-                </div>
-                <div class="card-body">
-                    <div class="user-status table-responsive latest-order-table">
-                        <table class="table table-bordernone">
-                            <thead>
-                            <tr>
-                                <th class="text-center" scope="col">Institution Name</th>
-                                <th class="text-center px-5" scope="col">Teachers</th>
-                                <th class="text-center px-5" scope="col">Students</th>
-                                <th class="text-center px-5" scope="col">Content creator</th>
-                                <th class="text-center px-5" scope="col">Created Date</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            <tr *ngFor="let list of orderList; "  >
-                                <td class="text-center">{{list.name | titlecase}}</td>
-                                <td class="text-center">{{list.teachers}}</td>
-                                <td class="text-center">{{list.students}}</td>
-                                <td class="text-center">{{list.content_creator}}</td>
-                                <td class="text-center">{{list.created_date | customDateFormat}}</td>
-
-                            </tr>
-                            </tbody>
-                        </table>
-<!--                        <a href="javascript:void(0)" class="btn btn-primary" (click)="navigateinsitute()">View all Institutions</a>-->
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-12 xl-100 mt-3">
-            <div class="card">
-                <div class="card-header">
-                    <h5>Institution Status</h5>
-                </div>
-                <div class="card-body">
-                    <div class="user-status table-responsive latest-order-table">
-                        <table class="table table-bordernone">
-                            <thead>
-                            <tr>
-                                <th class="text-center" scope="col">Institution Name</th>
-                                <th class="text-center" scope="col">Total Classes</th>
-                                <th class="text-center" scope="col">Current Month Classes</th>
-                                <th class="text-center" scope="col">Total Edit Classes</th>
-                                <th class="text-center" scope="col">Current Month Edit Classes</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            <tr *ngFor="let list of institutionClassess;"  >
-                                <td class="text-center">{{institutionName | titlecase}}</td>
-                                <td class="text-center">{{list.totalclass_count || 0}}</td>
-                                <td class="text-center">{{list.monthclass_count || 0}}</td>
-                                <td class="text-center">{{list.totaledited_class || 0}}</td>
-                                <td class="text-center">{{list.monthedit_class || 0}}</td>
-                            </tr>
-                            <tr *ngIf="!institutionClassess || institutionClassess.length === 0">
-                                <td colspan="5" class="text-center text-muted py-4">
-                                    No institution class data available
-                                </td>
-                            </tr>
-                            </tbody>
-                        </table>
-                        <!--                        <a href="javascript:void(0)" class="btn btn-primary" (click)="navigateinsitute()">View all Institutions</a>-->
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!--        <div class="col-xl-3 col-md-6 xl-50">-->
-        <!--            <div class="card order-graph sales-carousel">-->
-        <!--                <div class="card-header">-->
-        <!--                    <h6>Total Sales</h6>-->
-        <!--                    <div class="row">-->
-        <!--                        <div class="col-6">-->
-        <!--                            <div class="small-chartjs">-->
-        <!--                                <canvas baseChart id="small-graph-1" height="60vw" width="140vw"-->
-        <!--                                    [datasets]="smallLineChartData" [labels]="smallLineChartLabels"-->
-        <!--                                    [options]="smallLineChartOptions" [colors]="smallLineChartColors"-->
-        <!--                                    [legend]="smallLineChartLegend" [chartType]="smallLineChartType"-->
-        <!--                                    (chartHover)="chartHovered($event)" (chartClick)="chartClicked($event)"></canvas>-->
-        <!--                            </div>-->
-        <!--                        </div>-->
-        <!--                        <div class="col-6">-->
-        <!--                            <div class="value-graph">-->
-        <!--                                <h3>42% <span><i class="fa fa-angle-up font-primary"></i></span></h3>-->
-        <!--                            </div>-->
-        <!--                        </div>-->
-        <!--                    </div>-->
-        <!--                </div>-->
-        <!--                <div class="card-body">-->
-        <!--                    <div class="media">-->
-        <!--                        <div class="media-body">-->
-        <!--                            <span>Sales Last Month</span>-->
-        <!--                            <h2 class="mb-0">9054</h2>-->
-        <!--                            <p>0.25% <span><i class="fa fa-angle-up"></i></span></p>-->
-        <!--                            <h5 class="f-w-600">Gross sales of August</h5>-->
-        <!--                            <p>Lorem Ipsum is simply dummy text of the printing and typesetting</p>-->
-        <!--                        </div>-->
-        <!--                        <div class="bg-primary b-r-8">-->
-        <!--                            <div class="small-box">-->
-
-        <!--                                <i data-feather="briefcase"></i>-->
-        <!--                            </div>-->
-        <!--                        </div>-->
-        <!--                    </div>-->
-        <!--                </div>-->
-        <!--            </div>-->
-        <!--        </div>-->
-        <!--        <div class="col-xl-3 col-md-6 xl-50">-->
-        <!--            <div class="card order-graph sales-carousel">-->
-        <!--                <div class="card-header">-->
-        <!--                    <h6>Total purchase</h6>-->
-        <!--                    <div class="row">-->
-        <!--                        <div class="col-6">-->
-        <!--                            <div class="small-chartjs">-->
-        <!--                                <canvas baseChart id="small-graph-2" height="60vw" width="140vw"-->
-        <!--                                    [datasets]="smallLine2ChartData" [labels]="smallLine2ChartLabels"-->
-        <!--                                    [options]="smallLine2ChartOptions" [colors]="smallLine2ChartColors"-->
-        <!--                                    [legend]="smallLine2ChartLegend" [chartType]="smallLine2ChartType"-->
-        <!--                                    (chartHover)="chartHovered($event)" (chartClick)="chartClicked($event)"></canvas>-->
-        <!--                            </div>-->
-        <!--                        </div>-->
-        <!--                        <div class="col-6">-->
-        <!--                            <div class="value-graph">-->
-        <!--                                <h3>20% <span><i class="fa fa-angle-up font-secondary"></i></span></h3>-->
-        <!--                            </div>-->
-        <!--                        </div>-->
-        <!--                    </div>-->
-        <!--                </div>-->
-        <!--                <div class="card-body">-->
-        <!--                    <div class="media">-->
-        <!--                        <div class="media-body">-->
-        <!--                            <span>Monthly purchase</span>-->
-        <!--                            <h2 class="mb-0">2154</h2>-->
-        <!--                            <p>0.13% <span><i class="fa fa-angle-up"></i></span></p>-->
-        <!--                            <h5 class="f-w-600">Avg Gross purchase</h5>-->
-        <!--                            <p>Lorem Ipsum is simply dummy text of the printing and typesetting</p>-->
-        <!--                        </div>-->
-        <!--                        <div class="bg-secondary b-r-8">-->
-        <!--                            <div class="small-box">-->
-        <!--                                <i data-feather="credit-card"></i>-->
-        <!--                            </div>-->
-        <!--                        </div>-->
-        <!--                    </div>-->
-        <!--                </div>-->
-        <!--            </div>-->
-        <!--        </div>-->
-        <!--        <div class="col-xl-3 col-md-6 xl-50">-->
-        <!--            <div class="card order-graph sales-carousel">-->
-        <!--                <div class="card-header">-->
-        <!--                    <h6>Total cash transaction</h6>-->
-        <!--                    <div class="row">-->
-        <!--                        <div class="col-6">-->
-        <!--                            <div class="small-chartjs">-->
-        <!--                                <canvas baseChart id="small-graph-3" height="60vw" width="140vw"-->
-        <!--                                    [datasets]="smallLine3ChartData" [labels]="smallLine3ChartLabels"-->
-        <!--                                    [options]="smallLine3ChartOptions" [colors]="smallLine3ChartColors"-->
-        <!--                                    [legend]="smallLine3ChartLegend" [chartType]="smallLine3ChartType"-->
-        <!--                                    (chartHover)="chartHovered($event)" (chartClick)="chartClicked($event)"></canvas>-->
-        <!--                            </div>-->
-        <!--                        </div>-->
-        <!--                        <div class="col-6">-->
-        <!--                            <div class="value-graph">-->
-        <!--                                <h3>28% <span><i class="fa fa-angle-up font-warning"></i></span></h3>-->
-        <!--                            </div>-->
-        <!--                        </div>-->
-        <!--                    </div>-->
-        <!--                </div>-->
-        <!--                <div class="card-body">-->
-        <!--                    <div class="media">-->
-        <!--                        <div class="media-body">-->
-        <!--                            <span>Cash on hand</span>-->
-        <!--                            <h2 class="mb-0">4672</h2>-->
-        <!--                            <p>0.8% <span><i class="fa fa-angle-up"></i></span></p>-->
-        <!--                            <h5 class="f-w-600">Details about cash</h5>-->
-        <!--                            <p>Lorem Ipsum is simply dummy text of the printing and typesetting</p>-->
-        <!--                        </div>-->
-        <!--                        <div class="bg-warning b-r-8">-->
-        <!--                            <div class="small-box">-->
-        <!--                                <i data-feather="shopping-cart"></i>-->
-        <!--                            </div>-->
-        <!--                        </div>-->
-        <!--                    </div>-->
-        <!--                </div>-->
-        <!--            </div>-->
-        <!--        </div>-->
-        <!--        <div class="col-xl-3 col-md-6 xl-50">-->
-        <!--            <div class="card order-graph sales-carousel">-->
-        <!--                <div class="card-header">-->
-        <!--                    <h6>Daily Deposits</h6>-->
-        <!--                    <div class="row">-->
-        <!--                        <div class="col-6">-->
-        <!--                            <div class="small-chartjs">-->
-        <!--                                <canvas baseChart id="small-graph-4" height="60vw" width="140vw"-->
-        <!--                                    [datasets]="smallLine4ChartData" [labels]="smallLine4ChartLabels"-->
-        <!--                                    [options]="smallLine4ChartOptions" [colors]="smallLine4ChartColors"-->
-        <!--                                    [legend]="smallLine4ChartLegend" [chartType]="smallLine4ChartType"-->
-        <!--                                    (chartHover)="chartHovered($event)" (chartClick)="chartClicked($event)"></canvas>-->
-        <!--                            </div>-->
-        <!--                        </div>-->
-        <!--                        <div class="col-6">-->
-        <!--                            <div class="value-graph">-->
-        <!--                                <h3>75% <span><i class="fa fa-angle-up font-danger"></i></span></h3>-->
-        <!--                            </div>-->
-        <!--                        </div>-->
-        <!--                    </div>-->
-        <!--                </div>-->
-        <!--                <div class="card-body">-->
-        <!--                    <div class="media">-->
-        <!--                        <div class="media-body">-->
-        <!--                            <span>Security Deposits</span>-->
-        <!--                            <h2 class="mb-0">0782</h2>-->
-        <!--                            <p>0.25% <span><i class="fa fa-angle-up"></i></span></p>-->
-        <!--                            <h5 class="f-w-600">Gross sales of June</h5>-->
-        <!--                            <p>Lorem Ipsum is simply dummy text of the printing and typesetting</p>-->
-        <!--                        </div>-->
-        <!--                        <div class="bg-danger b-r-8">-->
-        <!--                            <div class="small-box">-->
-        <!--                                <i data-feather="calendar"></i>-->
-        <!--                            </div>-->
-        <!--                        </div>-->
-        <!--                    </div>-->
-        <!--                </div>-->
-        <!--            </div>-->
-        <!--        </div>-->
-        <div class="col-sm-12 mt-3">
-            <div class="card">
-                <div class="card-header">
-                    <h5>Content</h5>
-                </div>
-                <!--                <div class="card-body sell-graph">-->
-                <!--                    <canvas baseChart id="myGraph" [datasets]="lineChartData" [labels]="lineChartLabels"-->
-                <!--                        [options]="lineChartOptions" [colors]="lineChartColors" [legend]="lineChartLegend"-->
-                <!--                        [chartType]="lineChartType" (chartHover)="chartHovered($event)"-->
-                <!--                        (chartClick)="chartClicked($event)"></canvas>-->
-                <div class="card-body">
-                    <div id="chart1">
-                        <apx-chart
-                                [series]="chartOptions1?.series"
-                                [chart]="chartOptions1?.chart"
-                                [xaxis]="chartOptions1?.xaxis"
-                                [dataLabels]="chartOptions1?.dataLabels"
-                                [grid]="chartOptions1?.grid"
-                                [stroke]="chartOptions1?.stroke"
-                                [title]="chartOptions1?.title"
-                        ></apx-chart>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!--        <div class="col-xl-6 xl-100">-->
-        <!--            <div class="card height-equal">-->
-        <!--                <div class="card-header">-->
-        <!--                    <h5>Products Cart</h5>-->
-        <!--                </div>-->
-        <!--                <div class="card-body">-->
-        <!--                    <div class="user-status table-responsive products-table">-->
-        <!--                        <table class="table table-bordernone mb-0">-->
-        <!--                            <thead>-->
-        <!--                                <tr>-->
-        <!--                                    <th scope="col">Details</th>-->
-        <!--                                    <th scope="col">Quantity</th>-->
-        <!--                                    <th scope="col">Status</th>-->
-        <!--                                    <th scope="col">Price</th>-->
-        <!--                                </tr>-->
-        <!--                            </thead>-->
-        <!--                            <tbody>-->
-        <!--                                <tr>-->
-        <!--                                    <td>Simply dummy text of the printing</td>-->
-        <!--                                    <td class="digits">1</td>-->
-        <!--                                    <td class="font-primary">Pending</td>-->
-        <!--                                    <td class="digits">$6523</td>-->
-        <!--                                </tr>-->
-        <!--                                <tr>-->
-        <!--                                    <td>Long established</td>-->
-        <!--                                    <td class="digits">5</td>-->
-        <!--                                    <td class="font-secondary">Cancle</td>-->
-        <!--                                    <td class="digits">$6523</td>-->
-        <!--                                </tr>-->
-        <!--                                <tr>-->
-        <!--                                    <td>sometimes by accident</td>-->
-        <!--                                    <td class="digits">10</td>-->
-        <!--                                    <td class="font-secondary">Cancle</td>-->
-        <!--                                    <td class="digits">$6523</td>-->
-        <!--                                </tr>-->
-        <!--                                <tr>-->
-        <!--                                    <td>Classical Latin literature</td>-->
-        <!--                                    <td class="digits">9</td>-->
-        <!--                                    <td class="font-primary">Return</td>-->
-        <!--                                    <td class="digits">$6523</td>-->
-        <!--                                </tr>-->
-        <!--                                <tr>-->
-        <!--                                    <td>keep the site on the Internet</td>-->
-        <!--                                    <td class="digits">8</td>-->
-        <!--                                    <td class="font-primary">Pending</td>-->
-        <!--                                    <td class="digits">$6523</td>-->
-        <!--                                </tr>-->
-        <!--                                <tr>-->
-        <!--                                    <td>Molestiae consequatur</td>-->
-        <!--                                    <td class="digits">3</td>-->
-        <!--                                    <td class="font-secondary">Cancle</td>-->
-        <!--                                    <td class="digits">$6523</td>-->
-        <!--                                </tr>-->
-        <!--                                <tr>-->
-        <!--                                    <td>Pain can procure</td>-->
-        <!--                                    <td class="digits">8</td>-->
-        <!--                                    <td class="font-primary">Return</td>-->
-        <!--                                    <td class="digits">$6523</td>-->
-        <!--                                </tr>-->
-        <!--                            </tbody>-->
-        <!--                        </table>-->
-        <!--                    </div>-->
-        <!--                </div>-->
-        <!--            </div>-->
-        <!--        </div>-->
-        <!--        <div class="col-xl-6 xl-100">-->
-        <!--            <div class="card height-equal">-->
-        <!--                <div class="card-header">-->
-        <!--                    <h5>Empolyee Status</h5>-->
-        <!--                </div>-->
-        <!--                <div class="card-body">-->
-        <!--                    <div class="user-status table-responsive products-table">-->
-        <!--                        <table class="table table-bordernone mb-0">-->
-        <!--                            <thead>-->
-        <!--                                <tr>-->
-        <!--                                    <th scope="col">Name</th>-->
-        <!--                                    <th scope="col">Designation</th>-->
-        <!--                                    <th scope="col">Skill Level</th>-->
-        <!--                                    <th scope="col">Experience</th>-->
-        <!--                                </tr>-->
-        <!--                            </thead>-->
-        <!--                            <tbody>-->
-        <!--                                <tr>-->
-        <!--                                    <td class="bd-t-none u-s-tb">-->
-        <!--                                        <div class="align-middle image-sm-size"><img-->
-        <!--                                                class="img-radius align-top m-r-15 rounded-circle"-->
-        <!--                                                src="assets/images/dashboard/user2.jpg" alt="" data-original-title=""-->
-        <!--                                                title="">-->
-        <!--                                            <div class="d-inline-block">-->
-        <!--                                                <h6>John Deo <span class="text-muted digits">(14+ Online)</span></h6>-->
-        <!--                                            </div>-->
-        <!--                                        </div>-->
-        <!--                                    </td>-->
-        <!--                                    <td>Designer</td>-->
-        <!--                                    <td>-->
-        <!--                                        <div class="progress-showcase">-->
-        <!--                                            <div class="progress" style="height: 8px;">-->
-        <!--                                                <div class="progress-bar bg-primary" role="progressbar"-->
-        <!--                                                    style="width: 30%" aria-valuenow="50" aria-valuemin="0"-->
-        <!--                                                    aria-valuemax="100"></div>-->
-        <!--                                            </div>-->
-        <!--                                        </div>-->
-        <!--                                    </td>-->
-        <!--                                    <td class="digits">2 Year</td>-->
-        <!--                                </tr>-->
-        <!--                                <tr>-->
-        <!--                                    <td class="bd-t-none u-s-tb">-->
-        <!--                                        <div class="align-middle image-sm-size"><img-->
-        <!--                                                class="img-radius align-top m-r-15 rounded-circle"-->
-        <!--                                                src="assets/images/dashboard/user1.jpg" alt="" data-original-title=""-->
-        <!--                                                title="">-->
-        <!--                                            <div class="d-inline-block">-->
-        <!--                                                <h6>Holio Mako <span class="text-muted digits">(250+ Online)</span></h6>-->
-        <!--                                            </div>-->
-        <!--                                        </div>-->
-        <!--                                    </td>-->
-        <!--                                    <td>Developer</td>-->
-        <!--                                    <td>-->
-        <!--                                        <div class="progress-showcase">-->
-        <!--                                            <div class="progress" style="height: 8px;">-->
-        <!--                                                <div class="progress-bar bg-secondary" role="progressbar"-->
-        <!--                                                    style="width: 70%" aria-valuenow="50" aria-valuemin="0"-->
-        <!--                                                    aria-valuemax="100"></div>-->
-        <!--                                            </div>-->
-        <!--                                        </div>-->
-        <!--                                    </td>-->
-        <!--                                    <td class="digits">3 Year</td>-->
-        <!--                                </tr>-->
-        <!--                                <tr>-->
-        <!--                                    <td class="bd-t-none u-s-tb">-->
-        <!--                                        <div class="align-middle image-sm-size"><img-->
-        <!--                                                class="img-radius align-top m-r-15 rounded-circle"-->
-        <!--                                                src="assets/images/dashboard/man.png" alt="" data-original-title=""-->
-        <!--                                                title="">-->
-        <!--                                            <div class="d-inline-block">-->
-        <!--                                                <h6>Mohsib lara<span class="text-muted digits">(99+ Online)</span></h6>-->
-        <!--                                            </div>-->
-        <!--                                        </div>-->
-        <!--                                    </td>-->
-        <!--                                    <td>Tester</td>-->
-        <!--                                    <td>-->
-        <!--                                        <div class="progress-showcase">-->
-        <!--                                            <div class="progress" style="height: 8px;">-->
-        <!--                                                <div class="progress-bar bg-primary" role="progressbar"-->
-        <!--                                                    style="width: 60%" aria-valuenow="50" aria-valuemin="0"-->
-        <!--                                                    aria-valuemax="100"></div>-->
-        <!--                                            </div>-->
-        <!--                                        </div>-->
-        <!--                                    </td>-->
-        <!--                                    <td class="digits">5 Month</td>-->
-        <!--                                </tr>-->
-        <!--                                <tr>-->
-        <!--                                    <td class="bd-t-none u-s-tb">-->
-        <!--                                        <div class="align-middle image-sm-size"><img-->
-        <!--                                                class="img-radius align-top m-r-15 rounded-circle"-->
-        <!--                                                src="assets/images/dashboard/user.png" alt="" data-original-title=""-->
-        <!--                                                title="">-->
-        <!--                                            <div class="d-inline-block">-->
-        <!--                                                <h6>Hileri Soli <span class="text-muted digits">(150+ Online)</span>-->
-        <!--                                                </h6>-->
-        <!--                                            </div>-->
-        <!--                                        </div>-->
-        <!--                                    </td>-->
-        <!--                                    <td>Designer</td>-->
-        <!--                                    <td>-->
-        <!--                                        <div class="progress-showcase">-->
-        <!--                                            <div class="progress" style="height: 8px;">-->
-        <!--                                                <div class="progress-bar bg-secondary" role="progressbar"-->
-        <!--                                                    style="width: 30%" aria-valuenow="50" aria-valuemin="0"-->
-        <!--                                                    aria-valuemax="100"></div>-->
-        <!--                                            </div>-->
-        <!--                                        </div>-->
-        <!--                                    </td>-->
-        <!--                                    <td class="digits">3 Month</td>-->
-        <!--                                </tr>-->
-        <!--                                <tr>-->
-        <!--                                    <td class="bd-t-none u-s-tb">-->
-        <!--                                        <div class="align-middle image-sm-size"><img-->
-        <!--                                                class="img-radius align-top m-r-15 rounded-circle"-->
-        <!--                                                src="assets/images/dashboard/designer.jpg" alt=""-->
-        <!--                                                data-original-title="" title="">-->
-        <!--                                            <div class="d-inline-block">-->
-        <!--                                                <h6>Pusiz bia <span class="text-muted digits">(14+ Online)</span></h6>-->
-        <!--                                            </div>-->
-        <!--                                        </div>-->
-        <!--                                    </td>-->
-        <!--                                    <td>Designer</td>-->
-        <!--                                    <td>-->
-        <!--                                        <div class="progress-showcase">-->
-        <!--                                            <div class="progress" style="height: 8px;">-->
-        <!--                                                <div class="progress-bar bg-primary" role="progressbar"-->
-        <!--                                                    style="width: 90%" aria-valuenow="50" aria-valuemin="0"-->
-        <!--                                                    aria-valuemax="100"></div>-->
-        <!--                                            </div>-->
-        <!--                                        </div>-->
-        <!--                                    </td>-->
-        <!--                                    <td class="digits">5 Year</td>-->
-        <!--                                </tr>-->
-        <!--                            </tbody>-->
-        <!--                        </table>-->
-        <!--                    </div>-->
-        <!--                </div>-->
-        <!--            </div>-->
-        <!--        </div>-->
-        <!--        <div class="col-sm-12">-->
-        <!--            <div class="card">-->
-        <!--                <div class="card-header">-->
-        <!--                    <h5>Sales Status</h5>-->
-        <!--                </div>-->
-        <!--                <div class="card-body">-->
-        <!--                    <div class="row">-->
-        <!--                        <div class="col-xl-3 col-sm-6 xl-50">-->
-        <!--                            <div class="order-graph">-->
-        <!--                                <h6>Orders By Location</h6>-->
-        <!--                                <div class="chart-block chart-vertical-center">-->
-        <!--                                    <ngx-charts-pie-chart class="pie-colours-1" [view]="view"-->
-        <!--                                        [scheme]="doughnutChartColorScheme" [results]="pieData" [explodeSlices]="false"-->
-        <!--                                        [labels]="doughnutChartShowLabels" [arcWidth]=0.50 [doughnut]="true"-->
-        <!--                                        [animations]="false" [tooltipDisabled]="doughnutChartTooltip"-->
-        <!--                                        [gradient]="doughnutChartGradient">-->
-        <!--                                    </ngx-charts-pie-chart>-->
-        <!--                                </div>-->
-        <!--                                <div class="order-graph-bottom">-->
-        <!--                                    <div class="media">-->
-        <!--                                        <div class="order-color-primary"></div>-->
-        <!--                                        <div class="media-body">-->
-        <!--                                            <h6 class="mb-0">Saint Lucia <span class="pull-right">$157</span></h6>-->
-        <!--                                        </div>-->
-        <!--                                    </div>-->
-        <!--                                    <div class="media">-->
-        <!--                                        <div class="order-color-secondary"></div>-->
-        <!--                                        <div class="media-body">-->
-        <!--                                            <h6 class="mb-0">Kenya <span class="pull-right">$347</span></h6>-->
-        <!--                                        </div>-->
-        <!--                                    </div>-->
-        <!--                                    <div class="media">-->
-        <!--                                        <div class="order-color-danger"></div>-->
-        <!--                                        <div class="media-body">-->
-        <!--                                            <h6 class="mb-0">Liberia<span class="pull-right">$468</span></h6>-->
-        <!--                                        </div>-->
-        <!--                                    </div>-->
-        <!--                                    <div class="media">-->
-        <!--                                        <div class="order-color-warning"></div>-->
-        <!--                                        <div class="media-body">-->
-        <!--                                            <h6 class="mb-0">Christmas Island<span class="pull-right">$742</span></h6>-->
-        <!--                                        </div>-->
-        <!--                                    </div>-->
-        <!--                                    <div class="media">-->
-        <!--                                        <div class="order-color-success"></div>-->
-        <!--                                        <div class="media-body">-->
-        <!--                                            <h6 class="mb-0">Saint Helena <span class="pull-right">$647</span></h6>-->
-        <!--                                        </div>-->
-        <!--                                    </div>-->
-        <!--                                </div>-->
-        <!--                            </div>-->
-        <!--                        </div>-->
-        <!--                        <div class="col-xl-3 col-sm-6 xl-50">-->
-        <!--                            <div class="order-graph sm-order-space">-->
-        <!--                                <h6>Sales By Location</h6>-->
-        <!--                                <div class="peity-chart-dashboard text-center chart-vertical-center">-->
-        <!--                                    <ngx-charts-pie-chart class="pie-colours-1" [view]="view"-->
-        <!--                                        [scheme]="doughnutChartColorScheme" [results]="doughnutData"-->
-        <!--                                        [explodeSlices]="false" [labels]="doughnutChartShowLabels" [arcWidth]=0.99-->
-        <!--                                        [doughnut]="true" [animations]="false" [tooltipDisabled]="doughnutChartTooltip"-->
-        <!--                                        [gradient]="doughnutChartGradient">-->
-        <!--                                    </ngx-charts-pie-chart>-->
-        <!--                                </div>-->
-        <!--                                <div class="order-graph-bottom sales-location">-->
-        <!--                                    <div class="media">-->
-        <!--                                        <div class="order-shape-primary"></div>-->
-        <!--                                        <div class="media-body">-->
-        <!--                                            <h6 class="mb-0 mr-0">Germany <span class="pull-right">25%</span></h6>-->
-        <!--                                        </div>-->
-        <!--                                    </div>-->
-        <!--                                    <div class="media">-->
-        <!--                                        <div class="order-shape-secondary"></div>-->
-        <!--                                        <div class="media-body">-->
-        <!--                                            <h6 class="mb-0 mr-0">Brasil <span class="pull-right">10%</span></h6>-->
-        <!--                                        </div>-->
-        <!--                                    </div>-->
-        <!--                                    <div class="media">-->
-        <!--                                        <div class="order-shape-danger"></div>-->
-        <!--                                        <div class="media-body">-->
-        <!--                                            <h6 class="mb-0 mr-0">United Kingdom<span class="pull-right">34%</span></h6>-->
-        <!--                                        </div>-->
-        <!--                                    </div>-->
-        <!--                                    <div class="media">-->
-        <!--                                        <div class="order-shape-warning"></div>-->
-        <!--                                        <div class="media-body">-->
-        <!--                                            <h6 class="mb-0 mr-0">Australia<span class="pull-right">5%</span></h6>-->
-        <!--                                        </div>-->
-        <!--                                    </div>-->
-        <!--                                    <div class="media">-->
-        <!--                                        <div class="order-shape-success"></div>-->
-        <!--                                        <div class="media-body">-->
-        <!--                                            <h6 class="mb-0 mr-0">Canada <span class="pull-right">25%</span></h6>-->
-        <!--                                        </div>-->
-        <!--                                    </div>-->
-        <!--                                </div>-->
-        <!--                            </div>-->
-        <!--                        </div>-->
-        <!--                        <div class="col-xl-6 xl-100">-->
-        <!--                            <div class="order-graph xl-space">-->
-        <!--                                <h6>Revenue for last month</h6>-->
-        <!--                                <div class="ct-4 flot-chart-container">-->
-        <!--                                    <x-chartist [type]="chart5.type" [data]="chart5.data" [options]="chart5.options">-->
-        <!--                                    </x-chartist>-->
-        <!--                                </div>-->
-        <!--                            </div>-->
-        <!--                        </div>-->
-        <!--                    </div>-->
-        <!--                </div>-->
-        <!--            </div>-->
-        <!--        </div>-->
-
+<ng-template #content let-close="close" let-dismiss="dismiss">
+  <div class="modal-header border-0 pb-0">
+    <div>
+      <h5 class="modal-title fw-semibold">Update your temporary password</h5>
+      <p class="text-neutral-600 small mb-0">Set a new password to secure your account</p>
     </div>
+    <button type="button" class="btn-close" aria-label="Close" (click)="dismiss('close')"></button>
+  </div>
+  <div class="modal-body pt-3">
+    <form [formGroup]="accountForm" class="row g-3">
+      <div class="col-12">
+        <label class="form-label fw-semibold" for="dashboardPassword">New password</label>
+        <div class="input-group has-validation">
+          <span class="input-group-text">
+            <i class="bi bi-shield-lock"></i>
+          </span>
+          <input
+            type="password"
+            id="dashboardPassword"
+            class="form-control"
+            placeholder="Enter new password"
+            formControlName="password"
+            required
+          />
+        </div>
+        <div
+          class="invalid-feedback d-block"
+          *ngIf="accountForm.get('password')?.invalid && (accountForm.get('password')?.dirty || accountForm.get('password')?.touched)"
+        >
+          Password is required.
+        </div>
+      </div>
+      <div class="col-12">
+        <label class="form-label fw-semibold" for="dashboardConfirmPassword">Confirm password</label>
+        <div class="input-group has-validation">
+          <span class="input-group-text">
+            <i class="bi bi-shield-check"></i>
+          </span>
+          <input
+            type="password"
+            id="dashboardConfirmPassword"
+            class="form-control"
+            placeholder="Re-enter password"
+            formControlName="confirmPassword"
+            required
+          />
+        </div>
+        <div
+          class="invalid-feedback d-block"
+          *ngIf="accountForm.get('confirmPassword')?.invalid && (accountForm.get('confirmPassword')?.dirty || accountForm.get('confirmPassword')?.touched)"
+        >
+          Confirmation is required.
+        </div>
+        <div
+          class="invalid-feedback d-block"
+          *ngIf="
+            accountForm.get('password')?.value &&
+            accountForm.get('confirmPassword')?.value &&
+            accountForm.get('password')?.value !== accountForm.get('confirmPassword')?.value
+          "
+        >
+          Passwords do not match.
+        </div>
+      </div>
+    </form>
+  </div>
+  <div class="modal-footer border-0 pt-0">
+    <button type="button" class="btn btn-outline-secondary" (click)="dismiss('cancel')">Cancel</button>
+    <button
+      type="button"
+      class="btn btn-primary"
+      (click)="onSave()"
+      [disabled]="accountForm.invalid || accountForm.get('password')?.value !== accountForm.get('confirmPassword')?.value"
+    >
+      Save password
+    </button>
+  </div>
+</ng-template>
+
+<div class="dashboard-page container-fluid py-3">
+  @if (!functionCalled) {
+    <div class="card shadow-sm border-0 skeleton-card mb-3">
+      <div class="card-body text-center py-5">
+        <div class="spinner-border text-primary mb-3" role="status">
+          <span class="visually-hidden">Loading dashboard…</span>
+        </div>
+        <p class="text-neutral-600 mb-0">Preparing your dashboard insights…</p>
+      </div>
+    </div>
+  }
+
+  @if (functionCalled) {
+    <section class="row g-3 align-items-stretch">
+      @for (metric of summaryMetrics; track metric.label) {
+        <div class="col-12 col-sm-6 col-xl-3">
+          <article class="card stat-card border-0 shadow-sm h-100">
+            <div class="card-body d-flex flex-column gap-3">
+              <div class="d-flex align-items-start justify-content-between">
+                <div>
+                  <p class="stat-card__label text-uppercase small text-neutral-600 mb-1">{{ metric.label }}</p>
+                  <h2 class="stat-card__value mb-0">{{ metric.value | number }}</h2>
+                </div>
+                <span class="stat-card__icon" [ngClass]="metric.accent" [attr.title]="metric.tooltip">
+                  <i class="bi" [ngClass]="metric.icon"></i>
+                </span>
+              </div>
+              <p class="stat-card__meta text-neutral-500 small mb-0" *ngIf="metric.subtitle">
+                {{ metric.subtitle }}
+              </p>
+            </div>
+          </article>
+        </div>
+      }
+    </section>
+
+    <section class="row g-3 align-items-stretch mt-1">
+      <div class="col-12 col-xl-8">
+        <section class="card shadow-sm border-0 h-100">
+          <div class="card-header border-0 pb-0 d-flex flex-wrap gap-2 align-items-center justify-content-between">
+            <div>
+              <h5 class="mb-1">Enrollment Growth</h5>
+              <p class="text-neutral-600 small mb-0">Monthly student onboarding across your institution</p>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1"
+                (click)="refreshDashboard()"
+              >
+                <i class="bi bi-arrow-repeat"></i>
+                Refresh
+              </button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="chart-container">
+              <ng-container *ngIf="chartOptions?.series?.length; else emptyChart">
+                <apx-chart
+                  [series]="chartOptions?.series"
+                  [chart]="chartOptions?.chart"
+                  [dataLabels]="chartOptions?.dataLabels"
+                  [plotOptions]="chartOptions?.plotOptions"
+                  [yaxis]="chartOptions?.yaxis"
+                  [legend]="chartOptions?.legend"
+                  [fill]="chartOptions?.fill"
+                  [stroke]="chartOptions?.stroke"
+                  [tooltip]="chartOptions?.tooltip"
+                  [xaxis]="chartOptions?.xaxis"
+                ></apx-chart>
+              </ng-container>
+              <ng-template #emptyChart>
+                <div class="empty-state text-center py-5">
+                  <i class="bi bi-bar-chart-line fs-1 text-neutral-400"></i>
+                  <p class="text-neutral-600 mt-3 mb-0">
+                    We’ll visualize enrollment trends as soon as data is available.
+                  </p>
+                </div>
+              </ng-template>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div class="col-12 col-xl-4">
+        <section class="card shadow-sm border-0 h-100">
+          <div class="card-header border-0 pb-0">
+            <h5 class="mb-1">Institution Snapshot</h5>
+            <p class="text-neutral-600 small mb-0">
+              Key metrics for {{ institutionName || 'your institution' }}
+            </p>
+          </div>
+          <div class="card-body">
+            <ul class="list-group list-group-flush">
+              <li class="list-group-item px-0 d-flex align-items-center justify-content-between">
+                <span class="text-neutral-600">Primary institution</span>
+                <span class="fw-semibold text-neutral-900 text-end">{{ institutionName || '—' }}</span>
+              </li>
+              <li class="list-group-item px-0 d-flex align-items-center justify-content-between">
+                <span class="text-neutral-600">Linked campuses</span>
+                <span class="fw-semibold text-neutral-900 text-end">{{ schoolStatus?.length || 0 }}</span>
+              </li>
+              <li class="list-group-item px-0 d-flex align-items-center justify-content-between">
+                <span class="text-neutral-600">Last roster update</span>
+                <span class="fw-semibold text-neutral-900 text-end">
+                  <ng-container *ngIf="orderList?.length && orderList[0]?.created_date; else noRosterDate">
+                    {{ orderList[0].created_date | customDateFormat }}
+                  </ng-container>
+                  <ng-template #noRosterDate>—</ng-template>
+                </span>
+              </li>
+            </ul>
+
+            <div class="snapshot-metrics mt-4">
+              <ng-container *ngIf="institutionMetrics.length; else noInstitutionMetrics">
+                @for (metric of institutionMetrics; track metric.label) {
+                  <div class="snapshot-metric border rounded-3 p-3">
+                    <p class="text-neutral-600 small text-uppercase mb-1">{{ metric.label }}</p>
+                    <h4 class="fw-semibold mb-0">{{ metric.value | number }}</h4>
+                    <p class="text-neutral-500 small mb-0" *ngIf="metric.caption">{{ metric.caption }}</p>
+                  </div>
+                }
+              </ng-container>
+              <ng-template #noInstitutionMetrics>
+                <div class="empty-state text-center py-4">
+                  <i class="bi bi-collection text-neutral-400 fs-4"></i>
+                  <p class="text-neutral-600 small mb-0 mt-2">Institution activity metrics will appear here.</p>
+                </div>
+              </ng-template>
+            </div>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <section class="row g-3 align-items-stretch mt-1">
+      <div class="col-12 col-xxl-6">
+        <section class="card shadow-sm border-0 h-100">
+          <div class="card-header border-0 pb-0 d-flex flex-wrap align-items-center justify-content-between gap-2">
+            <div>
+              <h5 class="mb-1">Content Overview</h5>
+              <p class="text-neutral-600 small mb-0">Recent activity across content repositories</p>
+            </div>
+          </div>
+          <div class="card-body">
+            <ng-container *ngIf="chartOptions1?.series?.length; else emptyContentChart">
+              <apx-chart
+                [series]="chartOptions1?.series"
+                [chart]="chartOptions1?.chart"
+                [xaxis]="chartOptions1?.xaxis"
+                [dataLabels]="chartOptions1?.dataLabels"
+                [grid]="chartOptions1?.grid"
+                [stroke]="chartOptions1?.stroke"
+                [title]="chartOptions1?.title"
+              ></apx-chart>
+            </ng-container>
+            <ng-template #emptyContentChart>
+              <div class="empty-state text-center py-5">
+                <i class="bi bi-stack fs-1 text-neutral-400"></i>
+                <p class="text-neutral-600 mt-3 mb-0">
+                  Start publishing lessons to view content performance analytics.
+                </p>
+              </div>
+            </ng-template>
+          </div>
+        </section>
+      </div>
+
+      <div class="col-12 col-xxl-6">
+        <section class="card shadow-sm border-0 h-100">
+          <div class="card-header border-0 pb-0">
+            <h5 class="mb-1">Institution Status</h5>
+            <p class="text-neutral-600 small mb-0">Class creation and editing trends</p>
+          </div>
+          <div class="card-body">
+            <ng-container *ngIf="institutionMetrics.length; else noInstitutionStatus">
+              <div class="row g-3">
+                @for (metric of institutionMetrics; track metric.label) {
+                  <div class="col-6">
+                    <div class="status-tile border rounded-3 p-3 h-100">
+                      <span class="status-tile__label text-neutral-600 small text-uppercase">{{ metric.label }}</span>
+                      <span class="status-tile__value fw-semibold">{{ metric.value | number }}</span>
+                      <span class="status-tile__caption text-neutral-500 small" *ngIf="metric.caption">
+                        {{ metric.caption }}
+                      </span>
+                    </div>
+                  </div>
+                }
+              </div>
+            </ng-container>
+            <ng-template #noInstitutionStatus>
+              <div class="empty-state text-center py-4">
+                <i class="bi bi-building-up text-neutral-400 fs-4"></i>
+                <p class="text-neutral-600 small mb-0 mt-2">
+                  Once classes are created, we’ll surface institution trends here.
+                </p>
+              </div>
+            </ng-template>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <section class="card shadow-sm border-0 mt-3">
+      <div class="card-header border-0 pb-0 d-flex flex-wrap align-items-center justify-content-between gap-2">
+        <div>
+          <h5 class="mb-1">School Directory</h5>
+          <p class="text-neutral-600 small mb-0">
+            Overview of connected institutions with quick actions.
+          </p>
+        </div>
+        <span class="badge rounded-pill bg-light-subtle text-neutral-700">
+          {{ orderList?.length || 0 }} listed
+        </span>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-modern align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th scope="col">Institution</th>
+                <th scope="col" class="text-center">Teachers</th>
+                <th scope="col" class="text-center">Students</th>
+                <th scope="col" class="text-center">Content creators</th>
+                <th scope="col" class="text-center">Created</th>
+                <th scope="col" class="text-center">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              @if (orderList?.length) {
+                @for (item of orderList; track $index) {
+                  <tr>
+                    <td>
+                      <div class="d-flex flex-column">
+                        <span class="fw-semibold text-neutral-900">
+                          {{ item.name || item.school_name || '—' }}
+                        </span>
+                        <small class="text-neutral-500" *ngIf="item.school_code || item.code">
+                          Code: {{ item.school_code || item.code }}
+                        </small>
+                      </div>
+                    </td>
+                    <td class="text-center">
+                      <span class="badge rounded-pill bg-primary-subtle text-primary fw-semibold">
+                        {{ item.teachers || 0 }}
+                      </span>
+                    </td>
+                    <td class="text-center">
+                      <span class="badge rounded-pill bg-secondary-subtle text-secondary fw-semibold">
+                        {{ item.students || 0 }}
+                      </span>
+                    </td>
+                    <td class="text-center">
+                      <span class="badge rounded-pill bg-info-subtle text-info fw-semibold">
+                        {{ item.content_creator || item.content_creators || 0 }}
+                      </span>
+                    </td>
+                    <td class="text-center">
+                      <ng-container *ngIf="item.created_date; else noCreatedDate">
+                        {{ item.created_date | customDateFormat }}
+                      </ng-container>
+                      <ng-template #noCreatedDate>—</ng-template>
+                    </td>
+                    <td class="text-center">
+                      <span class="badge rounded-pill fw-semibold" [ngClass]="getStatusTone(item.status)">
+                        {{ getStatusLabel(item.status) }}
+                      </span>
+                    </td>
+                  </tr>
+                }
+              } @else {
+                <tr>
+                  <td colspan="6">
+                    <div class="empty-state text-center py-5">
+                      <i class="bi bi-houses fs-1 text-neutral-400"></i>
+                      <p class="text-neutral-600 mt-3 mb-0">
+                        Connect your first school to populate the directory.
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  }
 </div>
-<!-- Container-fluid Ends-->

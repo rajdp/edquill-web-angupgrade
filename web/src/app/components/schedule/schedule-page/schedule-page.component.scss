@@ -1,0 +1,47 @@
+.schedule-page {
+  .card {
+    border-radius: var(--radius-lg);
+  }
+
+  .schedule-toggle {
+    .btn {
+      min-width: 8.5rem;
+      border-radius: var(--radius-md);
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--spacing-1);
+      transition: all var(--transition-base) ease;
+
+      i {
+        font-size: 1rem;
+      }
+
+      &.active {
+        background: var(--color-primary);
+        border-color: var(--color-primary);
+        color: #fff;
+        box-shadow: var(--shadow-sm);
+      }
+
+      &:hover:not(.active) {
+        background: rgba(143, 0, 138, 0.08);
+        border-color: var(--color-primary);
+        color: var(--color-primary);
+      }
+    }
+  }
+}
+
+@media (max-width: 575.98px) {
+  .schedule-page {
+    .schedule-toggle {
+      width: 100%;
+
+      .btn {
+        flex: 1 1 50%;
+      }
+    }
+  }
+}

@@ -904,4 +904,168 @@ export class DashboardComponent implements OnInit {
 
         }
     }
+
+    /**
+     * Refresh dashboard cards and charts with latest data
+     */
+    refreshDashboard(): void {
+        this.functionCalled = false;
+        this.commondata.showLoader(true);
+        this.serviceCalled();
+    }
+
+    /**
+     * Surface high-level metrics for summary cards
+     */
+    get summaryMetrics(): Array<{ label: string; value: number; subtitle?: string; icon: string; accent: string; tooltip: string }> {
+        const teachers = this.toNumber(this.overallList?.teachers);
+        const students = this.toNumber(this.overallList?.students);
+        const creators = this.toNumber(this.overallList?.contentcreator ?? this.overallList?.content_creators);
+        const institutions = this.toNumber(this.schoolStatus?.length);
+
+        return [
+            {
+                label: 'Teachers',
+                value: teachers,
+                subtitle: 'Active faculty roster',
+                icon: 'bi-person-badge-fill',
+                accent: 'accent-primary',
+                tooltip: 'Total active teachers across your connected campuses.'
+            },
+            {
+                label: 'Students',
+                value: students,
+                subtitle: 'Enrolled learners this term',
+                icon: 'bi-mortarboard-fill',
+                accent: 'accent-success',
+                tooltip: 'Learners currently enrolled across institutions.'
+            },
+            {
+                label: 'Content creators',
+                value: creators,
+                subtitle: 'Authors publishing new lessons',
+                icon: 'bi-brush-fill',
+                accent: 'accent-info',
+                tooltip: 'Active content contributors with publishing permissions.'
+            },
+            {
+                label: 'Active institutions',
+                value: institutions,
+                subtitle: 'Campuses connected to EdQuill',
+                icon: 'bi-buildings-fill',
+                accent: 'accent-warning',
+                tooltip: 'Institutions linked to your administrator account.'
+            }
+        ];
+    }
+
+    /**
+     * Micro metrics used in the institution snapshot tiles
+     */
+    get institutionMetrics(): Array<{ label: string; value: number; caption?: string }> {
+        if (!Array.isArray(this.institutionClassess) || this.institutionClassess.length === 0) {
+            return [];
+        }
+
+        const snapshot = this.institutionClassess[0] ?? {};
+
+        const totalClasses = this.toNumber(snapshot.totalclass_count ?? snapshot.total_class_count ?? snapshot.totalclasscount);
+        const monthClasses = this.toNumber(snapshot.monthclass_count ?? snapshot.current_month_classes ?? snapshot.monthclasscount);
+        const editedClasses = this.toNumber(snapshot.totaledited_class ?? snapshot.total_edited_class ?? snapshot.edit_class_count);
+        const editedThisMonth = this.toNumber(snapshot.monthedit_class ?? snapshot.month_edit_class ?? snapshot.current_month_edit_classes);
+
+        return [
+            {
+                label: 'Total classes',
+                value: totalClasses,
+                caption: 'All-time scheduled classes'
+            },
+            {
+                label: 'Classes this month',
+                value: monthClasses,
+                caption: 'New sessions scheduled'
+            },
+            {
+                label: 'Edited classes',
+                value: editedClasses,
+                caption: 'Classes updated since launch'
+            },
+            {
+                label: 'Edited this month',
+                value: editedThisMonth,
+                caption: 'Recently updated sessions'
+            }
+        ];
+    }
+
+    /**
+     * Map backend status codes to badge styling
+     */
+    getStatusTone(status: unknown): string {
+        const normalized = (status ?? '').toString().toLowerCase();
+
+        if (['1', 'active', 'a', 'approved', 'live'].includes(normalized)) {
+            return 'bg-success-subtle text-success';
+        }
+
+        if (['pending', 'p', 'awaiting', 'inreview', 'in-review'].includes(normalized)) {
+            return 'bg-warning-subtle text-warning';
+        }
+
+        if (['0', 'inactive', 'd', 'disabled', 'draft'].includes(normalized)) {
+            return 'bg-secondary-subtle text-secondary';
+        }
+
+        if (['blocked', 'suspended', 'b', 'hold', 'paused', 'cancelled', 'canceled', 'c'].includes(normalized)) {
+            return 'bg-danger-subtle text-danger';
+        }
+
+        return 'bg-light text-neutral-600';
+    }
+
+    /**
+     * Create user-friendly labels for status codes
+     */
+    getStatusLabel(status: unknown): string {
+        if (status === null || status === undefined || status === '') {
+            return 'Unknown';
+        }
+
+        const normalized = status.toString().toLowerCase();
+
+        if (['1', 'active', 'a', 'approved', 'live'].includes(normalized)) {
+            return 'Active';
+        }
+
+        if (['pending', 'p', 'awaiting', 'inreview', 'in-review'].includes(normalized)) {
+            return 'Pending';
+        }
+
+        if (['0', 'inactive', 'd', 'disabled', 'draft'].includes(normalized)) {
+            return 'Inactive';
+        }
+
+        if (['blocked', 'suspended', 'b', 'hold'].includes(normalized)) {
+            return 'Suspended';
+        }
+
+        if (['cancelled', 'canceled', 'c'].includes(normalized)) {
+            return 'Cancelled';
+        }
+
+        return status.toString();
+    }
+
+    /**
+     * Safely coerce values to numbers for UI display
+     */
+    private toNumber(value: unknown): number {
+        if (value === null || value === undefined || value === '') {
+            return 0;
+        }
+
+        const coerced = Number(value);
+
+        return Number.isFinite(coerced) ? coerced : 0;
+    }
 }

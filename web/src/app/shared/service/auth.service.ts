@@ -530,14 +530,46 @@ export class AuthService {
         return observableThrowError(error);
     }
 
-    logout() {
+    logout(showMessage: boolean = true) {
+        // Check if we have a token before trying to logout
+        const hasToken = this.getAccessToken() && this.getAccessToken() !== '';
+        
+        if (hasToken) {
+            // Call logout API to invalidate token in backend
+            const logoutData = {
+                platform: 'web',
+                role_id: this.getRoleId(),
+                user_id: this.getUserId()
+            };
+            
+            this.postService(logoutData, 'user/logout').subscribe({
+                next: (response: any) => {
+                    console.log('Logout successful', response);
+                },
+                error: (error) => {
+                    console.error('Logout error:', error);
+                },
+                complete: () => {
+                    // Clear local storage and redirect regardless of API response
+                    this.performLogout(showMessage);
+                }
+            });
+        } else {
+            // No token, just clear storage and redirect
+            this.performLogout(showMessage);
+        }
+    }
 
+    private performLogout(showMessage: boolean = true) {
         if (this.getRoleId() != '6') {
             this.router.navigate(['/auth/login']);
         } else {
             this.router.navigate(['/auth/login/corporate']);
         }
-        this.toastr.error('You have logged in another Device .Please Re-login');
+        
+        if (showMessage) {
+            this.toastr.error('You have logged in another Device. Please Re-login');
+        }
 
         sessionStorage.clear();
         localStorage.clear();

@@ -27,6 +27,42 @@
                             </div>
                         </div>
                         <div class="form-group row">
+                            <label class="col-xl-3 col-md-4">
+                                <span style="visibility: hidden">*</span>Subject Fee
+                            </label>
+                            <div class="col-xl-8 col-md-7">
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">$</span>
+                                    </div>
+                                    <input class="form-control" formControlName="fee_amount" type="text" placeholder="0.00"
+                                           (keypress)="numberPattern($event)">
+                                </div>
+                                <em class="error"
+                                    *ngIf="subjectform.get('fee_amount').invalid && (subjectform.get('fee_amount').dirty || subjectform.get('fee_amount').touched)">
+                                    Enter a valid amount (use up to two decimals)
+                                </em>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label class="col-xl-3 col-md-4">
+                                <span style="visibility: hidden">*</span>Deposit Amount
+                            </label>
+                            <div class="col-xl-8 col-md-7">
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">$</span>
+                                    </div>
+                                    <input class="form-control" formControlName="deposit_amount" type="text" placeholder="0.00"
+                                           (keypress)="numberPattern($event)">
+                                </div>
+                                <em class="error"
+                                    *ngIf="subjectform.get('deposit_amount').invalid && (subjectform.get('deposit_amount').dirty || subjectform.get('deposit_amount').touched)">
+                                    Enter a valid amount (use up to two decimals)
+                                </em>
+                            </div>
+                        </div>
+                        <div class="form-group row">
                             <label for="validationCustom5" class="col-xl-3 col-md-4"><span>*</span>
                                 Status</label>
                             <div class="col-xl-8 col-md-7">

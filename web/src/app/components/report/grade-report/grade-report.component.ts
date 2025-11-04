@@ -182,15 +182,22 @@ export class GradeReportComponent implements OnInit {
 
     init(res) {
         this.schoolID = res;
+        console.log('🏫 Grade Report - Initialized with school_id:', this.schoolID);
         this.classDetails();
         this.reports();
         this.dateCountDetails();
     }
 
     ngOnInit(): void {
-
         this.allowSelect = false;
         this.newSubject.allowSchoolChange(this.allowSelect);
+        
+        // Initialize with current school_id
+        const currentSchoolId = this.auth.getSessionData('school_id');
+        console.log('🏫 Grade Report - ngOnInit with school_id:', currentSchoolId);
+        if (currentSchoolId) {
+            this.init(currentSchoolId);
+        }
     }
 
     numberValidate(event) {
@@ -256,14 +263,19 @@ export class GradeReportComponent implements OnInit {
                         day: new Date(maxToDate1).getDate()
                     },
                 };
-                this.from1Date = this.datePipe.transform(event.singleDate.formatted, 'yyyy-MM-dd');
+                this.from1Date = event.singleDate.formatted && !isNaN(new Date(event.singleDate.formatted).getTime())
+                    ? this.datePipe.transform(event.singleDate.formatted, 'yyyy-MM-dd')
+                    : '';
                 const dObject: IMyDateModel = {
                     isRange: false,
                     singleDate: {jsDate: new Date(maxToDate1)},
                     dateRange: null
                 };
                 this.studentReport.controls.toDate.patchValue(dObject);
-                this.to1Date = this.datePipe.transform(this.studentReport.controls.toDate.value.singleDate.jsDate, 'yyyy-MM-dd');
+                const toDateValue = this.studentReport.controls.toDate.value?.singleDate?.jsDate;
+                this.to1Date = toDateValue && !isNaN(new Date(toDateValue).getTime())
+                    ? this.datePipe.transform(toDateValue, 'yyyy-MM-dd')
+                    : '';
                 this.reports();
             } else {
                 this.myDpOptions1 = {
@@ -281,15 +293,22 @@ export class GradeReportComponent implements OnInit {
                         day: new Date().getDate() + 1
                     },
                 };
-                this.from1Date = this.datePipe.transform(event.singleDate.formatted, 'yyyy-MM-dd');
+                this.from1Date = event.singleDate.formatted && !isNaN(new Date(event.singleDate.formatted).getTime())
+                    ? this.datePipe.transform(event.singleDate.formatted, 'yyyy-MM-dd')
+                    : '';
                 const cObject: IMyDateModel = {isRange: false, singleDate: {jsDate: new Date()}, dateRange: null};
                 this.studentReport.controls.toDate.patchValue(cObject);
-                this.to1Date = this.datePipe.transform(this.studentReport.controls.toDate.value.singleDate.jsDate, 'yyyy-MM-dd');
+                const toDateValue = this.studentReport.controls.toDate.value?.singleDate?.jsDate;
+                this.to1Date = toDateValue && !isNaN(new Date(toDateValue).getTime())
+                    ? this.datePipe.transform(toDateValue, 'yyyy-MM-dd')
+                    : '';
                 this.reports();
             }
         } else {
             if (event.singleDate.formatted != '' && event.singleDate.formatted != null) {
-                this.to1Date = this.datePipe.transform(event.singleDate.formatted, 'yyyy-MM-dd');
+                this.to1Date = !isNaN(new Date(event.singleDate.formatted).getTime())
+                    ? this.datePipe.transform(event.singleDate.formatted, 'yyyy-MM-dd')
+                    : '';
             } else {
                 this.to1Date = '';
             }
@@ -303,11 +322,12 @@ export class GradeReportComponent implements OnInit {
             platform: 'web',
             role_id: this.auth.getRoleId(),
             user_id: this.auth.getUserId(),
-            school_id: this.auth.getSessionData('school_id'),
+            school_id: this.schoolID || this.auth.getSessionData('school_id'),
             class_code: '',
             from_date: this.from1Date == '' ? '' : this.from1Date,
             to_date: this.to1Date == '' ? '' : this.to1Date,
         };
+        console.log('🔍 Grade Report - Calling gradeReport with data:', data);
         this.report.gradeReport(data).subscribe((successData) => {
                 this.classDetailsSuccess(successData);
             },
@@ -317,9 +337,10 @@ export class GradeReportComponent implements OnInit {
     }
 
     classDetailsSuccess(successData) {
-        console.log(successData, 'successData');
+        console.log('📦 Grade Report - gradeReport response:', successData);
         if (successData.IsSuccess) {
             this.classList = successData.ResponseObject;
+            console.log('📋 Grade Report - Class list length:', this.classList.length);
         }
     }
 
@@ -356,14 +377,14 @@ export class GradeReportComponent implements OnInit {
             this.reportList.forEach((items) => {
                 items.student_list.forEach((student) => {
                     student.assessment.forEach((assess) => {
-                        if (assess.start_date != '00-00-0000') {
+                        if (assess.start_date != '00-00-0000' && assess.start_date && !isNaN(new Date(assess.start_date).getTime())) {
                             assess.start_date = this.datePipe.transform(assess.start_date, dateOptions.dateFormat);
                         } else {
                             assess.start_date = '';
                         }
                     });
                     student.assignment.forEach((assign) => {
-                        if (assign.start_date != '00-00-0000') {
+                        if (assign.start_date != '00-00-0000' && assign.start_date && !isNaN(new Date(assign.start_date).getTime())) {
                             assign.start_date = this.datePipe.transform(assign.start_date, dateOptions.dateFormat);
                         } else {
                             assign.start_date = '';
@@ -407,8 +428,18 @@ export class GradeReportComponent implements OnInit {
                 },
             };
             this.studentReport.controls.toDate.patchValue(bObject);
-            this.from1Date = this.datePipe.transform(this.studentReport.controls.fromDate.value.singleDate.jsDate, 'yyyy-MM-dd');
-            this.to1Date = this.datePipe.transform(this.studentReport.controls.toDate.value.singleDate.jsDate, 'yyyy-MM-dd');
+            
+            // Safely transform dates with validation
+            const fromDate = this.studentReport.controls.fromDate.value?.singleDate?.jsDate;
+            const toDate = this.studentReport.controls.toDate.value?.singleDate?.jsDate;
+            
+            this.from1Date = fromDate && !isNaN(new Date(fromDate).getTime()) 
+                ? this.datePipe.transform(fromDate, 'yyyy-MM-dd') 
+                : '';
+            this.to1Date = toDate && !isNaN(new Date(toDate).getTime()) 
+                ? this.datePipe.transform(toDate, 'yyyy-MM-dd') 
+                : '';
+                
             this.reports();
         }
     }

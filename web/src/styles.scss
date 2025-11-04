@@ -192,6 +192,99 @@ div#transition-popper{
 }
 
 /* ========================================
+   ENTERPRISE UI - UTILITY HELPERS
+   ======================================== */
+
+.text-neutral-900 { color: var(--neutral-900) !important; }
+.text-neutral-800 { color: var(--neutral-800) !important; }
+.text-neutral-700 { color: var(--neutral-700) !important; }
+.text-neutral-600 { color: var(--neutral-600) !important; }
+.text-neutral-500 { color: var(--neutral-500) !important; }
+
+.bg-surface { background-color: #fff; }
+
+.btn-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  padding: 0;
+}
+
+.shadow-xl {
+  box-shadow: var(--shadow-lg) !important;
+}
+
+.divider {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1 1 auto;
+    height: 1px;
+    background-color: var(--neutral-200);
+  }
+
+  &::before { margin-right: var(--spacing-3); }
+  &::after { margin-left: var(--spacing-3); }
+}
+
+.divider__text {
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--neutral-500);
+}
+
+.filter-select {
+  width: 100%;
+  max-width: 280px;
+}
+
+@media (max-width: 767.98px) {
+  .filter-select {
+    max-width: 100%;
+  }
+}
+
+.badge-soft {
+  border-radius: 999px;
+  font-weight: 600;
+  padding: 0.25rem 0.75rem;
+
+  &-primary {
+    background: rgba(143, 0, 138, 0.12);
+    color: var(--color-primary);
+  }
+
+  &-secondary {
+    background: rgba(19, 201, 202, 0.12);
+    color: var(--color-secondary);
+  }
+
+  &-success {
+    background: rgba(129, 186, 0, 0.12);
+    color: var(--color-success);
+  }
+
+  &-warning {
+    background: rgba(255, 188, 88, 0.18);
+    color: var(--color-warning);
+  }
+
+  &-danger {
+    background: rgba(219, 82, 75, 0.12);
+    color: var(--color-error);
+  }
+}
+
+/* ========================================
    ENTERPRISE UI - FORM STYLING
    ======================================== */
 
@@ -612,4 +705,3 @@ em.error,
   white-space: nowrap;
   border-width: 0;
 }
-

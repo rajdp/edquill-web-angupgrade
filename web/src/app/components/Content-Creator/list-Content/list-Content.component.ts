@@ -56,6 +56,8 @@ export class ListContentComponent implements OnInit, OnChanges {
     public conps1: boolean;
     public allowSelect: boolean;
     public schoolStatus: any;
+    public currentCreatorListPage = 1; // Track current pagination page
+    public savedCreatorFilters: any = {}; // Track saved filters
     @ViewChild('viewdetails') viewDetailsContent: TemplateRef<any>;
 
     constructor(public contentService: ContentService, public config: NgbModalConfig, public confi: ConfigurationService, public newSubject: NewsubjectService,
@@ -105,6 +107,20 @@ export class ListContentComponent implements OnInit, OnChanges {
 
     ngOnInit() {
         this.auth.removeSessionData('backOption');
+        // Restore saved pagination page if available
+        const savedPage = this.auth.getSessionData('creator-list-current-page');
+        if (savedPage) {
+            this.currentCreatorListPage = parseInt(savedPage, 10);
+        }
+        // Restore saved filters if available
+        const savedFilters = this.auth.getSessionData('creator-list-filters');
+        if (savedFilters) {
+            try {
+                this.savedCreatorFilters = JSON.parse(savedFilters);
+            } catch (e) {
+                this.savedCreatorFilters = {};
+            }
+        }
     }
 
     ngOnChanges() {
@@ -139,9 +155,28 @@ export class ListContentComponent implements OnInit, OnChanges {
         } else if (event.emitType == 'edit') {
             this.editAction(event.emitData);
         } else if (event.emitType == 'name') {
+            // Save current page and filters before navigating
+            this.saveStateBeforeNavigation();
             this.viewdetail = event.emitData;
             this.modalRef = this.modalService.open(this.viewDetailsContent);
         }
+    }
+
+    onPageChange(page: number) {
+        // Update current page when user changes pages
+        this.currentCreatorListPage = page;
+    }
+
+    onFilterChange(filters: any) {
+        // Update saved filters whenever filter changes in table
+        this.savedCreatorFilters = filters;
+    }
+
+    saveStateBeforeNavigation() {
+        // Save current page
+        this.auth.setSessionData('creator-list-current-page', this.currentCreatorListPage.toString());
+        // Save current filters
+        this.auth.setSessionData('creator-list-filters', JSON.stringify(this.savedCreatorFilters));
     }
 
     contentList() {
@@ -237,6 +272,8 @@ export class ListContentComponent implements OnInit, OnChanges {
 
     editAction(rows) {
         if (this.allowEdit == true) {
+            // Save current page and filters before navigating to edit
+            this.saveStateBeforeNavigation();
             this.auth.setSessionData('UsersRedirection', 'Creator');
             this.auth.setSessionData('editContent', JSON.stringify(rows));
             this.route.navigate(['/Content-Creator/create-Content/edit']);

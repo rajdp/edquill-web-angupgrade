@@ -110,8 +110,8 @@ export class AssessmentSummaryComponent implements OnInit {
             class: null,
             assessment: null,
             assignment: null,
-            fromDate: '',
-            toDate: ''
+            fromDate: null,
+            toDate: null
         });
         if (this.schoolStatus.length != 0) {
             this.newSubject.schoolChange.subscribe(params => {
@@ -138,15 +138,78 @@ export class AssessmentSummaryComponent implements OnInit {
 
     init(id) {
         this.schoolId = id;
+        console.log('🏫 Assessment Summary - Initialized with school_id:', this.schoolId);
+        
+        // Set default date range: 3 months ago to today
+        const today = new Date();
+        const threeMonthsAgo = new Date();
+        threeMonthsAgo.setMonth(today.getMonth() - 3);
+        
+        console.log('📅 DEBUG - Creating date models:', {
+            today: today,
+            threeMonthsAgo: threeMonthsAgo,
+            todayISO: today.toISOString(),
+            threeMonthsAgoISO: threeMonthsAgo.toISOString()
+        });
+        
+        // Set default "From Date" (3 months ago)
+        const fromDateModel: IMyDateModel = {
+            isRange: false,
+            singleDate: { jsDate: threeMonthsAgo },
+            dateRange: null
+        };
+        console.log('📅 DEBUG - fromDateModel created:', fromDateModel);
+        this.assessmentForm.controls.fromDate.patchValue(fromDateModel);
+        this.from1Date = this.datePipe.transform(threeMonthsAgo, 'yyyy-MM-dd');
+        console.log('📅 DEBUG - After setting fromDate:', {
+            formValue: this.assessmentForm.controls.fromDate.value,
+            from1Date: this.from1Date
+        });
+        
+        // Set default "To Date" (today)
+        const toDateModel: IMyDateModel = {
+            isRange: false,
+            singleDate: { jsDate: today },
+            dateRange: null
+        };
+        console.log('📅 DEBUG - toDateModel created:', toDateModel);
+        this.assessmentForm.controls.toDate.patchValue(toDateModel);
+        this.to1Date = this.datePipe.transform(today, 'yyyy-MM-dd');
+        console.log('📅 DEBUG - After setting toDate:', {
+            formValue: this.assessmentForm.controls.toDate.value,
+            to1Date: this.to1Date
+        });
+        
+        console.log('📅 SUMMARY - Default dates set:', {
+            from1Date: this.from1Date,
+            to1Date: this.to1Date,
+            formFromDate: this.assessmentForm.controls.fromDate.value,
+            formToDate: this.assessmentForm.controls.toDate.value,
+            entireFormValue: this.assessmentForm.value
+        });
+        
         this.classReport();
     }
 
     ngOnInit() {
+        console.log('🔄 ngOnInit - Starting initialization');
         this.auth.setSessionData('resourceAccess', false);
         this.auth.removeSessionData('backOption');
         this.allowSelect = false;
         this.newSubject.allowSchoolChange(this.allowSelect);
+        
+        console.log('📅 DEBUG - Form state before dateCountDetails:', this.assessmentForm.value);
         this.dateCountDetails();
+        console.log('📅 DEBUG - Form state after dateCountDetails:', this.assessmentForm.value);
+        
+        // Initialize with current school_id
+        const currentSchoolId = this.auth.getSessionData('school_id');
+        console.log('🏫 Assessment Summary - ngOnInit with school_id:', currentSchoolId);
+        if (currentSchoolId) {
+            this.init(currentSchoolId);
+        }
+        
+        console.log('📅 DEBUG - Form state after init():', this.assessmentForm.value);
     }
 
     close() {
@@ -203,6 +266,7 @@ export class AssessmentSummaryComponent implements OnInit {
             school_id: this.schoolId,
             teacher_id: this.teacherID
         };
+        console.log('🔍 Assessment Summary - Calling classReport with data:', data);
         this.report.classReport(data).subscribe((successData) => {
                 this.classReportSuccess(successData);
             },
@@ -212,18 +276,39 @@ export class AssessmentSummaryComponent implements OnInit {
     }
 
     classReportSuccess(successData) {
+        console.log('📦 Assessment Summary - classReport response:', successData);
         if (successData.IsSuccess) {
             this.classDetails = successData.ResponseObject;
+            console.log('📋 Assessment Summary - Class list length:', this.classDetails.length);
             if (this.classDetails.length != 0) {
+              console.log('✅ Assessment Summary - Setting first class:', this.classDetails[0].class_id);
               this.assessmentForm.controls.class.patchValue(this.classDetails[0].class_id);
               this.assessmentReport();
               this.assignmentReport();
+            } else {
+              console.warn('⚠️ Assessment Summary - No classes found! Check school_id:', this.schoolId);
+              this.message = 'No classes found for your school. Please check your profile settings.';
             }
+        } else {
+            console.error('❌ Assessment Summary - classReport failed:', successData.ErrorObject);
+            this.message = 'Failed to load classes: ' + successData.ErrorObject;
         }
     }
 
     onDateChanged1(event: any, type): void {
         if (type == '1') {
+            // Validate date before processing
+            if (!event?.singleDate?.formatted) {
+                console.warn('⚠️ Invalid date event:', event);
+                return;
+            }
+            
+            const inputDate = new Date(event.singleDate.formatted);
+            if (isNaN(inputDate.getTime())) {
+                console.warn('⚠️ Invalid date value:', event.singleDate.formatted);
+                return;
+            }
+            
             const maxDate = new Date().toISOString();
             const min = new Date(event.singleDate.formatted);
             const min1 = new Date(event.singleDate.formatted);
@@ -246,14 +331,19 @@ export class AssessmentSummaryComponent implements OnInit {
                         day: new Date(maxToDate1).getDate()
                     },
                 };
-                this.from1Date = this.datePipe.transform(event.singleDate.formatted, 'yyyy-MM-dd');
+                this.from1Date = event.singleDate.formatted && !isNaN(new Date(event.singleDate.formatted).getTime())
+                    ? this.datePipe.transform(event.singleDate.formatted, 'yyyy-MM-dd')
+                    : '';
                 const dObject: IMyDateModel = {
                     isRange: false,
                     singleDate: {jsDate: new Date(maxToDate1)},
                     dateRange: null
                 };
                 this.assessmentForm.controls.toDate.patchValue(dObject);
-                this.to1Date = this.datePipe.transform(this.assessmentForm.controls.toDate.value.singleDate.jsDate, 'yyyy-MM-dd');
+                const toDateValue = this.assessmentForm.controls.toDate.value?.singleDate?.jsDate;
+                this.to1Date = toDateValue && !isNaN(new Date(toDateValue).getTime())
+                    ? this.datePipe.transform(toDateValue, 'yyyy-MM-dd')
+                    : '';
                 this.assessmentReport();
                 this.assignmentReport();
             } else {
@@ -272,18 +362,30 @@ export class AssessmentSummaryComponent implements OnInit {
                         day: new Date().getDate() + 1
                     },
                 };
-                this.from1Date = this.datePipe.transform(event.singleDate.formatted, 'yyyy-MM-dd');
+                this.from1Date = event.singleDate.formatted && !isNaN(new Date(event.singleDate.formatted).getTime())
+                    ? this.datePipe.transform(event.singleDate.formatted, 'yyyy-MM-dd')
+                    : '';
                 const cObject: IMyDateModel = {isRange: false, singleDate: {jsDate: new Date()}, dateRange: null};
                 this.assessmentForm.controls.toDate.patchValue(cObject);
-                this.to1Date = this.datePipe.transform(this.assessmentForm.controls.toDate.value.singleDate.jsDate, 'yyyy-MM-dd');
+                const toDateValue = this.assessmentForm.controls.toDate.value?.singleDate?.jsDate;
+                this.to1Date = toDateValue && !isNaN(new Date(toDateValue).getTime())
+                    ? this.datePipe.transform(toDateValue, 'yyyy-MM-dd')
+                    : '';
                 this.assessmentReport();
                 this.assignmentReport();
             }
         } else {
-            if (event.singleDate.formatted != '' && event.singleDate.formatted != null) {
-                this.to1Date = this.datePipe.transform(event.singleDate.formatted, 'yyyy-MM-dd');
-            } else {
+            // Validate date before processing
+            if (!event?.singleDate?.formatted) {
                 this.to1Date = '';
+            } else {
+                const inputDate = new Date(event.singleDate.formatted);
+                if (isNaN(inputDate.getTime())) {
+                    console.warn('⚠️ Invalid "to" date value:', event.singleDate.formatted);
+                    this.to1Date = '';
+                } else {
+                    this.to1Date = this.datePipe.transform(event.singleDate.formatted, 'yyyy-MM-dd');
+                }
             }
             this.assessmentReport();
             this.assignmentReport();
@@ -291,23 +393,42 @@ export class AssessmentSummaryComponent implements OnInit {
     }
 
     assessmentReport() {
-        if (this.assessmentForm.get('class').value != null) {
+        const classValue = this.assessmentForm.get('class').value;
+        console.log('🎯 Assessment Summary - assessmentReport called with class value:', classValue);
+        
+        console.log('📅 DEBUG - Date values before API call:', {
+            from1Date: this.from1Date,
+            to1Date: this.to1Date,
+            from1DateType: typeof this.from1Date,
+            to1DateType: typeof this.to1Date,
+            formFromDate: this.assessmentForm.controls.fromDate.value,
+            formToDate: this.assessmentForm.controls.toDate.value
+        });
+        
+        if (classValue != null) {
             const data = {
                 platform: 'web',
                 role_id: this.auth.getRoleId(),
                 user_id: this.auth.getUserId(),
                 school_id: this.schoolId,
-                class_id: this.assessmentForm.get('class').value,
+                class_id: classValue,
                 from_date: this.from1Date == '' ? '' : this.datePipe.transform(this.from1Date, 'yyyy-MM-dd'),
                 to_date: this.to1Date == '' ? '' : this.datePipe.transform(this.to1Date, 'yyyy-MM-dd')
             };
+            console.log('📤 Assessment Summary - Calling assessmentReport API with:', data);
+            console.log('📅 DEBUG - Final dates being sent:', {
+                from_date: data.from_date,
+                to_date: data.to_date
+            });
             this.report.assessmentReport(data).subscribe((successData) => {
+                    console.log('📥 Assessment Summary - assessmentReport response:', successData);
                     this.assessmentReportSuccess(successData);
                 },
                 (error) => {
-                   console.error(error, 'assessmentReport');
+                   console.error('❌ Assessment Summary - assessmentReport error:', error);
                 });
         } else {
+            console.warn('⚠️ Assessment Summary - Class value is null!');
             this.message = 'Class should not be empty';
             this.assessmentShow = false;
             this.assessmentReportShow = false;
@@ -315,12 +436,24 @@ export class AssessmentSummaryComponent implements OnInit {
     }
 
     assessmentReportSuccess(successData) {
+        console.log('✅ Assessment Summary - assessmentReportSuccess:', successData);
         if (successData.IsSuccess) {
             this.assessmentDetails = successData.ResponseObject;
+            console.log('📊 Assessment Summary - Found', this.assessmentDetails.length, 'assessments');
             this.assessmentValue = this.assessmentDetails.map(item => item.content_id);
             this.assessmentShow = true;
+            
+            // Log current form values to verify dates are set
+            console.log('📅 Date values when assessmentShow becomes true:', {
+                fromDate: this.assessmentForm.controls.fromDate.value,
+                toDate: this.assessmentForm.controls.toDate.value,
+                from1Date: this.from1Date,
+                to1Date: this.to1Date
+            });
+            
             this.assessmentDetailReport();
         } else {
+            console.error('❌ Assessment Summary - assessmentReport failed');
             this.message = 'Class should not be empty';
             this.assessmentShow = false;
             this.assessmentReportShow = false;
@@ -345,64 +478,93 @@ export class AssessmentSummaryComponent implements OnInit {
     }
 
     assessmentDetailReportSuccess(successData) {
+        console.log('📊 Assessment Detail Report Success:', successData);
         if (successData.IsSuccess) {
             this.assessmentReportDetails = successData.ResponseObject;
-            this.listData = this.assessmentReportDetails.contentList;
-            this.listData.forEach((item) => {
-                if (item.assessment_date != '00-00-0000') {
-                    item.assessment_date = this.datePipe.transform(item.assessment_date, dateOptions.dateFormat);
-                } else {
-                    item.assessment_date = '';
-                }
-            });
-            this.chartOptions = {
-                series: [this.assessmentReportDetails.chartValues[0].Master, this.assessmentReportDetails.chartValues[0].Excellent, this.assessmentReportDetails.chartValues[0].Proficient, this.assessmentReportDetails.chartValues[0].Average, this.assessmentReportDetails.chartValues[0].belowAverage],
-                chart: {
-                    width: 480,
-                    type: 'pie'
-                },
-                labels: ['Master(90% and above)', 'Excellent(80% - 89.99%)', 'Proficient(70% - 79.99%)', 'Average(50% - 69.99%)', 'Below Average(less than 50%)'],
-                responsive: [
-                    {
-                        breakpoint: 480,
-                        options: {
-                            chart: {
-                                width: 400
-                            },
-                            legend: {
-                                position: 'bottom'
+            console.log('📊 Assessment Detail - ResponseObject:', this.assessmentReportDetails);
+            
+            this.listData = this.assessmentReportDetails.contentList || [];
+            console.log('📊 Assessment Detail - contentList length:', this.listData.length);
+            
+            if (this.listData.length > 0) {
+                this.listData.forEach((item) => {
+                    if (item.assessment_date != '00-00-0000' && item.assessment_date && !isNaN(new Date(item.assessment_date).getTime())) {
+                        item.assessment_date = this.datePipe.transform(item.assessment_date, dateOptions.dateFormat);
+                    } else {
+                        item.assessment_date = '';
+                    }
+                });
+            }
+            
+            // Only create chart if we have chart data
+            if (this.assessmentReportDetails.chartValues && this.assessmentReportDetails.chartValues[0]) {
+                this.chartOptions = {
+                    series: [this.assessmentReportDetails.chartValues[0].Master, this.assessmentReportDetails.chartValues[0].Excellent, this.assessmentReportDetails.chartValues[0].Proficient, this.assessmentReportDetails.chartValues[0].Average, this.assessmentReportDetails.chartValues[0].belowAverage],
+                    chart: {
+                        width: 480,
+                        type: 'pie'
+                    },
+                    labels: ['Master(90% and above)', 'Excellent(80% - 89.99%)', 'Proficient(70% - 79.99%)', 'Average(50% - 69.99%)', 'Below Average(less than 50%)'],
+                    responsive: [
+                        {
+                            breakpoint: 480,
+                            options: {
+                                chart: {
+                                    width: 400
+                                },
+                                legend: {
+                                    position: 'bottom'
+                                }
                             }
                         }
-                    }
-                ]
-            };
+                    ]
+                };
+            }
+            
+            console.log('✅ Setting assessmentReportShow = true');
             this.assessmentReportShow = true;
         } else {
+            console.warn('⚠️ assessmentDetailReport failed, hiding section');
             this.assessmentReportShow = false;
             this.message = 'No Records found';
         }
     }
 
     assignmentReport() {
-        if (this.assessmentForm.get('class').value != null) {
+        const classValue = this.assessmentForm.get('class').value;
+        console.log('🎯 Assessment Summary - assignmentReport called with class value:', classValue);
+        
+        console.log('📅 DEBUG - Date values before assignment API call:', {
+            from1Date: this.from1Date,
+            to1Date: this.to1Date,
+            formFromDate: this.assessmentForm.controls.fromDate.value,
+            formToDate: this.assessmentForm.controls.toDate.value
+        });
+        
+        if (classValue != null) {
             const data = {
                 platform: 'web',
                 role_id: this.auth.getRoleId(),
                 user_id: this.auth.getUserId(),
                 school_id: this.schoolId,
-                class_id: this.assessmentForm.get('class').value,
+                class_id: classValue,
                 from_date: this.from1Date == '' ? '' : this.datePipe.transform(this.from1Date, 'yyyy-MM-dd'),
                 to_date: this.to1Date == '' ? '' : this.datePipe.transform(this.to1Date, 'yyyy-MM-dd')
-                // from_date: this.assessmentForm.get('fromDate').value == '' ? '' : this.datePipe.transform(this.assessmentForm.get('fromDate').value.singleDate.jsDate, 'yyyy-MM-dd'),
-                // to_date: this.assessmentForm.get('toDate').value == '' ? '' : this.datePipe.transform(this.assessmentForm.get('toDate').value.singleDate.jsDate, 'yyyy-MM-dd')
             };
+            console.log('📤 Assessment Summary - Calling assignmentReport API with:', data);
+            console.log('📅 DEBUG - Final assignment dates being sent:', {
+                from_date: data.from_date,
+                to_date: data.to_date
+            });
             this.report.assignmentReport(data).subscribe((successData) => {
+                    console.log('📥 Assessment Summary - assignmentReport response:', successData);
                     this.assignmentReportSuccess(successData);
                 },
                 (error) => {
-                    console.error(error, 'assignmentReport');
+                    console.error('❌ Assessment Summary - assignmentReport error:', error);
                 });
         } else {
+            console.warn('⚠️ Assessment Summary - Class value is null for assignment!');
             this.message = 'Class should not be empty';
             this.assessmentShow = false;
             this.assignmentReportShow = false;
@@ -410,13 +572,15 @@ export class AssessmentSummaryComponent implements OnInit {
     }
 
     assignmentReportSuccess(successData) {
+        console.log('✅ Assessment Summary - assignmentReportSuccess:', successData);
         if (successData.IsSuccess) {
             this.assignmentDetails = successData.ResponseObject;
+            console.log('📊 Assessment Summary - Found', this.assignmentDetails.length, 'assignments');
             this.assignmentValue = this.assignmentDetails.map(item => item.content_id);
             this.assessmentShow = true;
-            // this.assignmentReportShow = true;
             this.assignmentDetailReport();
         } else {
+            console.error('❌ Assignment Summary - assignmentReport failed');
             this.message = 'Class should not be empty';
             this.assessmentShow = false;
             this.assignmentReportShow = false;
@@ -432,7 +596,11 @@ export class AssessmentSummaryComponent implements OnInit {
             class_id: this.assessmentForm.get('class').value,
             content_id: ((this.assessmentForm.get('assignment').value && this.assessmentForm.get('assignment').value.length > 0) ? this.assessmentForm.get('assignment').value : this.assignmentValue)
         };
+        console.log('📤 Calling assignmentDetailReport with:', data);
+        console.log('📊 Assignment value array:', this.assignmentValue);
+        
         this.report.assignmentDetailReport(data).subscribe((successData) => {
+                console.log('📥 assignmentDetailReport response:', successData);
                 this.assignmentDetailReportSuccess(successData);
             },
             (error) => {
@@ -441,39 +609,53 @@ export class AssessmentSummaryComponent implements OnInit {
     }
 
     assignmentDetailReportSuccess(successData) {
+        console.log('📊 Assignment Detail Report Success:', successData);
         if (successData.IsSuccess) {
             this.assignmentReportDetails = successData.ResponseObject;
-            this.listData1 = this.assignmentReportDetails.contentList;
-            this.listData1.forEach((item) => {
-                if (item.assignment_date != '00-00-0000') {
-                    item.assignment_date = this.datePipe.transform(item.assignment_date, dateOptions.dateFormat);
-                } else {
-                    item.assignment_date = '';
-                }
-            });
-            this.chartOptions1 = {
-                series: [this.assignmentReportDetails.chartValues[0].Master, this.assignmentReportDetails.chartValues[0].Excellent, this.assignmentReportDetails.chartValues[0].Proficient, this.assignmentReportDetails.chartValues[0].Average, this.assignmentReportDetails.chartValues[0].belowAverage],
-                chart: {
-                    width: 480,
-                    type: 'pie'
-                },
-                labels: ['Master(90% and above)', 'Excellent(80% - 89.99%)', 'Proficient(70% - 79.99%)', 'Average(50% - 69.99%)', 'Below Average(less than 50%)'],
-                responsive: [
-                    {
-                        breakpoint: 480,
-                        options: {
-                            chart: {
-                                width: 400
-                            },
-                            legend: {
-                                position: 'bottom'
+            console.log('📊 Assignment Detail - ResponseObject:', this.assignmentReportDetails);
+            
+            this.listData1 = this.assignmentReportDetails.contentList || [];
+            console.log('📊 Assignment Detail - contentList length:', this.listData1.length);
+            
+            if (this.listData1.length > 0) {
+                this.listData1.forEach((item) => {
+                    if (item.assignment_date != '00-00-0000' && item.assignment_date && !isNaN(new Date(item.assignment_date).getTime())) {
+                        item.assignment_date = this.datePipe.transform(item.assignment_date, dateOptions.dateFormat);
+                    } else {
+                        item.assignment_date = '';
+                    }
+                });
+            }
+            
+            // Only create chart if we have chart data
+            if (this.assignmentReportDetails.chartValues && this.assignmentReportDetails.chartValues[0]) {
+                this.chartOptions1 = {
+                    series: [this.assignmentReportDetails.chartValues[0].Master, this.assignmentReportDetails.chartValues[0].Excellent, this.assignmentReportDetails.chartValues[0].Proficient, this.assignmentReportDetails.chartValues[0].Average, this.assignmentReportDetails.chartValues[0].belowAverage],
+                    chart: {
+                        width: 480,
+                        type: 'pie'
+                    },
+                    labels: ['Master(90% and above)', 'Excellent(80% - 89.99%)', 'Proficient(70% - 79.99%)', 'Average(50% - 69.99%)', 'Below Average(less than 50%)'],
+                    responsive: [
+                        {
+                            breakpoint: 480,
+                            options: {
+                                chart: {
+                                    width: 400
+                                },
+                                legend: {
+                                    position: 'bottom'
+                                }
                             }
                         }
-                    }
-                ]
-            };
+                    ]
+                };
+            }
+            
+            console.log('✅ Setting assignmentReportShow = true');
             this.assignmentReportShow = true;
         } else {
+            console.warn('⚠️ assignmentDetailReport failed, hiding section');
             this.assignmentReportShow = false;
             this.message = 'No Records found';
         }
@@ -939,13 +1121,29 @@ export class AssessmentSummaryComponent implements OnInit {
     dateCountSuccess(successData) {
         if (successData.IsSuccess) {
             this.dateCount = successData.ResponseObject.class_report_days;
-            console.log(this.dateCount, 'datecount');
-            const a = new Date();
-            const b = new Date();
-            a.setDate(a.getDate() - this.dateCount);
-            const aObject: IMyDateModel = {isRange: false, singleDate: {jsDate: a}, dateRange: null};
-            const bObject: IMyDateModel = {isRange: false, singleDate: {jsDate: b}, dateRange: null};
+            console.log('📅 DEBUG - dateCountSuccess - Backend returned days:', this.dateCount);
+            
+            // Use 3 months (90 days) as default instead of backend value
+            const daysToGoBack = 90; // 3 months
+            console.log('📅 DEBUG - Using 90 days (3 months) for default date range');
+            
+            const today = new Date();
+            const fromDate = new Date();
+            fromDate.setDate(today.getDate() - daysToGoBack);
+            
+            console.log('📅 DEBUG - dateCountSuccess setting dates:', {
+                today: today,
+                fromDate: fromDate,
+                todayISO: today.toISOString(),
+                fromDateISO: fromDate.toISOString()
+            });
+            
+            const aObject: IMyDateModel = {isRange: false, singleDate: {jsDate: fromDate}, dateRange: null};
+            const bObject: IMyDateModel = {isRange: false, singleDate: {jsDate: today}, dateRange: null};
+            
             this.assessmentForm.controls.fromDate.patchValue(aObject);
+            console.log('📅 DEBUG - After patchValue fromDate:', this.assessmentForm.controls.fromDate.value);
+            
             const aa = this.assessmentForm.controls.fromDate.value.singleDate.jsDate;
             this.myDpOptions1 = {
                 dateRange: false,
@@ -957,9 +1155,28 @@ export class AssessmentSummaryComponent implements OnInit {
                     day: new Date(aa).getDate() - 1,
                 },
             };
+            
             this.assessmentForm.controls.toDate.patchValue(bObject);
-            this.from1Date = this.datePipe.transform(this.assessmentForm.controls.fromDate.value.singleDate.jsDate, 'yyyy-MM-dd');
-            this.to1Date = this.datePipe.transform(this.assessmentForm.controls.toDate.value.singleDate.jsDate, 'yyyy-MM-dd');
+            console.log('📅 DEBUG - After patchValue toDate:', this.assessmentForm.controls.toDate.value);
+            
+            // Safely transform dates with validation
+            const formFromDate = this.assessmentForm.controls.fromDate.value?.singleDate?.jsDate;
+            const formToDate = this.assessmentForm.controls.toDate.value?.singleDate?.jsDate;
+            
+            this.from1Date = formFromDate && !isNaN(new Date(formFromDate).getTime()) 
+                ? this.datePipe.transform(formFromDate, 'yyyy-MM-dd') 
+                : '';
+            this.to1Date = formToDate && !isNaN(new Date(formToDate).getTime()) 
+                ? this.datePipe.transform(formToDate, 'yyyy-MM-dd') 
+                : '';
+            
+            console.log('📅 DEBUG - dateCountSuccess FINAL values:', {
+                from1Date: this.from1Date,
+                to1Date: this.to1Date,
+                formFromDate: this.assessmentForm.controls.fromDate.value,
+                formToDate: this.assessmentForm.controls.toDate.value
+            });
+                
             this.assessmentReport();
             this.assignmentReport();
         }

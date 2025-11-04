@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, signal } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
 import { Title } from '@angular/platform-browser';
 import { ConnectionService } from 'ng-connection-service';
@@ -28,12 +28,7 @@ export class AppComponent {
 
   readonly allow = signal(false);
   readonly zoomAllowed = signal(true);
-  readonly hasInternet = signal(false);
-
-  readonly connectivityClass = computed(() => (this.hasInternet() ? 'internet' : 'no-internet'));
-  readonly invertedConnectivityClass = computed(() => (this.hasInternet() ? 'no-internet' : 'internet'));
-  readonly overlayClass = computed(() => (this.hasInternet() ? 'internet overlay-hidden' : 'no-internet overlay'));
-  readonly offlineOverlayClass = computed(() => (this.hasInternet() ? 'no-internet overlay' : 'internet overlay-hidden'));
+  readonly hasInternet = signal(true);
 
   favIcon: HTMLLinkElement | null = document.querySelector('#appIcon');
 

@@ -14,32 +14,16 @@
             </div>
         </div>
         <div class="col-12 col-sm-12 col-lg-6 px-0 d-flex justify-content-end">
-            <div class="col-12 px-1 col-sm-4 col-lg-4 align-self-center">
-                <div *ngIf="auth.getRoleId() != '4'" class="pull-right">
-                    <div class="input-group">
-                        <input (input)="setFilter()" [(ngModel)]="searchTeacher" class="form-control" placeholder="Search Teacher" size="50" style="height:40px" type="text">
-                        <div class="input-group-append">
-                            <button style="padding: 6px 8px" (click)="setFilter()" class="btn btn-primary" type="submit"><i aria-hidden="true" class="fa fa-search"></i></button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-12 px-1 col-sm-4 col-lg-4 align-self-center">
+            <div class="col-12 px-1 col-sm-6 col-lg-6 align-self-center">
                 <div class="pull-right">
                     <div class="input-group">
-                        <input (input)="setFilter()" [(ngModel)]="searchClass" class="form-control" placeholder="Search Class" size="50" style="height:40px" type="text">
+                        <input (input)="setFilter()" [(ngModel)]="searchText" class="form-control" 
+                               [placeholder]="auth.getRoleId() == '4' ? 'Search class or student' : (auth.getRoleId() == '5' ? 'Search teacher or class' : 'Search teacher, class or student')" 
+                               size="50" style="height:40px" type="text">
                         <div class="input-group-append">
-                            <button style="padding: 6px 8px" (click)="setFilter()" class="btn btn-primary" type="submit"><i aria-hidden="true" class="fa fa-search"></i></button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-12 px-1 col-sm-4 col-lg-4 align-self-center" *ngIf="auth.getRoleId() != '5'">
-                <div class="pull-right">
-                    <div class="input-group">
-                        <input (input)="setFilter()" [(ngModel)]="searchStudent" class="form-control" placeholder="Search Student" size="50" style="height:40px" type="text">
-                        <div class="input-group-append">
-                            <button style="padding: 6px 8px" (click)="setFilter()" class="btn btn-primary" type="submit"><i aria-hidden="true" class="fa fa-search"></i></button>
+                            <button style="padding: 6px 8px" (click)="setFilter()" class="btn btn-primary" type="submit">
+                                <i aria-hidden="true" class="fa fa-search"></i>
+                            </button>
                         </div>
                     </div>
                 </div>

@@ -94,6 +94,8 @@ export class ListTemplateComponent implements OnInit, OnChanges {
     public student_id: any;
 
     public manageStudent = false;
+    public currentStudentListPage = 1; // Track current pagination page
+    public savedStudentFilters: any = {}; // Track saved filters
     @ViewChild('allNotes') allNotes: TemplateRef<any>;
 
     @ViewChild('content') modalContent: TemplateRef<any>;
@@ -151,6 +153,20 @@ export class ListTemplateComponent implements OnInit, OnChanges {
 
     ngOnInit() {
         this.auth.removeSessionData('backOption');
+        // Restore saved pagination page if available
+        const savedPage = this.auth.getSessionData('student-list-current-page');
+        if (savedPage) {
+            this.currentStudentListPage = parseInt(savedPage, 10);
+        }
+        // Restore saved filters if available
+        const savedFilters = this.auth.getSessionData('student-list-filters');
+        if (savedFilters) {
+            try {
+                this.savedStudentFilters = JSON.parse(savedFilters);
+            } catch (e) {
+                this.savedStudentFilters = {};
+            }
+        }
     }
 
     ngOnChanges() {
@@ -177,13 +193,34 @@ export class ListTemplateComponent implements OnInit, OnChanges {
         } else if (event.emitType == 'Announcement') {
             this.getNotes(event.emitData.user_id, this.classId, this.contentId);
         } else if (event.emitType == 'name') {
+            // Save current page and filters before navigating
+            this.saveStateBeforeNavigation();
             this.auth.setSessionData('student-profile-details', JSON.stringify(event.emitData));
             this.route.navigate(['studentlogin/profile-details']);
         }
     }
 
+    onFilterChange(filters: any) {
+        // Update saved filters whenever filter changes in table
+        this.savedStudentFilters = filters;
+    }
+
+    saveStateBeforeNavigation() {
+        // Save current page
+        this.auth.setSessionData('student-list-current-page', this.currentStudentListPage.toString());
+        // Save current filters
+        this.auth.setSessionData('student-list-filters', JSON.stringify(this.savedStudentFilters));
+    }
+
+    onPageChange(page: number) {
+        // Update current page when user changes pages
+        this.currentStudentListPage = page;
+    }
+
     editAction(rows) {
         if (this.manageStudent) {
+            // Save current page and filters before navigating to edit
+            this.saveStateBeforeNavigation();
             this.auth.setSessionData('UsersRedirection', 'Student');
             this.auth.setSessionData('editStudent', JSON.stringify(rows));
             this.route.navigate(['/student/create-student/edit']);

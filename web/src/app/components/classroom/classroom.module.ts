@@ -10,6 +10,10 @@ import {NgSelectModule} from '@ng-select/ng-select';
 import {CorporateschoolModule} from '../corporateschool/corporateschool.module';
 import {AuthModule} from '../auth/auth.module';
 import {ContentModule} from '../repository/repositery.module';
+import {MatTreeModule} from '@angular/material/tree';
+import {MatIconModule} from '@angular/material/icon';
+import {MatButtonModule} from '@angular/material/button';
+import {MatCheckboxModule} from '@angular/material/checkbox';
 
 @NgModule({
   declarations: [ListClassroomComponent, AddClassroomComponent],
@@ -23,7 +27,11 @@ import {ContentModule} from '../repository/repositery.module';
         FormsModule,
         CorporateschoolModule,
         AuthModule,
-        ContentModule
+        ContentModule,
+        MatTreeModule,
+        MatIconModule,
+        MatButtonModule,
+        MatCheckboxModule
     ],
     providers: [TitleCasePipe]
 })

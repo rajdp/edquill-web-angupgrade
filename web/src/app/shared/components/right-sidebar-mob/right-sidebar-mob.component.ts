@@ -142,11 +142,17 @@ export class RightSidebarMobComponent implements OnInit {
         } else {
             this.profile = this.auth.getSessionData('school_profile_url');
         }
-        const profilepic = this.profile.split('/');
-        if (profilepic[0] == 'assets') {
-            this.listCheck = true;
-        } else if (profilepic[0] == 'uploads') {
-            this.listCheck = false;
+        
+        // Add null check before split
+        if (this.profile) {
+            const profilepic = this.profile.split('/');
+            if (profilepic[0] == 'assets') {
+                this.listCheck = true;
+            } else if (profilepic[0] == 'uploads') {
+                this.listCheck = false;
+            }
+        } else {
+            this.listCheck = true; // Default to true if no profile
         }
     }
 }

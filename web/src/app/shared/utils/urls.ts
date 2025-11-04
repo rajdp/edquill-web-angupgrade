@@ -84,6 +84,8 @@ export const urls = {
   makeUpClass: 'student/makeUpClass',
   addOverallFeedback: 'teacher/addOverallFeedback',
   updateOverallFeedback: 'teacher/updateOverallFeedback',
-  getOverallFeedback: 'teacher/getOverallFeedback'
+  getOverallFeedback: 'teacher/getOverallFeedback',
+  teacherAvailability: 'availability',
+  teacherAvailabilityAdmin: 'availability/admin-view'
 };
 

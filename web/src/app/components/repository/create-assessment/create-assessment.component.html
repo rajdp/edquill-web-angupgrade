@@ -322,16 +322,16 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div *ngIf="teacherVersion.length != 0" class="col-md-4 d-flex justify-content-center">
+                                <div *ngIf="teacherVersion?.length != 0" class="col-md-4 d-flex justify-content-center">
                                     <div *ngFor="let file of teacherVersion; let i= index"
                                          class="form-group card-resource">
                                         <h4 style="color: black; font-weight: bold">Teacher version PDF</h4>
-                                        <div *ngIf="teacherVersion.length > 0" class="delete-icon w-100">
+                                        <div *ngIf="teacherVersion?.length > 0" class="delete-icon w-100">
                                             <img (click)="viewDetail(file)" alt="" class="cursor img-path"
                                                  src="assets/images/ristaschool/teacherVersion.png"
                                                  title="{{file.image}}">
                                             <br/>
-                                            <img (click)="deleteVersion()" *ngIf="teacherVersion.length != 0" alt=""
+                                            <img (click)="deleteVersion()" *ngIf="teacherVersion?.length != 0" alt=""
                                                  class="img-icon mt-2 float-right"
                                                  src="assets/images/pdf-icons/Icon material-delete@2x.png">
                                             <h6 (click)="viewDetail(file)"

@@ -5,7 +5,7 @@
 <!--            <h4 class="letter" *ngIf="rollId == '2' || rollId == '6'">Schedule</h4>-->
 <!--            <h4 class="letter" *ngIf="rollId == '4'">My Schedule</h4>-->
 <!--        </div>-->
-        <div class="col-4 col-lg-3 form-group" *ngIf="rollId != '4'">
+        <div class="col-12 col-sm-6 col-md-4 col-lg-3 form-group" *ngIf="rollId != '4'">
             <ng-select [items]="teacherData"
                        bindLabel="teacher_name"
                        bindValue="teacher_id"
@@ -15,7 +15,7 @@
                        (change)="scheduleDetails('teacher')">
             </ng-select>
         </div>
-        <div class="col-4 col-lg-3 form-group">
+        <div class="col-12 col-sm-6 col-md-4 col-lg-3 form-group">
             <ng-select [items]="classData"
                        bindLabel="class_name"
                        bindValue="class_id"
@@ -93,6 +93,8 @@
                                 [viewDate]="viewDate"
                                 [events]="caelenderDayEvents"
                                 [refresh]="refresh"
+                                [dayStartHour]="8"
+                                [dayEndHour]="20"
                                 (eventClicked)="handleEvent('Clicked', $event.event)"
                                 >
                     </mwl-calendar-week-view>
@@ -101,6 +103,8 @@
                                 [viewDate]="viewDate"
                                 [events]="caelenderDayEvents"
                                 [refresh]="refresh"
+                                [dayStartHour]="8"
+                                [dayEndHour]="20"
                                 (eventClicked)="handleEvent('Clicked', $event.event)">
                     </mwl-calendar-day-view>
                 </div>

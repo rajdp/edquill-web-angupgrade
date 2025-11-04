@@ -342,20 +342,67 @@ export class PreviewComponent implements OnInit {
                 this.webhost = this.confi.getimgUrl();
                 this.additionalLinks = this.getpdf[0]?.links ? this.getpdf[0]?.links : [];
                 console.log(this.additionalLinks, 'additionAlLinks');
-                if (this.getpdf[0].original_image_url != undefined) {
+                console.log('PDF URL:', this.webhost + '/' + this.getpdf[0]?.original_image_url);
+                
+                if (this.getpdf[0] && this.getpdf[0].original_image_url != undefined) {
+                    console.log('Starting PDF download...');
+                    
+                    // Set a timeout to ensure we don't hang forever
+                    const timeout = setTimeout(() => {
+                        console.warn('PDF download timeout, setting isPdfAvailable to false');
+                        this.isPdfAvailable = false;
+                    }, 10000); // 10 second timeout
+                    
                     this.commonservice.downloadfilewithbytes(this.webhost + '/' + this.getpdf[0]?.original_image_url)
-                        .subscribe((filebytes: ArrayBuffer) => {
-                            this.pdfTemplate = filebytes;
-                            this.isPdfAvailable = true;
+                        .subscribe({
+                            next: (filebytes: ArrayBuffer) => {
+                                clearTimeout(timeout);
+                                console.log('PDF download successful, size:', filebytes.byteLength);
+                                this.pdfTemplate = filebytes;
+                                this.isPdfAvailable = true;
+                            },
+                            error: (error) => {
+                                clearTimeout(timeout);
+                                console.error('Error loading PDF file:', error);
+                                this.isPdfAvailable = false;
+                            }
                         });
                 } else {
+                    console.log('No PDF file URL found, setting isPdfAvailable to false');
                     this.isPdfAvailable = false;
                 }
 
                 this.previewPdf = true;
 
-                const annotation = this.detailData.annotation;
-                this.dragQuestionsList = this.detailData.questionAnnotation;
+                // Ensure annotation is always an array
+                let annotation = this.detailData.annotation;
+                if (typeof annotation === 'string') {
+                    try {
+                        annotation = JSON.parse(annotation);
+                    } catch (e) {
+                        console.error('Error parsing annotation:', e);
+                        annotation = [];
+                    }
+                }
+                if (!Array.isArray(annotation)) {
+                    annotation = [];
+                }
+                
+                // Ensure questionAnnotation is always an array
+                let questionAnnotation = this.detailData.questionAnnotation;
+                if (typeof questionAnnotation === 'string') {
+                    try {
+                        questionAnnotation = JSON.parse(questionAnnotation);
+                    } catch (e) {
+                        console.error('Error parsing questionAnnotation:', e);
+                        questionAnnotation = [];
+                    }
+                }
+                if (!Array.isArray(questionAnnotation)) {
+                    questionAnnotation = [];
+                }
+                
+                this.dragQuestionsList = questionAnnotation;
                 annotation.forEach((value) => {
                     value.isTeacherCorrection = false;
                 });
@@ -510,6 +557,7 @@ export class PreviewComponent implements OnInit {
 
     resorceAnnotateFailure(error) {
         console.log(error);
+        this.functionCalled = true; // Ensure functionCalled is set even on failure
     }
 
     graphDetail(val) {

@@ -1,0 +1,147 @@
+<div class="availability-wrapper">
+  <div class="page-header">
+    <h3>Teacher Availability</h3>
+    <p class="subheading" *ngIf="isAdmin">View availability across all teachers.</p>
+    <p class="subheading" *ngIf="!isAdmin">Manage when you are available for 1:1 sessions.</p>
+  </div>
+
+  <section *ngIf="isAdmin" class="card filter-card">
+    <form [formGroup]="filterForm" (ngSubmit)="applyFilters()" class="filter-form">
+      <div class="row">
+        <div class="col">
+          <label for="teacher_id">Teacher</label>
+          <select id="teacher_id" class="form-control" formControlName="teacher_id">
+            <option value="">All Teachers</option>
+            <option *ngFor="let teacher of teacherOptions" [value]="teacher.id">{{ teacher.name }}</option>
+          </select>
+        </div>
+        <div class="col">
+          <label for="day_of_week">Day</label>
+          <select id="day_of_week" class="form-control" formControlName="day_of_week">
+            <option value="">All Days</option>
+            <option *ngFor="let day of dayOptions" [value]="day.value">{{ day.label }}</option>
+          </select>
+        </div>
+        <div class="col">
+          <label for="start_date">Start Date</label>
+          <input id="start_date" type="date" class="form-control" formControlName="start_date">
+        </div>
+        <div class="col">
+          <label for="end_date">End Date</label>
+          <input id="end_date" type="date" class="form-control" formControlName="end_date">
+        </div>
+      </div>
+      <div class="actions">
+        <button type="submit" class="btn btn-primary">Apply Filters</button>
+        <button type="button" class="btn btn-light" (click)="clearFilters()">Clear</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="card form-card">
+    <form [formGroup]="availabilityForm" (ngSubmit)="submitAvailability()" novalidate>
+      <div class="row">
+        <div class="col" *ngIf="isAdmin">
+          <label for="form_teacher_id">Teacher<span class="required">*</span></label>
+          <select id="form_teacher_id" class="form-control" formControlName="teacher_id" required>
+            <option value="">Select teacher</option>
+            <option *ngFor="let teacher of teacherOptions" [ngValue]="teacher.id">{{ teacher.name }}</option>
+          </select>
+        </div>
+        <div class="col col-toggle">
+          <label class="checkbox">
+            <input type="checkbox" formControlName="is_recurring">
+            <span>Recurring weekly availability</span>
+          </label>
+        </div>
+        <div class="col" *ngIf="!(availabilityForm.get('is_recurring')?.value)">
+          <label for="date">Date<span class="required">*</span></label>
+          <input id="date" type="date" class="form-control" formControlName="date" required>
+        </div>
+        <div class="col" *ngIf="availabilityForm.get('is_recurring')?.value">
+          <label for="day_of_week">Day of Week<span class="required">*</span></label>
+          <select id="day_of_week" class="form-control" formControlName="day_of_week">
+            <option *ngFor="let day of dayOptions" [value]="day.value">{{ day.label }}</option>
+          </select>
+        </div>
+        <div class="col" *ngIf="availabilityForm.get('is_recurring')?.value">
+          <label for="recurrence_end">Repeat Until</label>
+          <input id="recurrence_end" type="date" class="form-control" formControlName="recurrence_end">
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col">
+          <label for="start_time">Start Time<span class="required">*</span></label>
+          <input id="start_time" type="time" class="form-control" formControlName="start_time" required>
+        </div>
+        <div class="col">
+          <label for="end_time">End Time<span class="required">*</span></label>
+          <input id="end_time" type="time" class="form-control" formControlName="end_time" required>
+        </div>
+        <div class="col">
+          <label for="timezone">Timezone<span class="required">*</span></label>
+          <select id="timezone" class="form-control" formControlName="timezone" required>
+            <option value="" disabled>Select timezone</option>
+            <option *ngFor="let item of timezoneOptions" [value]="item.value">{{ item.label }}</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col">
+          <label for="notes">Notes</label>
+          <textarea id="notes" rows="2" class="form-control" formControlName="notes" placeholder="Optional context (e.g. Zoom prep time)"></textarea>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button type="submit" class="btn btn-primary" [disabled]="isSubmitting">
+          {{ editingId ? 'Update Availability' : 'Add Availability' }}
+        </button>
+        <button type="button" class="btn btn-light" *ngIf="editingId" (click)="cancelEdit()">Cancel</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="card table-card">
+    <div class="card-header">
+      <h4>Availability Blocks</h4>
+      <span *ngIf="isLoading" class="status">Loading…</span>
+      <span *ngIf="!isLoading && availability.length" class="status">{{ availability.length }} entries</span>
+    </div>
+
+    <div *ngIf="!isLoading && !availability.length" class="empty-state">
+      <p>No availability configured yet.</p>
+      <p *ngIf="!isAdmin">Use the form above to add your first block.</p>
+    </div>
+
+    <table *ngIf="availability.length" class="table table-striped">
+      <thead>
+      <tr>
+        <th *ngIf="isAdmin">Teacher</th>
+        <th>Type</th>
+        <th>Schedule</th>
+        <th>Timezone</th>
+        <th>Notes</th>
+        <th>Last Updated</th>
+        <th class="actions-col">Actions</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let entry of availability; trackBy: trackById">
+        <td *ngIf="isAdmin">{{ teacherName(entry) }}</td>
+        <td>{{ displayType(entry) }}</td>
+        <td>{{ displaySchedule(entry) }}</td>
+        <td>{{ getTimezoneLabel(entry.timezone) }}</td>
+        <td>{{ entry.notes || '—' }}</td>
+        <td>{{ (entry.updated_at || entry.created_at) | date:'medium' }}</td>
+        <td class="actions-col">
+          <button type="button" class="btn btn-link" (click)="startEdit(entry)">Edit</button>
+          <button type="button" class="btn btn-link text-danger" (click)="deleteAvailability(entry)">Delete</button>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </section>
+</div>

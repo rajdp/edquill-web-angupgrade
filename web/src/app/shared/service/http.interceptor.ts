@@ -16,6 +16,11 @@ export class ServerHttpInterceptor implements HttpInterceptor {
     }
 
     intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+        // Skip interceptor for external URLs (CDN, APIs outside our backend)
+        if (req.url.startsWith('http://') || req.url.startsWith('https://')) {
+            return next.handle(req);
+        }
+
         const loader = this.auth.getSessionData('sse_loader') ?? 'false';
         if (['content/sortMaster', 'teacher/saveAnnotation', 'student/studentClassList', 'student/saveAnnotation', 'teacher/teacherCorrectionAnnotation'
             , 'teacher/teacherassignStudentPrint', 'report/studentReportClassPrint', 'teacher/saveAnswerSheetAnnotation', 'classes/addScheduleNotes'
@@ -39,43 +44,37 @@ export class ServerHttpInterceptor implements HttpInterceptor {
             });
         }
         if (allow) {
-            const requestUrl = req.method != 'GET' ? this.configurationService.apiHost + req.url : req.url;
+            const needsHost = !(req.url.startsWith('http://') || req.url.startsWith('https://'));
+            const requestUrl = needsHost ? this.configurationService.apiHost + req.url : req.url;
             const authToken = this.auth.getAccessToken() ? this.auth.getAccessToken() : '';
-            // const authToken = this.auth.getAccessToken() ? '' : '';
-            let authReq: any;
-            if (req.method != 'GET') {
+            let authReq: HttpRequest<any>;
 
-                // console.log(Intl.DateTimeFormat().resolvedOptions().timeZone ,'zone')
-                // console.log(req.body ,'req');
-                // req.body.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-                // let val = req.body;
-
-                // req = req.clone({
-                //     body: req.body.append('s', '2323')
-                // });
+            if (req.method !== 'GET') {
                 if (!['report/studentReportClassPrint', 'teacher/teacherassignStudentPrint', 'classes/getCommentCount',
                     'mailbox/listMessages', 'mailbox/getMessageCount', 'student/curriculumList', 'student/classList'].includes(req.url)) {
-                    const val = JSON.parse(req.body);
+                    let val: any;
+                    if (typeof req.body === 'string') {
+                        val = JSON.parse(req.body);
+                    } else {
+                        val = req.body || {};
+                    }
                     val.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-                    authReq = req.clone(
-                        {
-                            url: requestUrl,
-                            setHeaders: {'Content-Type': 'application/json', 'accesstoken': authToken},
-                            body: JSON.stringify(val)
-                        });
+                    authReq = req.clone({
+                        url: requestUrl,
+                        setHeaders: {'Content-Type': 'application/json', 'accesstoken': authToken},
+                        body: JSON.stringify(val)
+                    });
                 } else {
-                    authReq = req.clone(
-                        {
-                            url: requestUrl,
-                            setHeaders: {'Content-Type': 'application/json', 'accesstoken': authToken},
-                        });
+                    authReq = req.clone({
+                        url: requestUrl,
+                        setHeaders: {'Content-Type': 'application/json', 'accesstoken': authToken},
+                    });
                 }
             } else {
-                authReq = req.clone(
-                    {
-                        url: requestUrl,
-                        // setHeaders: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Accesstoken': authToken}
-                    });
+                authReq = req.clone({
+                    url: requestUrl,
+                    setHeaders: authToken ? {'accesstoken': authToken} : {}
+                });
             }
 
             return next.handle(authReq)

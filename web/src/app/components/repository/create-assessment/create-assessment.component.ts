@@ -1784,8 +1784,10 @@ export class CreateAssessmentComponent implements OnInit, OnDestroy {
         const path = this.composedPath(event.source.div);
         this.globalPdfViewerPath = path;
         path.find(p => p.className == 'page').appendChild(this.elem);
-        this.areaInfo.forEach((value) => {
-            if (value.pageNumber == event.pageNumber && !value.isDelete) {
+        // Ensure areaInfo is an array before calling forEach
+        if (Array.isArray(this.areaInfo)) {
+            this.areaInfo.forEach((value) => {
+                if (value.pageNumber == event.pageNumber && !value.isDelete) {
                 const rectId = value.rectangleId;
                 let rect;
                 if (value.shape != 'text') {
@@ -1882,8 +1884,9 @@ export class CreateAssessmentComponent implements OnInit, OnDestroy {
                     }
                 }
                 // path.find(p => p.className == 'page').appendChild(rect);
-            }
-        });
+                }
+            });
+        }
         this.shapeTypeChanged && this.pageVariable > 1 ? this.scrollToPage(this.pageVariable) : '';
         this.clickEvent();
         this.addQuestionButtonInPdf(event);
@@ -4202,14 +4205,14 @@ export class CreateAssessmentComponent implements OnInit, OnDestroy {
                 this.deleteFillBlanks = false;
                 console.log(this.fillInArray, 'splice');
             }, 100);
-            this.cdr.detectChanges();
+            this.cdr.markForCheck();
         } else {
             this.numericAnswer.splice(id , 1);
         }
         if (array.length == 1) {
             this.hide = true;
         }
-        this.cdr.detectChanges();
+        this.cdr.markForCheck();
     }
 
     deleteQues(no, section, id) {
@@ -4492,15 +4495,17 @@ export class CreateAssessmentComponent implements OnInit, OnDestroy {
             this.editData = successData.ResponseObject;
             console.log(this.editData.batch_id, 'batch');
             this.contentName = this.editData.name;
-            this.areaInfo = this.editData.annotation;
-            this.dragQuestionsList = this.editData.questionAnnotation;
+            this.areaInfo = Array.isArray(this.editData.annotation) ? this.editData.annotation : [];
+            this.dragQuestionsList = Array.isArray(this.editData.questionAnnotation) ? this.editData.questionAnnotation : [];
             this.showdropdown = true;
             if (this.editData.status == 5) {
                 this.draftAdd = 'publish';
             }
-            this.subQuestion = this.editData.answers;
+            this.subQuestion = Array.isArray(this.editData.answers) ? this.editData.answers : [];
             for (let i = 0; i < this.subQuestion.length; i++) {
-                this.subQuestion[i].section.sort((a, b) => parseFloat(a.sub_questions[0].question_no) - parseFloat(b.sub_questions[0].question_no));
+                if (Array.isArray(this.subQuestion[i]?.section)) {
+                    this.subQuestion[i].section.sort((a, b) => parseFloat(a.sub_questions[0].question_no) - parseFloat(b.sub_questions[0].question_no));
+                }
             }
             this.showpdf = this.common.convertBase64(this.editData.file_path);
             console.log(this.showpdf, 'showpdf');
@@ -4511,7 +4516,7 @@ export class CreateAssessmentComponent implements OnInit, OnDestroy {
             this.resourceLinks = this.getpdf?.links;
             this.answerpdfpath = this.common.convertBase64(this.editData.answerkey_path);
             this.showAnswerKey = this.editData.allow_answer_key == '1';
-            this.teacherVersion = this.editData.teacher_version;
+            this.teacherVersion = this.editData.teacher_version || [];
             for (let i = 0; i < this.editData.answers.length; i++) {
                 this.sectionCount = i;
                 this.totalsub[i] = {heading: '', section: []};

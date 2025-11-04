@@ -1,0 +1,13 @@
+.plan-list-card {
+  max-height: 340px;
+  overflow-y: auto;
+}
+
+.assignment-tile,
+.payment-item {
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+  background-color: #f8f9fa;
+}

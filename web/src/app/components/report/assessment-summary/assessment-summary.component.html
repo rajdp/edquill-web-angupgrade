@@ -4,7 +4,7 @@
             <div class="card-body tab2-card p-0">
                 <form [formGroup]="assessmentForm" class="needs-validation user-add">
                     <div class="row">
-                        <div class="form-group col-3 px-0">
+                        <div class="form-group col-4 px-0">
                             <label class="col-xl-12 col-md-12 px-2"><span style="visibility: hidden">*</span>
                                 Class List</label>
                             <div class="col-xl-12 col-md-12">
@@ -17,7 +17,7 @@
                                 </ng-select>
                             </div>
                         </div>
-                        <div class="form-group col-3 px-0" *ngIf="assessmentShow">
+                        <div class="form-group col-4 px-0" *ngIf="assessmentShow">
                             <label class="col-xl-12 col-md-12 px-2"><span style="visibility: hidden">*</span> From Date</label>
                             <div class="col-xl-12 col-md-12 form-group">
                                 <div class="input-group">
@@ -32,7 +32,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="form-group col-3 px-0" *ngIf="assessmentShow">
+                        <div class="form-group col-4 px-0" *ngIf="assessmentShow">
                             <label class="col-xl-12 col-md-12 px-2"><span style="visibility: hidden">*</span> To Date</label>
                             <div class="col-xl-12 col-md-12 form-group">
                                 <div class="input-group">
@@ -149,8 +149,12 @@
                     </div>
                     <div class="col-12 mt-2">
                         <div id="batchDelete" class="category-table custom-datatable transcation-datatable user-image">
-                            <div class="table-responsive">
+                            <div class="table-responsive" *ngIf="listData && listData.length > 0">
                                 <app-table [TableType]="'ReportAssessment'" [TableArray]="listData" (clickValue)="viewDetail($event)" ></app-table>
+                            </div>
+                            <div class="alert alert-info text-center" *ngIf="!listData || listData.length === 0">
+                                <i class="fa fa-info-circle me-2"></i>
+                                No student performance data available yet. This feature requires full implementation of performance statistics calculation.
                             </div>
                         </div>
                     </div>
@@ -220,8 +224,12 @@
                     </div>
                     <div class="col-12 mt-2">
                         <div id="batchDelete1" class="category-table custom-datatable transcation-datatable user-image">
-                            <div class="table-responsive">
+                            <div class="table-responsive" *ngIf="listData1 && listData1.length > 0">
                                 <app-table [TableType]="'ReportAssignment'" [TableArray]="listData1" (clickValue)="viewDetail($event)" ></app-table>
+                            </div>
+                            <div class="alert alert-info text-center" *ngIf="!listData1 || listData1.length === 0">
+                                <i class="fa fa-info-circle me-2"></i>
+                                No student performance data available yet. This feature requires full implementation of performance statistics calculation.
                             </div>
                         </div>
                     </div>

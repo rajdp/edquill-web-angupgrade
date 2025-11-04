@@ -143,13 +143,40 @@ export class CommonService {
     }
 
     convertBase64(b64urlData) {
-        if (b64urlData != '' && b64urlData.length != 0) {
-            let b64Data: any;
-            b64Data = atob(atob(atob(atob(b64urlData))));
-            b64Data = JSON.parse(b64Data);
-            return b64Data;
-        } else {
-            return b64urlData;
+        try {
+            // Handle empty or null data
+            if (!b64urlData || b64urlData === '' || (Array.isArray(b64urlData) && b64urlData.length === 0)) {
+                return [];
+            }
+            
+            // Handle array data (return as is if it's already processed)
+            if (Array.isArray(b64urlData)) {
+                return b64urlData;
+            }
+            
+            // Handle string data that needs Base64 decoding
+            if (typeof b64urlData === 'string' && b64urlData.length > 0) {
+                let b64Data: any;
+                try {
+                    b64Data = atob(atob(atob(atob(b64urlData))));
+                    b64Data = JSON.parse(b64Data);
+                    return b64Data;
+                } catch (decodeError) {
+                    console.warn('Base64 decoding failed:', decodeError);
+                    // If decoding fails, try to parse as JSON directly
+                    try {
+                        return JSON.parse(b64urlData);
+                    } catch (parseError) {
+                        console.warn('JSON parsing failed:', parseError);
+                        return [];
+                    }
+                }
+            }
+            
+            return [];
+        } catch (error) {
+            console.error('convertBase64 error:', error);
+            return [];
         }
     }
 

@@ -1,97 +1,164 @@
-<div class="page-main-header" [ngClass]="{'sidebar-opened' : !open}" [class.open]="open">
-    <div class="main-header-right row">
-        <div class="main-header-left d-lg-none">
-            <div class="logo-wrapper d-flex justify-content-center">
-                <img class="svg-icon d-flex justify-content-center" alt="" src="assets/images/{{logo}}" style="width: auto; height: 30px">
-            </div>
-        </div>
-        <div class="mobile-sidebar">
-            <div class="media-body text-right switch-sm">
-                <label class="switch">
-                    <a class="cursor">
-                        <app-feather-icons id="sidebar-toggle" [icon]="'align-left'" (click)="collapseSidebar()">
-                        </app-feather-icons>
-                    </a>
-                </label>
-            </div>
-        </div>
+<header class="app-topbar shadow-sm" [class.sidebar-collapsed]="!open">
+  <div class="topbar-inner container-fluid">
+    <div class="topbar-left">
+      <button
+        type="button"
+        class="btn btn-icon btn-outline-primary topbar-icon d-none d-lg-inline-flex"
+        (click)="collapseSidebar()"
+        ngbTooltip="Toggle navigation"
+        placement="bottom"
+      >
+        <i class="bi bi-layout-sidebar-inset"></i>
+      </button>
 
-        <div class="logo-wrapper d-flex justify-content-center" *ngIf="open">
-            <img (click)="navigateToDefaultPages()" alt="" class="blur-up lazyloaded" src="assets/images/{{logo}}" style="width: auto; height: 34px;">
-        </div>
-        <div class="nav-right col">
-            <ul style="justify-content: space-between" class="nav-menus" [ngClass]="{'open' : openNav}">
-                <div *ngIf="auth.loggedIn()" style="position: absolute" class="col-{{roleid == '3' || roleid == '6' ? '2' : '8'}} pr-4"
-                     [ngStyle]="{'visibility': !showPaymentMessage() ? 'hidden' : ''}">
-                    <div class="marquee">
-                        <div style="color: red"> Dear Customer, Your subscription is due for renewal. Kindly make the
-                            payment <a class="payment-color" href="https://www.paypal.com/webapps/billing/plans/subscribe?plan_id=P-8YL46966WX816621MMWSYSKQ"
-                                       target="_blank">here</a> before <span>{{showDate()}}</span> to continue with the service.
-                        </div>
-                    </div>
-                </div>
-                <div style="position: absolute; right: 0" class="d-flex align-items-center justify-content-end">
-                    <li class="mr-4">
-                        <div class="row" *ngIf="['2', '4', '5'].indexOf(roleid) > -1">
-                            <select *ngIf="schoolName.length > 1" [disabled]="!allowSelect" class="form-control" (change)="schoolChangeList($event.target.value)" [(ngModel)]="sclName">
-                                <option *ngFor="let school of schoolName" [value]="school.school_id">{{school.name}}</option>
-                            </select>
-                            <h6 *ngIf="schoolName.length == 1" class="school_name_design col-12">
-                                {{schoolName[0].name}}</h6>
-                        </div>
-                        <div class="row d-inline-flex align-items-center" *ngIf="['3', '6'].includes(roleid)">
-                            <span class="f-14 color-primary">{{name}}</span>
-                            <span class="f-12 mx-2" *ngIf="roleid == 6">({{corporateCode}})</span>
-                            <select *ngIf="overallData != '' && roleid == 6 && !hideSchoolDropdown && schoolName.length > 1"
-                                    [disabled]="!allowSelect" class="form-control w-auto" (change)="schoolChangeList($event.target.value)" [(ngModel)]="sclName">
-                                <option *ngFor="let school of schoolName; let i = index" [value]="school.school_id">{{school.name}}</option>
-                            </select>
-                            <h6 *ngIf="overallData != '' && roleid == 6 && !hideSchoolDropdown && schoolName.length == 1"
-                                class="school_name_design my-0 px-0">{{schoolName[0]?.name}}</h6>
-                        </div>
-                    </li>
-                    <li>
-                        <a href="javascript:void(0)" class="text-dark" toggleFullscreen>
-                            <app-feather-icons [icon]="'maximize-2'"></app-feather-icons>
-                        </a>
-                    </li>
-                    <li class="onhover-dropdown mx-3">
-                        <div class="media align-items-center">
-                            <img class="align-self-center pull-right img-30 rounded-circle"
-                                 *ngIf="profile == '' || profile == null" src="assets/images/dashboard/default.png"
-                                 alt="">
-                            <img class="align-self-center pull-right img-30 rounded-circle"
-                                 *ngIf="profile != '' && profile != null && !listCheck" style="height: 30px"
-                                 src="{{imgUrl +'/'+ profile}}" alt="">
-                            <img class="img-30 rounded-circle" *ngIf="profile != '' && listCheck" style="height: 30px"
-                                 [src]="profile" alt="">
-                        </div>
-                        <ul class="profile-dropdown onhover-show-div p-20 profile-dropdown-hover">
-                            <li *ngIf="roleid == '2' || roleid == '3' || roleid == '4' || roleid == '6'"><a
-                                    [routerLink]="'/settings/profile/view'">
-                                <app-feather-icons [icon]="'user'"></app-feather-icons>
-                                My Profile
-                            </a></li>
-                            <li *ngIf="roleid == '5'"><a [routerLink]="'/studentlogin/profile/view'">
-                                <app-feather-icons [icon]="'user'"></app-feather-icons>
-                                My Profile
-                            </a></li>
-                            <li><a [routerLink]="'/users/change-password'">
-                                <app-feather-icons [icon]="'mail'"></app-feather-icons>
-                                Change Password
-                            </a></li>
-                            <li><a (click)="logout()">
-                                <app-feather-icons [icon]="'log-out'"></app-feather-icons>
-                                Logout
-                            </a></li>
-                        </ul>
-                    </li>
-                    <li>
-                        <h6 *ngIf="['2', '3', '4', '5', '6'].indexOf(roleid) > -1" class="letter mt-2">
-                            Welcome {{name}}</h6>
-                    </li>
-                </div>
-            </ul>
-        </div>
+      <button
+        type="button"
+        class="btn btn-icon btn-outline-primary topbar-icon d-inline-flex d-lg-none me-2"
+        (click)="collapseSidebar()"
+        ngbTooltip="Toggle navigation"
+        placement="bottom"
+      >
+        <i class="bi bi-list"></i>
+      </button>
+
+      <a class="topbar-logo d-flex align-items-center gap-2" role="button" (click)="navigateToDefaultPages()">
+        <img class="topbar-logo__image" [src]="'assets/images/' + logo" alt="EdQuill logo" height="34" />
+        <span class="topbar-logo__text d-none d-md-inline fw-semibold text-neutral-900">EdQuill Enterprise</span>
+      </a>
     </div>
-</div>
+
+    <div class="topbar-center">
+      @if (auth.loggedIn() && showPaymentMessage()) {
+        <div class="subscription-banner">
+          <i class="bi bi-info-circle-fill me-2"></i>
+          <span>
+            Dear Customer, your subscription is due for renewal.
+            Please complete the payment
+            <a
+              class="subscription-banner__link"
+              href="https://www.paypal.com/webapps/billing/plans/subscribe?plan_id=P-8YL46966WX816621MMWSYSKQ"
+              target="_blank"
+              rel="noopener"
+            >
+              here
+            </a>
+            before <strong>{{ showDate() }}</strong> to continue the service.
+          </span>
+        </div>
+      }
+    </div>
+
+    <div class="topbar-actions">
+      @if (['2', '4', '5'].includes(roleid ?? '')) {
+        <div class="topbar-switcher d-none d-md-flex align-items-center">
+          <label class="form-label text-neutral-600 me-2 mb-0">Institution</label>
+          <select
+            class="form-select form-select-sm w-auto"
+            *ngIf="schoolName?.length > 1"
+            [disabled]="!allowSelect"
+            (change)="schoolChangeList($event.target.value)"
+            [(ngModel)]="sclName"
+          >
+            <option *ngFor="let school of schoolName" [value]="school.school_id">
+              {{ school.name }}
+            </option>
+          </select>
+          <span *ngIf="schoolName?.length === 1" class="fw-medium text-neutral-700">{{ schoolName[0].name }}</span>
+        </div>
+      }
+
+      @if (['3', '6'].includes(roleid ?? '')) {
+        <div class="topbar-switcher d-none d-md-flex align-items-center">
+          <div class="d-flex flex-column">
+            <span class="fw-semibold text-neutral-800">{{ name }}</span>
+            @if (roleid == 6 && corporateCode) {
+              <span class="text-neutral-500 small">Corporate ID: {{ corporateCode }}</span>
+            }
+          </div>
+          <select
+            class="form-select form-select-sm w-auto ms-3"
+            *ngIf="overallData && roleid == 6 && !hideSchoolDropdown && schoolName?.length > 1"
+            [disabled]="!allowSelect"
+            (change)="schoolChangeList($event.target.value)"
+            [(ngModel)]="sclName"
+          >
+            <option *ngFor="let school of schoolName" [value]="school.school_id">
+              {{ school.name }}
+            </option>
+          </select>
+          <span
+            *ngIf="overallData && roleid == 6 && !hideSchoolDropdown && schoolName?.length === 1"
+            class="fw-medium text-neutral-700 ms-3"
+          >
+            {{ schoolName[0]?.name }}
+          </span>
+        </div>
+      }
+
+      <button
+        type="button"
+        class="btn btn-icon btn-outline-secondary topbar-icon ms-2"
+        toggleFullscreen
+        ngbTooltip="Toggle full screen"
+        placement="bottom"
+      >
+        <i class="bi bi-arrows-fullscreen"></i>
+      </button>
+
+      <div class="dropdown topbar-user ms-2" ngbDropdown placement="bottom-end">
+        <button
+          class="btn btn-user d-flex align-items-center"
+          ngbDropdownToggle
+          type="button"
+          aria-label="Open user menu"
+        >
+          <span class="avatar avatar-sm">
+            <img
+              *ngIf="profile && !listCheck"
+              [src]="imgUrl + '/' + profile"
+              alt="Profile image"
+              class="avatar-img"
+            />
+            <img
+              *ngIf="profile && listCheck"
+              [src]="profile"
+              alt="Profile image"
+              class="avatar-img"
+            />
+            <span *ngIf="!profile" class="avatar-placeholder">
+              <i class="bi bi-person-fill"></i>
+            </span>
+          </span>
+          <span class="d-none d-md-inline ms-2 text-start">
+            <span class="fw-semibold text-neutral-900 d-block">Welcome {{ name }}</span>
+
+          </span>
+          <i class="bi bi-chevron-down ms-2 text-neutral-500"></i>
+        </button>
+        <div ngbDropdownMenu class="dropdown-menu dropdown-menu-end shadow-sm p-2">
+          @if (['2', '3', '4', '6'].includes(roleid ?? '')) {
+            <button class="dropdown-item" type="button" [routerLink]="'/settings/profile/view'">
+              <i class="bi bi-person-circle me-2 text-primary"></i>
+              My Profile
+            </button>
+          }
+          @if (roleid == '5') {
+            <button class="dropdown-item" type="button" [routerLink]="'/studentlogin/profile/view'">
+              <i class="bi bi-person-circle me-2 text-primary"></i>
+              My Profile
+            </button>
+          }
+          <button class="dropdown-item" type="button" [routerLink]="'/users/change-password'">
+            <i class="bi bi-shield-lock me-2 text-success"></i>
+            Change Password
+          </button>
+          <div class="dropdown-divider"></div>
+          <button class="dropdown-item text-danger" type="button" (click)="logout()">
+            <i class="bi bi-box-arrow-right me-2"></i>
+            Logout
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>

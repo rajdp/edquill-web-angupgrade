@@ -1,39 +1,47 @@
-<div [ngClass]="sideNavStatus == true ? 'container' : 'container-fluid'">
-    <div class="page-header">
-        <div class="row">
-            <div class="col-6 col-lg-6">
-                <div class="page-header-left">
-                    <h3>{{title}}
-                       <small> </small>
-                    </h3>
-                </div>
+<div [ngClass]="sideNavStatus == true ? 'container' : 'container-fluid'" class="compact-breadcrumb">
+    <div class="page-header py-2">
+        <div class="d-flex align-items-center justify-content-between">
+            <div class="page-header-left">
+                <h5 class="mb-0 fw-semibold">{{title}}</h5>
             </div>
-            <div class="col-6 col-lg-6">
-                <ol class="breadcrumb float-right">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0 bg-transparent">
                     <li class="breadcrumb-item">
-                        <a *ngIf="roleid == '2' || roleid == '6' " title="Home-Page" [routerLink]="'/schedule/schedule-page'">
-                            <app-feather-icons [icon]="'home'"></app-feather-icons>
+                        <a *ngIf="roleid == '2' || roleid == '6' " 
+                           title="Home-Page" 
+                           [routerLink]="'/schedule/schedule-page'"
+                           class="text-decoration-none">
+                            <i class="bi bi-house-fill"></i>
                         </a>
-                        <a *ngIf="roleid == '3'" title="Home-Page" [routerLink]="'/repository/content-home'">
-                            <app-feather-icons [icon]="'home'"></app-feather-icons>
+                        <a *ngIf="roleid == '3'" 
+                           title="Home-Page" 
+                           [routerLink]="'/repository/content-home'"
+                           class="text-decoration-none">
+                            <i class="bi bi-house-fill"></i>
                         </a>
-                        <a *ngIf="roleid == '4'" title="Home-Page" [routerLink]="'schedule/schedule-page'">
-                            <app-feather-icons [icon]="'home'"></app-feather-icons>
+                        <a *ngIf="roleid == '4'" 
+                           title="Home-Page" 
+                           [routerLink]="'schedule/schedule-page'"
+                           class="text-decoration-none">
+                            <i class="bi bi-house-fill"></i>
                         </a>
-                        <a *ngIf="roleid == '5'" title="Home-Page" [routerLink]="'/student/dashboard'">
-<!--                        <a *ngIf="roleid == '5'" title="Home-Page" [routerLink]="'/studentlogin/list-home'">-->
-                            <app-feather-icons [icon]="'home'"></app-feather-icons>
+                        <a *ngIf="roleid == '5'" 
+                           title="Home-Page" 
+                           [routerLink]="'/student/dashboard'"
+                           class="text-decoration-none">
+                            <i class="bi bi-house-fill"></i>
                         </a>
                     </li>
-                    <li class="breadcrumb-item" *ngIf="breadcrumbs?.parentBreadcrumb && breadcrumbs?.childBreadcrumb != 'Passage Details'">{{breadcrumbs?.parentBreadcrumb}}
+                    <li class="breadcrumb-item small" 
+                        *ngIf="breadcrumbs?.parentBreadcrumb && breadcrumbs?.childBreadcrumb != 'Passage Details'">
+                        {{breadcrumbs?.parentBreadcrumb}}
                     </li>
-                    <li class="breadcrumb-item" *ngIf="breadcrumbs?.parentBreadcrumb == 'Content Text Resource' && breadcrumbs?.childBreadcrumb == 'Passage Details'">{{breadcrumbs?.childBreadcrumb}}
+                    <li class="breadcrumb-item small" 
+                        *ngIf="breadcrumbs?.parentBreadcrumb == 'Content Text Resource' && breadcrumbs?.childBreadcrumb == 'Passage Details'">
+                        {{breadcrumbs?.childBreadcrumb}}
                     </li>
-<!--                    <li class="breadcrumb-item active" *ngIf="breadcrumbs?.childBreadcrumb">-->
-<!--                        {{breadcrumbs?.childBreadcrumb}}-->
-<!--                    </li>-->
                 </ol>
-            </div>
+            </nav>
         </div>
     </div>
 </div>

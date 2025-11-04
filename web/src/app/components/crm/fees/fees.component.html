@@ -1,0 +1,269 @@
+<div class="row g-4">
+  <div class="col-lg-4">
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="mb-0">Fee Plan Builder</h5>
+      </div>
+      <div class="card-body">
+        <form [formGroup]="planForm" (ngSubmit)="savePlan()">
+          <div class="mb-3">
+            <label class="form-label">Plan Name *</label>
+            <input class="form-control" formControlName="name" placeholder="Monthly Tuition" />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Plan Type *</label>
+            <select class="form-select" formControlName="plan_type">
+              <option value="monthly">Monthly</option>
+              <option value="prepaid">Prepaid</option>
+              <option value="per_class">Per Class</option>
+            </select>
+          </div>
+
+          <div class="row">
+            <div class="col-sm-6 mb-3">
+              <label class="form-label">Amount (USD)*</label>
+              <input class="form-control" type="number" min="0" step="0.01" formControlName="amount" />
+            </div>
+            <div class="col-sm-6 mb-3">
+              <label class="form-label">Billing Cycle (days)</label>
+              <input class="form-control" type="number" min="0" formControlName="billing_cycle_days" />
+            </div>
+          </div>
+
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" role="switch" formControlName="auto_payment_enabled" id="autoPaySwitch" />
+            <label class="form-check-label" for="autoPaySwitch">Enable Auto Payments</label>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Description</label>
+            <textarea class="form-control" rows="2" formControlName="description" placeholder="Optional notes for this plan"></textarea>
+          </div>
+
+          <button class="btn btn-primary w-100" type="submit" [disabled]="savingPlan">
+            <span *ngIf="savingPlan" class="spinner-border spinner-border-sm me-2"></span>
+            Save Plan
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <div class="card plan-list-card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h6 class="mb-0">Available Plans</h6>
+        <span *ngIf="loadingPlans" class="spinner-border spinner-border-sm"></span>
+      </div>
+      <div class="card-body p-0">
+        <div class="list-group list-group-flush">
+          <div class="list-group-item" *ngFor="let plan of feePlans">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <div class="fw-semibold">{{ plan.name }}</div>
+                <div class="text-muted small text-uppercase">{{ plan.plan_type }}</div>
+                <div class="text-muted small">${{ plan.amount | number: '1.2-2' }}</div>
+              </div>
+            </div>
+            <div class="text-muted small mt-1" *ngIf="plan.description">
+              {{ plan.description }}
+            </div>
+          </div>
+          <div class="list-group-item text-center text-muted" *ngIf="!feePlans.length && !loadingPlans">
+            No plans defined yet
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-8">
+    <div class="card mb-4">
+      <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <h5 class="mb-0">Student Billing Workspace</h5>
+        <div class="w-auto">
+          <ng-select
+            [items]="students"
+            bindLabel="full_name"
+            bindValue="id"
+            placeholder="Select a student"
+            [clearable]="true"
+            (change)="onSelectStudent($event)"
+          >
+            <ng-template ng-option-tmp let-item="item">
+              <div class="d-flex flex-column">
+                <span>{{ item.full_name }}</span>
+                <small class="text-muted">{{ item.email }}</small>
+              </div>
+            </ng-template>
+          </ng-select>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="card h-100">
+              <div class="card-header">
+                <h6 class="mb-0">Assign Plan</h6>
+              </div>
+              <div class="card-body">
+                <form [formGroup]="assignmentForm" (ngSubmit)="assignPlan()">
+                  <div class="mb-3">
+                    <label class="form-label">Plan *</label>
+                    <select class="form-select" formControlName="fee_plan_id">
+                      <option value="" disabled>Select plan</option>
+                      <option *ngFor="let plan of feePlans" [value]="plan.id">{{ plan.name }}</option>
+                    </select>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Start Date *</label>
+                    <input class="form-control" type="date" formControlName="start_date" />
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Custom Amount</label>
+                    <input class="form-control" type="number" min="0" step="0.01" formControlName="custom_amount" />
+                    <small class="text-muted">Leave blank to use plan default</small>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Discount</label>
+                    <input class="form-control" type="number" min="0" step="0.01" formControlName="discount_amount" />
+                  </div>
+                  <button class="btn btn-outline-primary w-100" type="submit" [disabled]="savingAssignment">
+                    <span *ngIf="savingAssignment" class="spinner-border spinner-border-sm me-2"></span>
+                    Save Assignment
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="card h-100 mb-3">
+              <div class="card-header">
+                <h6 class="mb-0">Record Payment</h6>
+              </div>
+              <div class="card-body">
+                <form [formGroup]="paymentForm" (ngSubmit)="recordPayment()">
+                  <div class="mb-3">
+                    <label class="form-label">Applied Assignment</label>
+                    <select class="form-select" formControlName="student_fee_plan_id">
+                      <option value="">Unassigned</option>
+                      <option *ngFor="let assignment of overview?.assignments" [value]="assignment.assignment.id">
+                        {{ assignment.plan?.name }}
+                      </option>
+                    </select>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Amount *</label>
+                    <input class="form-control" type="number" min="0" step="0.01" formControlName="amount" />
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Payment Date *</label>
+                    <input class="form-control" type="date" formControlName="payment_date" />
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Method</label>
+                    <input class="form-control" formControlName="payment_method" placeholder="Card / Cash / ACH" />
+                  </div>
+                  <button class="btn btn-outline-success w-100" type="submit" [disabled]="savingPayment">
+                    <span *ngIf="savingPayment" class="spinner-border spinner-border-sm me-2"></span>
+                    Record Payment
+                  </button>
+                </form>
+              </div>
+            </div>
+
+            <div class="card h-100">
+              <div class="card-header">
+                <h6 class="mb-0">Invoice & Receipt</h6>
+              </div>
+              <div class="card-body">
+                <form [formGroup]="invoiceForm" (ngSubmit)="generateInvoice()">
+                  <div class="mb-3">
+                    <label class="form-label">Assignment *</label>
+                    <select class="form-select" formControlName="student_fee_plan_id">
+                      <option value="" disabled>Select assignment</option>
+                      <option *ngFor="let assignment of overview?.assignments" [value]="assignment.assignment.id">
+                        {{ assignment.plan?.name }}
+                      </option>
+                    </select>
+                  </div>
+                  <div class="row">
+                    <div class="col-sm-6 mb-3">
+                      <label class="form-label">Amount Due *</label>
+                      <input class="form-control" type="number" min="0" step="0.01" formControlName="amount_due" />
+                    </div>
+                    <div class="col-sm-6 mb-3">
+                      <label class="form-label">Amount Paid</label>
+                      <input class="form-control" type="number" min="0" step="0.01" formControlName="amount_paid" />
+                    </div>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Due Date *</label>
+                    <input class="form-control" type="date" formControlName="due_date" />
+                  </div>
+                  <button class="btn btn-outline-secondary w-100" type="submit" [disabled]="savingInvoice">
+                    <span *ngIf="savingInvoice" class="spinner-border spinner-border-sm me-2"></span>
+                    Generate Invoice PDF
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Billing Overview</h5>
+        <span *ngIf="loadingOverview" class="spinner-border spinner-border-sm"></span>
+      </div>
+      <div class="card-body" *ngIf="overview && !loadingOverview; else overviewPlaceholder">
+        <div class="row">
+          <div class="col-md-6">
+            <h6 class="fw-semibold">Active Assignments</h6>
+            <div class="assignment-tile" *ngFor="let assignment of overview.assignments">
+              <div class="d-flex justify-content-between">
+                <span class="fw-semibold">{{ assignment.plan?.name }}</span>
+                <span class="badge" [ngClass]="assignment.balance && assignment.balance > 0 ? 'bg-warning text-dark' : 'bg-success'">
+                  Balance: ${{ assignment.balance | number: '1.2-2' }}
+                </span>
+              </div>
+              <div class="text-muted small">
+                Expected: ${{ assignment.expected | number: '1.2-2' }} · Paid: ${{ assignment.paid || 0 | number: '1.2-2' }}
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <h6 class="fw-semibold">Recent Payments</h6>
+            <div *ngIf="overview.payments?.length; else noPayments">
+              <div class="payment-item" *ngFor="let payment of overview.payments | slice:0:5">
+                <div class="d-flex justify-content-between">
+                  <span>${{ payment.amount | number: '1.2-2' }}</span>
+                  <span class="text-muted small">{{ payment.payment_date | date }}</span>
+                </div>
+                <div class="text-muted small">{{ payment.payment_method || 'Unspecified method' }}</div>
+              </div>
+            </div>
+            <ng-template #noPayments>
+              <p class="text-muted small mb-0">No payments recorded yet.</p>
+            </ng-template>
+          </div>
+        </div>
+        <hr />
+        <div class="d-flex justify-content-between align-items-center">
+          <div class="fw-semibold">Total Paid: ${{ overview.total_paid | number: '1.2-2' }}</div>
+          <div class="badge" [ngClass]="overview.overall_balance > 0 ? 'bg-danger' : 'bg-success'">
+            Outstanding Balance: ${{ overview.overall_balance | number: '1.2-2' }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<ng-template #overviewPlaceholder>
+  <div class="card-body text-center text-muted" *ngIf="!loadingOverview">
+    Select a student to view billing summary.
+  </div>
+</ng-template>

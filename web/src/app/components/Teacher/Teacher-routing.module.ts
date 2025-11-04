@@ -2,6 +2,7 @@ import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
 import {AddTeacherComponent} from './add-Teacher/add-Teacher.component';
 import {ListTeacherComponent} from './list-Teacher/list-Teacher.component';
+import {TeacherAvailabilityComponent} from './availability/teacher-availability.component';
 
 
 const routes: Routes = [
@@ -22,6 +23,14 @@ const routes: Routes = [
         data: {
           title: 'Teacher',
           breadcrumb: 'Add Teacher'
+        }
+      },
+      {
+        path: 'availability',
+        component: TeacherAvailabilityComponent,
+        data: {
+          title: 'Teacher Availability',
+          breadcrumb: 'Availability'
         }
       }
     ]

@@ -55,6 +55,8 @@ export class CommonTable {
     static Subject = {
         Header: [{Name: 'Subject Name', ApiKey: 'subject_name', HeaderClass: '', SearchValue: '', EmitValue: '', Class: ''},
             {Name: 'Description', ApiKey: 'description', Class: '', EmitValue: '', SearchValue: '', HeaderClass: ''},
+            {Name: 'Subject Fee', ApiKey: 'fee_display', Class: '', EmitValue: '', SearchValue: '', HeaderClass: ''},
+            {Name: 'Deposit Amount', ApiKey: 'deposit_display', Class: '', EmitValue: '', SearchValue: '', HeaderClass: ''},
             {Name: 'Status', ApiKey: 'status', Class: '', EmitValue: '', SearchValue: '', HeaderClass: ''},
             {Name: 'Actions', ApiKey: 'Actions', Class: 'col-1', EmitValue: '', SearchValue: '', HeaderClass: 'col-1'}],
         Action: [

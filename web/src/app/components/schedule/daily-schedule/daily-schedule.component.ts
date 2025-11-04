@@ -54,6 +54,7 @@ export class DailyScheduleComponent implements OnInit, OnChanges, OnDestroy {
     public searchClass: any = '';
     public searchStudent: any = '';
     public searchTeacher: any = '';
+    public searchText: any = ''; // Unified search field
     public contentNameValue: any = '';
     public classNotes: any = '';
     public customLoader = false;
@@ -266,7 +267,7 @@ export class DailyScheduleComponent implements OnInit, OnChanges, OnDestroy {
                 role_id: this.auth.getRoleId(),
                 class_id
             };
-            this.messageSubs.push(this.sseClient.stream('mailbox/getMessageCount', { keepAlive: true, reconnectionDelay: 2000,
+            this.messageSubs.push(this.sseClient.stream('mailbox/getMessageCount', { keepAlive: true, reconnectionDelay: 60000,
                 responseType: 'event' }, {body: payload}, 'POST').subscribe((event) => {
                 if (event.type === 'error') {
                     const errorEvent = event as ErrorEvent;
@@ -510,22 +511,43 @@ export class DailyScheduleComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     setFilter() {
+        const searchTerm = this.searchText.toLowerCase().trim();
+        
+        if (searchTerm === '') {
+            // If search is empty, show all data
+            this.scheduleData = this.scheduleDataAlt;
+            return;
+        }
 
+        // Unified search across teacher, class, and student names
         this.scheduleData = this.scheduleDataAlt.filter((val) => {
-            if (val.class_name.toLowerCase().indexOf(this.searchClass.toLowerCase()) > -1
-                && val.teacher_name.toLowerCase().indexOf(this.searchTeacher.toLowerCase()) > -1) {
-                if (this.searchStudent == '') {
-                    return true;
-                } else {
-                    let exist = false;
-                    val.student_details.forEach((items) => {
-                        if (items.student_name.toLowerCase().indexOf(this.searchStudent.toLowerCase()) > -1) {
-                            exist = true;
-                        }
-                    });
-                    return exist;
+            // Search in class name
+            const classMatch = val.class_name && val.class_name.toLowerCase().indexOf(searchTerm) > -1;
+            
+            // Search in teacher name (handle both string and array)
+            let teacherMatch = false;
+            if (val.teacher_name) {
+                if (typeof val.teacher_name === 'string') {
+                    teacherMatch = val.teacher_name.toLowerCase().indexOf(searchTerm) > -1;
+                } else if (Array.isArray(val.teacher_name)) {
+                    teacherMatch = val.teacher_name.some(teacher => 
+                        teacher && teacher.toLowerCase().indexOf(searchTerm) > -1
+                    );
                 }
             }
+            
+            // Search in student names
+            let studentMatch = false;
+            if (val.student_details && val.student_details.length > 0) {
+                val.student_details.forEach((student) => {
+                    if (student.student_name && student.student_name.toLowerCase().indexOf(searchTerm) > -1) {
+                        studentMatch = true;
+                    }
+                });
+            }
+            
+            // Return true if match found in any field (OR logic)
+            return classMatch || teacherMatch || studentMatch;
         });
     }
 

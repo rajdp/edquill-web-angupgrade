@@ -1,5 +1,90 @@
-figure {
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
+.auth-shell {
+  min-height: 100vh;
+  background: radial-gradient(circle at top left, rgba(143, 0, 138, 0.12), transparent 45%),
+    radial-gradient(circle at bottom right, rgba(19, 201, 202, 0.1), transparent 40%),
+    #f8f9fb;
+  display: flex;
+  align-items: center;
+}
+
+.auth-hero {
+  border-radius: var(--radius-lg);
+  background:
+    radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.65), transparent 60%),
+    linear-gradient(155deg, #f6e9ff 0%, #e6d9ff 45%, #dfe7ff 100%);
+  color: var(--neutral-800);
+  min-height: 520px;
+
+  .badge {
+    background: rgba(143, 0, 138, 0.12);
+    color: var(--color-primary);
+  }
+
+  h2 {
+    color: var(--neutral-900);
+  }
+
+  li {
+    font-size: 0.95rem;
+    color: var(--neutral-700);
+  }
+
+  .auth-hero__brand {
+    max-width: 220px;
+    filter: drop-shadow(0 12px 24px rgba(143, 0, 138, 0.18));
+  }
+}
+
+.card {
+  border-radius: var(--radius-lg);
+}
+
+.password-toggle {
+  position: absolute;
+  top: 50%;
+  right: var(--spacing-3);
+  transform: translateY(-50%);
+  color: var(--neutral-500);
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1 1 auto;
+    height: 1px;
+    background: var(--neutral-200);
+  }
+
+  &__text {
+    background: #fff;
+    padding: 0 var(--spacing-3);
+    white-space: nowrap;
+  }
+}
+
+.form-control.is-invalid ~ .invalid-feedback {
+  display: block;
+}
+
+.form-floating > .form-control:not(:placeholder-shown) ~ label,
+.form-floating > .form-select ~ label {
+  font-weight: 500;
+}
+
+@media (max-width: 767.98px) {
+  .auth-shell {
+    padding: var(--spacing-4) var(--spacing-3);
+  }
+
+  .auth-hero {
+    min-height: auto;
+  }
 }

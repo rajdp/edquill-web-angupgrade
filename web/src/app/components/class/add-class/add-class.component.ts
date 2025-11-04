@@ -444,16 +444,12 @@ export class AddClassComponent implements OnInit, OnChanges, AfterViewInit {
                     dateRange: null
                 };
                 this.classform.controls.startDate.patchValue(sdObject);
+                // When editing, allow selecting any date (no date restrictions)
                 this.myDpOptions1 = {};
                 this.myDpOptions1 = {
                     dateRange: false,
                     dateFormat: dateOptions.pickerFormat,
                     firstDayOfWeek: 'su',
-                    disableUntil: {
-                        year: parseInt(sd[0]),
-                        month: parseInt(sd[1]),
-                        day: parseInt(sd[2]) - 1
-                    },
                 };
             } else {
                 this.classform.controls.startDate.patchValue(null);
@@ -2206,6 +2202,7 @@ export class AddClassComponent implements OnInit, OnChanges, AfterViewInit {
             class_name: this.classname,
             availabilityDate: this.availabilityTimeData1,
             teacher_id: this.auth.getRoleId() == '4' ? this.auth.getUserId() : '0',
+            class_id: id == '2' ? this.class_id : '',
             timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
         };
         this.classService.slotList(data).subscribe((successData) => {

@@ -17,6 +17,18 @@ export class CustomDateFormatPipe implements PipeTransform {
     });
   }
   transform(value: any, args?: any): any {
+      // Handle null, undefined, empty string, or invalid dates
+      if (!value || value === '' || value === '0000-00-00' || value === '0000-00-00 00:00:00') {
+          return '';
+      }
+      
+      // Check if the value can be converted to a valid date
+      const dateValue = new Date(value);
+      if (isNaN(dateValue.getTime())) {
+          // Invalid date - return empty string instead of crashing
+          return '';
+      }
+      
       const format = this.newSubject.dateFormat.value ?  this.newSubject.dateFormat.value : localStorage.getItem('currentFormat');
       return this.datePipe.transform(value, format);
   }

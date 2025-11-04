@@ -133,10 +133,24 @@ export class ListSubjectComponent implements OnInit {
             this.commondata.showLoader(false);
             this.listData = successData.ResponseObject;
             this.listData.forEach((value, index, array) => {
-                this.listData[index].status = this.listData[index].status == 1 ? 'Active' : this.listData[index].status == 2 ?
-                    'Suspended' : this.listData[index].status == 3 ? 'Disengaged' : this.listData[index].status == 4 ? 'Deleted' : '';
+                const statusValue = this.listData[index].status;
+                this.listData[index].status = statusValue == 1 ? 'Active' : statusValue == 2 ?
+                    'Suspended' : statusValue == 3 ? 'Disengaged' : statusValue == 4 ? 'Deleted' : '';
+                this.listData[index].fee_display = this.formatCurrency(this.listData[index].fee_amount);
+                this.listData[index].deposit_display = this.formatCurrency(this.listData[index].deposit_amount);
             });
         }
+    }
+
+    private formatCurrency(amount: any): string {
+        if (amount === null || amount === undefined || amount === '') {
+            return '-';
+        }
+        const numericValue = Number(amount);
+        if (isNaN(numericValue)) {
+            return '-';
+        }
+        return `$${numericValue.toFixed(2)}`;
     }
 
     subjectListFailure(error) {
@@ -145,4 +159,3 @@ export class ListSubjectComponent implements OnInit {
     }
 
 }
-
