@@ -299,7 +299,12 @@ export class TextAssignmentComponent implements OnInit {
         if (this.assignmentform.valid) {
             this.editorVal = this.content?.content;
             this.tagArray = [];
-            const tags = this.assignmentform.controls.tag.value;
+            const tagControlValue = this.assignmentform.controls.tag.value;
+            const tags = Array.isArray(tagControlValue)
+                ? tagControlValue
+                : (tagControlValue && typeof tagControlValue === 'object' && 'value' in tagControlValue
+                    ? [tagControlValue]
+                    : []);
             console.log(tags, 'tags');
             for (let i = 0; i < tags.length; i++) {
                 this.tagArray.push(tags[i].value);
@@ -393,7 +398,12 @@ export class TextAssignmentComponent implements OnInit {
         if (this.assignmentform.valid) {
             this.editorVal = this.content?.content;
             this.tagArray = [];
-            const tags = this.assignmentform.controls.tag.value;
+            const tagControlValue = this.assignmentform.controls.tag.value;
+            const tags = Array.isArray(tagControlValue)
+                ? tagControlValue
+                : (tagControlValue && typeof tagControlValue === 'object' && 'value' in tagControlValue
+                    ? [tagControlValue]
+                    : []);
             for (let i = 0; i < tags.length; i++) {
                 this.tagArray.push(tags[i].value);
             }
@@ -501,7 +511,12 @@ export class TextAssignmentComponent implements OnInit {
                 this.editorVal = this.content?.content;
             }
             this.tagArray = [];
-            const tags = this.assignmentform.controls.tag.value;
+            const tagControlValue = this.assignmentform.controls.tag.value;
+            const tags = Array.isArray(tagControlValue)
+                ? tagControlValue
+                : (tagControlValue && typeof tagControlValue === 'object' && 'value' in tagControlValue
+                    ? [tagControlValue]
+                    : []);
             for (let i = 0; i < tags.length; i++) {
                 this.tagArray.push(tags[i].value);
             }
@@ -573,29 +588,40 @@ export class TextAssignmentComponent implements OnInit {
         if (successData.IsSuccess) {
             this.assignDataValue = successData.Contentdetails;
             console.log(this.assignDataValue, 'this.assignDataValue');
-            
+
             if (!this.assignDataValue) {
                 console.error('assignDataValue is undefined from successData.Contentdetails');
+                this.toastr.error('Something went wrong while loading the content. Please try again.');
                 return;
             }
-            
+
+            this.type = 'edit';
+            this.contentName = this.assignDataValue?.name || this.contentName;
+            if (!Array.isArray(this.detailData)) {
+                this.detailData = [];
+            }
+            this.openContent = true;
+
             if (buttonClickedFrom == 'backButton') {
                 this.back();
             } else if (buttonClickedFrom == 'nextButton') {
-                this.openContent = true;
                 // this.auth.setSessionData('cfs_question_no', '');
                 this.auth.setSessionData('textAssignValue', JSON.stringify(this.assignDataValue));
                 this.auth.setSessionData('editresources', JSON.stringify(this.assignDataValue));
                 this.listDetails(this.assignDataValue);
             } else if (buttonClickedFrom == 'addQuestion') {
-                this.auth.setSessionData('cfs_question_no', this.detailData.length == 0 ? '1' : this.detailData.length + 1);
+                const totalQuestions = Array.isArray(this.detailData) ? this.detailData.length : 0;
+                this.auth.setSessionData('cfs_question_no', totalQuestions === 0 ? '1' : totalQuestions + 1);
                 this.auth.setSessionData('content_subject', this.assignDataValue.subject);
                 this.auth.setSessionData('qnsList', JSON.stringify(this.detailData));
                 this.selectQuestion();
             }
             this.showpre();
         } else {
-            this.toastr.error(successData.ResponseObject);
+            const responseMessage = typeof successData.ResponseObject === 'string' && successData.ResponseObject.trim() !== ''
+                ? successData.ResponseObject
+                : successData?.Message || 'Something went wrong. Please try again.';
+            this.toastr.error(responseMessage);
         }
 
     }
@@ -652,6 +678,7 @@ export class TextAssignmentComponent implements OnInit {
             this.editData = successData.ResponseObject;
             this.detailData = successData.ResponseObject.questions;
             this.showPage = true;
+            this.openContent = true;
             if (this.type == 'edit') {
                 this.batchId = this.editData.batch_id;
                 this.contentName = this.editData.name;

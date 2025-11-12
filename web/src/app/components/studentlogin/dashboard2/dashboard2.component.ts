@@ -419,11 +419,11 @@ export class Dashboard2Component implements OnDestroy{
                 this.ErrorTitle = selectedData.class_name;
                 this.modalRef = this.modalService.open(this.throwError, {size: 'md'});
             } else if (selectedData.student_content_status == 3) {
-                this.auth.setSessionData('ContentType', 'Assessments');
+                this.auth.setSessionData('ContentType', 'Quiz');
                 this.auth.setSessionData('student-card', JSON.stringify(selectedData));
                 this.router.navigate(['/studentlogin/score-card']);
             } else {
-                this.auth.setSessionData('ContentType', 'Assessments');
+                this.auth.setSessionData('ContentType', 'Quiz');
                 this.auth.setSessionData('classDetails', JSON.stringify(selectedData));
                 this.router.navigate(['/studentlogin/answering']);
             }

@@ -28,6 +28,19 @@
             </div>
         </div>
         <div class="card-body">
+            <div class="alert alert-info d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3"
+                 *ngIf="isCourseFilterActive">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-info-circle-fill"></i>
+                    <span>
+                        Showing classes linked to
+                        <strong>{{ courseFilterContext?.name || 'selected course' }}</strong>
+                    </span>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-secondary" (click)="clearCourseFilter()">
+                    Clear filter
+                </button>
+            </div>
             <div class="filter-toolbar d-flex flex-wrap gap-3 align-items-end">
                 <div class="filter-toolbar__item">
                     <label class="form-label text-neutral-600 small fw-semibold mb-1">Status</label>
@@ -147,12 +160,36 @@
                             </ng-option>
                         </ng-select>
                     </div>
+                    <div class="col-12 col-md-6 col-xl-3">
+                        <label class="form-label text-neutral-600 small fw-semibold">Day of Week</label>
+                        <ng-select class="filter-select"
+                                   [items]="daysOfWeek"
+                                   bindLabel="label"
+                                   bindValue="value"
+                                   [(ngModel)]="selectDay"
+                                   placeholder="Select day"
+                                   typeToSearchText=""
+                                   (change)="pageNo = 1;choosedData = [];setSearch_Filter(classlisthighlight);classList(classlisthighlight)">
+                        </ng-select>
+                    </div>
                 </div>
             </div>
         </div>
     </section>
     
-    <div class="row d-flex justify-content-center list-card mt-5" *ngIf="choosedData.length == 0 && !showLoader">
+    <div class="card text-center border-0 shadow-sm py-5 mb-3" *ngIf="shouldShowCourseEmptyState">
+        <div class="card-body">
+            <i class="bi bi-calendar3 mb-3 fs-2 text-muted d-block"></i>
+            <h5 class="mb-2">No classes linked to {{ courseFilterContext?.name || 'this course' }} yet</h5>
+            <p class="text-muted mb-4">Create the first class for this course to start scheduling sessions.</p>
+            <button type="button" class="btn btn-primary" (click)="navigateToAddClassForCourse()">
+                <i class="bi bi-plus-circle me-1"></i>
+                Add Class
+            </button>
+        </div>
+    </div>
+
+    <div class="row d-flex justify-content-center list-card mt-5" *ngIf="!shouldShowCourseEmptyState && choosedData.length == 0 && !showLoader">
         <div class="col-4">
             <button class="nodataList">No Data Available!</button>
         </div>
@@ -198,9 +235,19 @@
                                             class="badge badge-pill badge-info cursor"
                                             style="font-size: 12px"
                                             (click)="openStudentRoster(i, $event)">{{list.no_of_students - 0}}
-                                        Student{{list.no_of_students > 1 ? 's' : ''}}</small><br/>
-                                        <span class="font-weight-bold">Teacher Assigned: </span> <span
-                                            class="t-name font-weight-bold">{{list.teacher_name}}</span>
+                                        Student{{list.no_of_students > 1 ? 's' : ''}}</small>
+                                        <span *ngIf="list.schedules && list.schedules.length > 0"><br/>
+                                            <span class="font-weight-bold">Schedule: </span>
+                                            <div class="mt-1">
+                                                <div *ngFor="let schedule of list.schedules" class="mb-1">
+                                                    <small class="badge badge-primary mr-1">{{getWeekdayLabel(schedule.slot_day)}}</small>
+                                                    <small class="text-muted">{{formatTime(schedule.start_time)}} - {{formatTime(schedule.end_time)}}</small>
+                                                    <small *ngIf="schedule.teachers && schedule.teachers.length > 0" class="text-info ml-1">
+                                                        ({{schedule.teachers.join(', ')}})
+                                                    </small>
+                                                </div>
+                                            </div>
+                                        </span>
                                     </p>
                                 </div>
                                 <div class="col-5">

@@ -1,0 +1,103 @@
+<div class="quick-create-wrapper">
+  <div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">Quick Add User</h5>
+      <button
+        class="btn btn-link btn-sm text-muted"
+        type="button"
+        (click)="form.reset()"
+        [disabled]="submitting"
+        aria-label="Reset form">
+        Reset
+      </button>
+    </div>
+    <div class="card-body">
+      <form [formGroup]="form" (ngSubmit)="handleSubmit()" novalidate>
+        <div class="form-row">
+          <div class="form-group col-md-6">
+            <label for="firstName">First name <span class="text-danger">*</span></label>
+            <input
+              id="firstName"
+              type="text"
+              class="form-control"
+              formControlName="firstName"
+              placeholder="Jane">
+            <small class="text-danger" *ngIf="form.get('firstName')?.touched && form.get('firstName')?.invalid">
+              First name is required.
+            </small>
+          </div>
+          <div class="form-group col-md-6">
+            <label for="lastName">Last name <span class="text-danger">*</span></label>
+            <input
+              id="lastName"
+              type="text"
+              class="form-control"
+              formControlName="lastName"
+              placeholder="Doe">
+            <small class="text-danger" *ngIf="form.get('lastName')?.touched && form.get('lastName')?.invalid">
+              Last name is required.
+            </small>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group col-md-6">
+            <label for="email">Email <span class="text-danger">*</span></label>
+            <input
+              id="email"
+              type="email"
+              class="form-control"
+              formControlName="email"
+              placeholder="name@example.com">
+            <small class="text-danger" *ngIf="emailCtrl?.touched && emailCtrl?.invalid">
+              Enter a valid email address.
+            </small>
+          </div>
+          <div class="form-group col-md-6">
+            <label for="roleId">Role <span class="text-danger">*</span></label>
+            <select
+              id="roleId"
+              class="form-control"
+              formControlName="roleId">
+              <option value="" disabled>Select role</option>
+              <option *ngFor="let role of roleOptions" [value]="role.value">{{ role.label }}</option>
+            </select>
+            <small class="text-danger" *ngIf="form.get('roleId')?.touched && form.get('roleId')?.invalid">
+              Select a role.
+            </small>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Temporary password <span class="text-danger">*</span></label>
+          <input
+            id="password"
+            type="password"
+            class="form-control"
+            formControlName="password"
+            placeholder="Minimum 6 characters">
+          <small class="text-muted d-block">
+            This password will be salted and stored securely.
+          </small>
+          <small class="text-danger" *ngIf="passwordCtrl?.touched && passwordCtrl?.invalid">
+            Password must be at least 6 characters long.
+          </small>
+        </div>
+
+        <div class="alert alert-info mb-4" role="alert">
+          Users are scoped automatically to the currently selected school ({{ auth.getSchoolName() || 'Default' }}).
+          Corp admins can change this later from the user detail page.
+        </div>
+
+        <button
+          type="submit"
+          class="btn btn-primary"
+          [disabled]="form.invalid || submitting">
+          <span class="spinner-border spinner-border-sm mr-2" *ngIf="submitting"></span>
+          Create User
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+

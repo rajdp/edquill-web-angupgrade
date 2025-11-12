@@ -574,7 +574,7 @@
                                             <div class="inner" *ngIf="item.question != '' && item.question_type_id == 55">
                                                 <div ngbAccordion  class="question_type">
                                                     <div ngbAccordionItem="{{item.question_type_id}}" #accordion="ngbAccordionItem" [collapsed]="false">
-                                                        <h2 ngbAccordionHeader>
+                                                        <h3 ngbAccordionHeader>
                                                             <button class="btn btn-link d-flex align-items-center justify-content-between p-2 w-100"
                                                                     ngbAccordionToggle>
                                                                 <h4 style="font-size: 16px" class="m-0" [innerHTML]="convertMarkdownToHtml(item.question, accordion.collapsed ? 20 : 0)"></h4>
@@ -583,7 +583,7 @@
                                                                 </div>
                                                                 <ng-template #uparrow><i aria-hidden="true" class="fa fa-caret-up"></i></ng-template>
                                                             </button>
-                                                        </h2>
+                                                        </h3>
 
                                                         <div ngbAccordionCollapse>
                                                             <div ngbAccordionBody>

@@ -1,9 +1,36 @@
 // Local Development Environment
+const DEFAULT_HOST = 'localhost';
+const DEFAULT_FRONTEND_PORT = 8211;
+const DEFAULT_BACKEND_HOST = 'localhost';
+const DEFAULT_BACKEND_PORT = 8888;
+const DEFAULT_BACKEND_BASE_PATH = 'rista_ci4';
+
+function resolveHostname(): string {
+  if (typeof window === 'undefined' || !window?.location?.hostname) {
+    return DEFAULT_HOST;
+  }
+  return window.location.hostname.toLowerCase();
+}
+
+function resolveFrontendOrigin(hostname: string): string {
+  if (typeof window !== 'undefined' && window?.location?.origin) {
+    return window.location.origin;
+  }
+  return `http://${hostname}:${DEFAULT_FRONTEND_PORT}`;
+}
+
+const hostname = resolveHostname();
+const frontendOrigin = resolveFrontendOrigin(hostname);
+const backendOrigin = `http://${DEFAULT_BACKEND_HOST}:${DEFAULT_BACKEND_PORT}`;
+const backendBaseUrl = DEFAULT_BACKEND_BASE_PATH
+  ? `${backendOrigin}/${DEFAULT_BACKEND_BASE_PATH.replace(/^\/|\/$/g, '')}`
+  : backendOrigin;
+
 export const environment = {
   production: false,
-  apiHost: 'http://localhost:8888/rista_ci4/public/',
-  webHost: 'http://localhost:8211',
-  imgUrl: 'http://localhost:8888/rista_ci4/public',
+  apiHost: `${backendBaseUrl}/`,
+  webHost: frontendOrigin,
+  imgUrl: `${backendBaseUrl}/`,
   version: '6.0.0',
   showStudent: true,
   sessionPrefix: 'rista_',

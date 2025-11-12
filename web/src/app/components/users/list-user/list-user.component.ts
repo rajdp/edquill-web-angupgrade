@@ -16,6 +16,13 @@ export class ListUserComponent implements OnInit {
     page = 'Student';
     public schoolid = '';
     public manageStudent = true;
+    public tabs = [
+        { key: 'Admin', label: 'Owner/Admin', visible: () => this.auth.getRoleId() === '6' },
+        { key: 'Student', label: 'Students', visible: () => this.manageStudent },
+        { key: 'Teacher', label: 'Teachers', visible: () => this.auth.getRoleId() !== '4' },
+        { key: 'Creator', label: 'Content Creators', visible: () => this.auth.getRoleId() !== '4' },
+        { key: 'Parent', label: 'Parents/Guardians', visible: () => true }
+    ];
 
     constructor(public category: CategoryService, public config: NgbModalConfig, public confi: ConfigurationService, private newSubject: NewsubjectService, public auth: AuthService, public commondata: CommonDataService, public route: Router) {
         this.newSubject.schoolChange.subscribe(params => {

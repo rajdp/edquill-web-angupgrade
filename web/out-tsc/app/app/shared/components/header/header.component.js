@@ -446,7 +446,7 @@ export class HeaderComponent {
             i0.ɵɵlistener("click", function HeaderComponent_Template_a_click_7_listener() { return ctx.navigateToDefaultPages(); });
             i0.ɵɵelement(8, "img", 8);
             i0.ɵɵelementStart(9, "span", 9);
-            i0.ɵɵtext(10, "EdQuill Enterprise");
+            i0.ɵɵtext(10, " Enterprise");
             i0.ɵɵelementEnd()()();
             i0.ɵɵelementStart(11, "div", 10);
             i0.ɵɵtemplate(12, HeaderComponent_Conditional_12_Template, 10, 1, "div", 11);

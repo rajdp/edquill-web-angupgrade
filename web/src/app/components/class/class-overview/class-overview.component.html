@@ -5,126 +5,297 @@
 <div class="assign-drawer card shadow-lg border-0" *ngIf="showAssignDrawer">
     <div class="assign-drawer__header">
         <div>
-            <h3 class="h6 mb-1">Assign from content library</h3>
-            <p class="small text-neutral-600 mb-0">Drag items onto the curriculum, then confirm details here.</p>
+            <h3 class="h6 mb-1">Assign content to this class</h3>
+            <p class="small text-neutral-600 mb-0">Choose how you want to bring new learning materials into this class.</p>
         </div>
         <button type="button" class="btn btn-sm btn-outline-secondary" (click)="closeAssignDrawer()" aria-label="Close assign drawer">
             <i class="bi bi-x-lg"></i>
         </button>
     </div>
-    <div class="assign-drawer__search">
+    <div class="assign-drawer__mode-toggle">
+        <button type="button"
+                class="assign-drawer__mode-button"
+                [class.active]="isAssignMode('library')"
+                (click)="setAssignMode('library')">
+            <i class="bi bi-journal-text me-1"></i>
+            Content library
+        </button>
+        <button type="button"
+                class="assign-drawer__mode-button"
+                [class.active]="isAssignMode('upload')"
+                (click)="setAssignMode('upload')">
+            <i class="bi bi-cloud-upload me-1"></i>
+            Upload & assign
+        </button>
+        <button type="button"
+                class="assign-drawer__mode-button"
+                [class.active]="isAssignMode('link')"
+                (click)="setAssignMode('link')">
+            <i class="bi bi-link-45deg me-1"></i>
+            Resource link
+        </button>
+        <button type="button"
+                class="assign-drawer__mode-button"
+                [class.active]="isAssignMode('scratch')"
+                (click)="setAssignMode('scratch')">
+            <i class="bi bi-lightning-charge me-1"></i>
+            Quick quiz
+        </button>
+    </div>
+    <div class="assign-drawer__search" *ngIf="isAssignMode('library')">
         <input type="search"
                class="form-control form-control-sm"
                placeholder="Search content"
                [value]="librarySearchTerm"
                (input)="onLibrarySearch($any($event.target).value)">
     </div>
-    <div class="assign-drawer__pane">
-        <div class="assign-drawer__library"
-             cdkDropList
-             [id]="libraryDropListId"
-             [cdkDropListData]="libraryItems"
-             [cdkDropListConnectedTo]="getDropConnections(libraryDropListId)"
-             cdkDropListSortingDisabled>
-            <div *ngIf="isLibraryLoading" class="assign-drawer__empty text-center">
-                <div class="spinner-border spinner-border-sm text-primary" role="status" aria-hidden="true"></div>
-                <span class="ms-2">Loading content…</span>
-            </div>
-            <div *ngIf="!isLibraryLoading && libraryLoadError" class="assign-drawer__empty text-danger text-center">
-                {{ libraryLoadError }}
-            </div>
-            <ng-container *ngIf="!isLibraryLoading && !libraryLoadError">
-                <div *ngIf="!libraryItems.length" class="assign-drawer__empty text-center">
-                    No content found. Try adjusting your search.
+    <div class="assign-drawer__pane" [ngClass]="{'assign-drawer__pane--split': isAssignMode('library')}">
+        <ng-container [ngSwitch]="assignMode">
+            <ng-container *ngSwitchCase="'library'">
+                <div class="assign-drawer__library"
+                     cdkDropList
+                     [id]="libraryDropListId"
+                     [cdkDropListData]="libraryItems"
+                     [cdkDropListConnectedTo]="getDropConnections(libraryDropListId)"
+                     cdkDropListSortingDisabled>
+                    <div *ngIf="isLibraryLoading" class="assign-drawer__empty text-center">
+                        <div class="spinner-border spinner-border-sm text-primary" role="status" aria-hidden="true"></div>
+                        <span class="ms-2">Loading content…</span>
+                    </div>
+                    <div *ngIf="!isLibraryLoading && libraryLoadError" class="assign-drawer__empty text-danger text-center">
+                        {{ libraryLoadError }}
+                    </div>
+                    <ng-container *ngIf="!isLibraryLoading && !libraryLoadError">
+                        <div *ngIf="!libraryItems.length" class="assign-drawer__empty text-center">
+                            No content found. Try adjusting your search.
+                        </div>
+                        <div *ngFor="let libraryItem of libraryItems; trackBy: trackById"
+                             class="assign-drawer__item"
+                             cdkDrag
+                             [cdkDragData]="{ source: 'library', item: libraryItem }">
+                            <div class="assign-drawer__item-title">
+                                {{ libraryItem.content_name }}
+                            </div>
+                            <div class="assign-drawer__item-meta small text-neutral-600">
+                                <span *ngIf="libraryItem.subject_name">{{ libraryItem.subject_name }}</span>
+                                <span *ngIf="libraryItem.content_format" class="badge bg-light text-dark ms-2 text-uppercase">
+                                    {{ libraryItem.content_format }}
+                                </span>
+                            </div>
+                            <div class="assign-drawer__hint small text-neutral-500">
+                                Drag this onto a topic or the curriculum list
+                            </div>
+                        </div>
+                    </ng-container>
                 </div>
-                <div *ngFor="let libraryItem of libraryItems; trackBy: trackById"
-                     class="assign-drawer__item"
-                     cdkDrag
-                     [cdkDragData]="{ source: 'library', item: libraryItem }">
-                    <div class="assign-drawer__item-title">
-                        {{ libraryItem.content_name }}
+                <div class="assign-drawer__pending">
+                    <div class="assign-drawer__pending-header">
+                        <h4 class="h6 mb-0">Pending assignments ({{ pendingAssignments.length }})</h4>
                     </div>
-                    <div class="assign-drawer__item-meta small text-neutral-600">
-                        <span *ngIf="libraryItem.subject_name">{{ libraryItem.subject_name }}</span>
-                        <span *ngIf="libraryItem.content_format" class="badge bg-light text-dark ms-2 text-uppercase">
-                            {{ libraryItem.content_format }}
-                        </span>
+                    <div *ngIf="!pendingAssignments.length" class="assign-drawer__empty text-center">
+                        Drag content from the library onto a topic to stage it for assignment.
                     </div>
-                    <div class="assign-drawer__hint small text-neutral-500">
-                        Drag this onto a topic or the curriculum list
+                    <div *ngFor="let draft of pendingAssignments" class="assign-drawer__pending-card">
+                        <div class="assign-drawer__pending-title">
+                            {{ draft.content.content_name }}
+                        </div>
+                        <div class="assign-drawer__pending-meta small text-neutral-600 mb-2">
+                            Target: {{ draft.targetTopicName || 'Curriculum list' }}
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small text-neutral-600 d-block">Topic</label>
+                            <select class="form-select form-select-sm" [(ngModel)]="draft.targetTopicId" (ngModelChange)="onDraftTopicChange(draft, $event)">
+                                <option value="">Curriculum list</option>
+                                <option *ngFor="let topic of topics" [value]="topic?.topic_id ?? topic?.id">
+                                    {{ topic?.topic_name ?? topic?.name ?? topic?.topic }}
+                                </option>
+                            </select>
+                        </div>
+                        <div class="assign-drawer__date-grid">
+                            <div>
+                                <label class="form-label small text-neutral-600 d-block">Start date</label>
+                                <input type="date" class="form-control form-control-sm" [(ngModel)]="draft.startDate">
+                            </div>
+                            <div>
+                                <label class="form-label small text-neutral-600 d-block">End date</label>
+                                <input type="date" class="form-control form-control-sm" [(ngModel)]="draft.endDate">
+                            </div>
+                        </div>
+                        <div class="assign-drawer__options">
+                            <label class="form-check small">
+                                <input type="checkbox" class="form-check-input" [(ngModel)]="draft.allowDownload">
+                                <span class="form-check-label">Allow download</span>
+                            </label>
+                            <label class="form-check small">
+                                <input type="checkbox" class="form-check-input" [(ngModel)]="draft.allowWorkspace">
+                                <span class="form-check-label">Student workspace</span>
+                            </label>
+                            <label class="form-check small">
+                                <input type="checkbox" class="form-check-input" [(ngModel)]="draft.allowFeedback">
+                                <span class="form-check-label">Enable feedback</span>
+                            </label>
+                            <label class="form-check small">
+                                <input type="checkbox" class="form-check-input" [(ngModel)]="draft.autoReview">
+                                <span class="form-check-label">Auto grade</span>
+                            </label>
+                        </div>
+                        <div class="assign-drawer__actions">
+                            <button type="button"
+                                    class="btn btn-sm btn-primary"
+                                    [disabled]="draft.isSaving"
+                                    (click)="assignDraft(draft)">
+                                <span *ngIf="draft.isSaving" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                                Assign
+                            </button>
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-secondary"
+                                    [disabled]="draft.isSaving"
+                                    (click)="removeDraft(draft.id)">
+                                Remove
+                            </button>
+                        </div>
+                        <div class="small text-danger mt-2" *ngIf="draft.error">{{ draft.error }}</div>
                     </div>
                 </div>
             </ng-container>
-        </div>
-        <div class="assign-drawer__pending">
-            <div class="assign-drawer__pending-header">
-                <h4 class="h6 mb-0">Pending assignments ({{ pendingAssignments.length }})</h4>
-            </div>
-            <div *ngIf="!pendingAssignments.length" class="assign-drawer__empty text-center">
-                Drag content from the library onto a topic to stage it for assignment.
-            </div>
-            <div *ngFor="let draft of pendingAssignments" class="assign-drawer__pending-card">
-                <div class="assign-drawer__pending-title">
-                    {{ draft.content.content_name }}
-                </div>
-                <div class="assign-drawer__pending-meta small text-neutral-600 mb-2">
-                    Target: {{ draft.targetTopicName || 'Curriculum list' }}
-                </div>
-                <div class="mb-2">
-                    <label class="form-label small text-neutral-600 d-block">Topic</label>
-                    <select class="form-select form-select-sm" [(ngModel)]="draft.targetTopicId" (ngModelChange)="onDraftTopicChange(draft, $event)">
-                        <option value="">Curriculum list</option>
-                        <option *ngFor="let topic of topics" [value]="topic?.topic_id ?? topic?.id">
-                            {{ topic?.topic_name ?? topic?.name ?? topic?.topic }}
-                        </option>
-                    </select>
-                </div>
-                <div class="assign-drawer__date-grid">
-                    <div>
-                        <label class="form-label small text-neutral-600 d-block">Start date</label>
-                        <input type="date" class="form-control form-control-sm" [(ngModel)]="draft.startDate">
+            <ng-container *ngSwitchCase="'upload'">
+                <form [formGroup]="uploadForm" (ngSubmit)="submitDirectUpload()" class="assign-drawer__form">
+                    <div class="mb-3">
+                        <label class="form-label small text-uppercase text-neutral-600 fw-semibold">Title</label>
+                        <input type="text" class="form-control form-control-sm" formControlName="title" placeholder="Enter a name for this content">
+                        <div class="text-danger small mt-1" *ngIf="uploadForm.controls.title.touched && uploadForm.controls.title.invalid">
+                            Title is required.
+                        </div>
                     </div>
-                    <div>
-                        <label class="form-label small text-neutral-600 d-block">End date</label>
-                        <input type="date" class="form-control form-control-sm" [(ngModel)]="draft.endDate">
+                    <div class="mb-3">
+                        <label class="form-label small text-uppercase text-neutral-600 fw-semibold">Description</label>
+                        <textarea rows="2" class="form-control form-control-sm" formControlName="description" placeholder="Optional short summary"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small text-uppercase text-neutral-600 fw-semibold">Upload file</label>
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <button class="btn btn-sm btn-outline-primary" type="button" (click)="triggerDirectUpload()" [disabled]="isFileUploading">
+                                <span *ngIf="isFileUploading" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                                Choose file
+                            </button>
+                            <span class="small text-neutral-600" *ngIf="uploadFileName; else noFile">{{ uploadFileName }}</span>
+                            <ng-template #noFile>
+                                <span class="small text-neutral-500">No file selected yet</span>
+                            </ng-template>
+                            <button type="button" class="btn btn-link btn-sm text-danger p-0" *ngIf="uploadPayload.length" (click)="removeDirectUpload()">Remove</button>
+                        </div>
+                        <input type="file" #directUploadInput class="visually-hidden" (change)="onDirectUploadFileSelected($event)">
+                        <div class="text-danger small mt-1" *ngIf="uploadError">
+                            {{ uploadError }}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small text-uppercase text-neutral-600 fw-semibold">Topic</label>
+                        <select class="form-select form-select-sm" formControlName="topicId">
+                            <option value="">Curriculum list</option>
+                            <option *ngFor="let topic of topics" [value]="topic?.topic_id ?? topic?.id">
+                                {{ topic?.topic_name ?? topic?.name ?? topic?.topic }}
+                            </option>
+                        </select>
+                    </div>
+                    <div class="assign-drawer__date-grid mb-3">
+                        <div>
+                            <label class="form-label small text-uppercase text-neutral-600 fw-semibold">Start date</label>
+                            <input type="date" class="form-control form-control-sm" formControlName="startDate">
+                        </div>
+                        <div>
+                            <label class="form-label small text-uppercase text-neutral-600 fw-semibold">End date</label>
+                            <input type="date" class="form-control form-control-sm" formControlName="endDate">
+                        </div>
+                    </div>
+                    <label class="form-check mb-3">
+                        <input type="checkbox" class="form-check-input" formControlName="allowDownload">
+                        <span class="form-check-label small">Allow students to download this file</span>
+                    </label>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <button class="btn btn-sm btn-primary"
+                                type="submit"
+                                [disabled]="isDirectUploadSaving || isFileUploading">
+                            <span *ngIf="isDirectUploadSaving" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                            Upload & Assign
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary" type="button" (click)="removeDirectUpload()" [disabled]="isDirectUploadSaving || isFileUploading">
+                            Clear
+                        </button>
+                    </div>
+                </form>
+            </ng-container>
+            <ng-container *ngSwitchCase="'link'">
+                <form [formGroup]="resourceLinkForm" (ngSubmit)="submitResourceLink()" class="assign-drawer__form">
+                    <div class="mb-3">
+                        <label class="form-label small text-uppercase text-neutral-600 fw-semibold">Title</label>
+                        <input type="text" class="form-control form-control-sm" formControlName="title" placeholder="What should students see?">
+                        <div class="text-danger small mt-1" *ngIf="resourceLinkForm.controls.title.touched && resourceLinkForm.controls.title.invalid">
+                            Title is required.
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small text-uppercase text-neutral-600 fw-semibold">Link URL</label>
+                        <input type="url" class="form-control form-control-sm" formControlName="url" placeholder="https://...">
+                        <div class="text-danger small mt-1" *ngIf="resourceLinkForm.controls.url.touched && resourceLinkForm.controls.url.invalid">
+                            A valid link is required.
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small text-uppercase text-neutral-600 fw-semibold">Description</label>
+                        <textarea rows="2" class="form-control form-control-sm" formControlName="description" placeholder="Optional context for this link"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small text-uppercase text-neutral-600 fw-semibold">Topic</label>
+                        <select class="form-select form-select-sm" formControlName="topicId">
+                            <option value="">Curriculum list</option>
+                            <option *ngFor="let topic of topics" [value]="topic?.topic_id ?? topic?.id">
+                                {{ topic?.topic_name ?? topic?.name ?? topic?.topic }}
+                            </option>
+                        </select>
+                    </div>
+                    <div class="assign-drawer__date-grid mb-3">
+                        <div>
+                            <label class="form-label small text-uppercase text-neutral-600 fw-semibold">Start date</label>
+                            <input type="date" class="form-control form-control-sm" formControlName="startDate">
+                        </div>
+                        <div>
+                            <label class="form-label small text-uppercase text-neutral-600 fw-semibold">End date</label>
+                            <input type="date" class="form-control form-control-sm" formControlName="endDate">
+                        </div>
+                    </div>
+                    <div class="text-danger small mb-3" *ngIf="resourceLinkError">{{ resourceLinkError }}</div>
+                    <button class="btn btn-sm btn-primary w-100"
+                            type="submit"
+                            [disabled]="isResourceLinkSaving">
+                        <span *ngIf="isResourceLinkSaving" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                        Save link & Assign
+                    </button>
+                </form>
+            </ng-container>
+            <ng-container *ngSwitchCase="'scratch'">
+                <div class="assign-drawer__info-card">
+                    <h4 class="h6 mb-2">Create something from scratch</h4>
+                    <p class="small mb-3 text-neutral-600">
+                        Launch the quick authoring workspace to build a quiz or questionnaire. We will return you here so you
+                        can assign it as soon as it is published.
+                    </p>
+                    <div class="d-flex flex-column gap-2">
+                        <button type="button" class="btn btn-sm btn-primary d-flex align-items-center justify-content-center gap-2" (click)="startCreateFromScratch('assignment')">
+                            <i class="bi bi-list-check"></i>
+                            Create quick quiz
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary d-flex align-items-center justify-content-center gap-2" (click)="startCreateFromScratch('assessment')">
+                            <i class="bi bi-ui-checks-grid"></i>
+                            Create questionnaire
+                        </button>
+                        <p class="small text-neutral-500 mb-0">
+                            Need something else? Use the library mode to drag in existing content anytime.
+                        </p>
                     </div>
                 </div>
-                <div class="assign-drawer__options">
-                    <label class="form-check small">
-                        <input type="checkbox" class="form-check-input" [(ngModel)]="draft.allowDownload">
-                        <span class="form-check-label">Allow download</span>
-                    </label>
-                    <label class="form-check small">
-                        <input type="checkbox" class="form-check-input" [(ngModel)]="draft.allowWorkspace">
-                        <span class="form-check-label">Student workspace</span>
-                    </label>
-                    <label class="form-check small">
-                        <input type="checkbox" class="form-check-input" [(ngModel)]="draft.allowFeedback">
-                        <span class="form-check-label">Enable feedback</span>
-                    </label>
-                    <label class="form-check small">
-                        <input type="checkbox" class="form-check-input" [(ngModel)]="draft.autoReview">
-                        <span class="form-check-label">Auto grade</span>
-                    </label>
-                </div>
-                <div class="assign-drawer__actions">
-                    <button type="button"
-                            class="btn btn-sm btn-primary"
-                            [disabled]="draft.isSaving"
-                            (click)="assignDraft(draft)">
-                        <span *ngIf="draft.isSaving" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-                        Assign
-                    </button>
-                    <button type="button"
-                            class="btn btn-sm btn-outline-secondary"
-                            [disabled]="draft.isSaving"
-                            (click)="removeDraft(draft.id)">
-                        Remove
-                    </button>
-                </div>
-                <div class="small text-danger mt-2" *ngIf="draft.error">{{ draft.error }}</div>
-            </div>
-        </div>
+            </ng-container>
+        </ng-container>
     </div>
 </div>
 
@@ -161,7 +332,7 @@
                     <div class="card-header border-0 pb-0">
                         <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
                             <div>
-                                <h2 class="h6 mb-1">Curriculum</h2>
+                                <h3 class="h6 mb-1">Curriculum</h3>
                                 <p class="small text-neutral-600 mb-0">
                                     Track lessons, assignments, and assessments in this class.
                                 </p>
@@ -308,7 +479,7 @@
                     <div class="card-header border-0 pb-0">
                         <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
                             <div class="flex-grow-1">
-                                <h2 class="h6 mb-1">Topics</h2>
+                                <h3 class="h6 mb-1">Topics</h3>
                                 <p class="small text-neutral-600 mb-0">
                                     Review curriculum items grouped by topic. Use the filter above to focus on a specific status.
                                 </p>
@@ -465,7 +636,7 @@
                     <div class="card-header border-0 pb-0">
                         <div class="d-flex align-items-center justify-content-between">
                             <div>
-                                <h2 class="h6 mb-1">Other Links</h2>
+                                <h3 class="h6 mb-1">Other Links</h3>
                                 <p class="small text-neutral-600 mb-0">
                                     Quick access to supporting materials and external resources.
                                 </p>
@@ -501,7 +672,7 @@
                     <div class="card-header border-0 pb-0">
                         <div class="d-flex align-items-center justify-content-between">
                             <div>
-                                <h2 class="h6 mb-1">Students</h2>
+                                <h3 class="h6 mb-1">Students</h3>
                                 <p class="small text-neutral-600 mb-0">
                                     Current roster with quick actions to manage enrollment.
                                 </p>
@@ -550,7 +721,7 @@
                     <div class="card-header border-0 pb-0">
                         <div class="d-flex align-items-center justify-content-between">
                             <div>
-                                <h2 class="h6 mb-1">Homework Submissions</h2>
+                                <h3 class="h6 mb-1">Homework Submissions</h3>
                                 <p class="small text-neutral-600 mb-0">
                                     Sorted by most recent submission date.
                                 </p>
@@ -590,7 +761,7 @@
                     <div class="card-header border-0 pb-0">
                         <div class="d-flex align-items-center justify-content-between">
                             <div>
-                                <h2 class="h6 mb-1">Announcements</h2>
+                                <h3 class="h6 mb-1">Announcements</h3>
                                 <p class="small text-neutral-600 mb-0">
                                     Keep families and students in the loop with timely updates.
                                 </p>
@@ -629,7 +800,7 @@
 <ng-template #announcementModal>
     <form [formGroup]="announcementForm" (ngSubmit)="submitAnnouncement()">
         <div class="modal-header">
-            <h2 class="modal-title h5 mb-0">New Announcement</h2>
+            <h3 class="modal-title h5 mb-0">New Announcement</h3>
             <button type="button" class="btn-close" aria-label="Close" (click)="closeAnnouncementModal()"></button>
         </div>
         <div class="modal-body">
@@ -653,7 +824,7 @@
 
 <ng-template #teacherVersionModal>
     <div class="modal-header">
-        <h2 class="modal-title h5 mb-0">Teacher Version</h2>
+        <h3 class="modal-title h5 mb-0">Teacher Version</h3>
         <button type="button" class="btn-close" aria-label="Close" (click)="teacherVersionModalRef?.close()"></button>
     </div>
     <div class="modal-body">
@@ -677,7 +848,7 @@
 
 <ng-template #editContentModal>
     <div class="modal-header">
-        <h2 class="modal-title h5 mb-0">Edit Content Schedule</h2>
+        <h3 class="modal-title h5 mb-0">Edit Content Schedule</h3>
         <button type="button" class="btn-close" aria-label="Close" (click)="editContentModalRef?.dismiss()"></button>
     </div>
     <form [formGroup]="editContentForm" (ngSubmit)="saveContentEdits()">
@@ -765,7 +936,7 @@
 
 <ng-template #deleteContentModal>
     <div class="modal-header">
-        <h2 class="modal-title h5 mb-0">Delete Content</h2>
+        <h3 class="modal-title h5 mb-0">Delete Content</h3>
         <button type="button" class="btn-close" aria-label="Close" (click)="deleteContentModalRef?.dismiss()"></button>
     </div>
     <div class="modal-body">
@@ -793,97 +964,254 @@
 </ng-template>
 
 <ng-template #addStudentModal>
-    <div class="modal-header">
-        <h2 class="modal-title h5 mb-0">Add Student</h2>
-        <button type="button" class="btn-close" aria-label="Close" (click)="closeAddStudentModal()"></button>
+    <div class="modal-header align-items-center">
+        <div class="col-7 pl-0">
+            <h4 class="modal-title font-weight-bold mb-0">Add Student</h4>
+            <label *ngIf="addStudentEnabled" class="text-muted mb-0 small">
+                All fields marked with <span class="text-danger">*</span> are required
+            </label>
+        </div>
+        <div class="col-5 d-flex justify-content-end align-items-center pr-0">
+            <button *ngIf="!addStudentEnabled" class="btn btn-outline-secondary btn-sm mr-2" title="Invite By Email" (click)="shareEmail(selectClassData, 'addStudent')">
+                Invite By Email
+            </button>
+            <button *ngIf="addStudentEnabled" class="btn btn-outline-secondary btn-sm mr-2" (click)="addStudentClicked()">
+                <i class="fa fa-long-arrow-left mr-1"></i>Back
+            </button>
+            <button type="button" class="btn-close" aria-label="Close" (click)="closeAddStudentModal()"></button>
+        </div>
     </div>
-    <div class="modal-body">
-        <p class="small text-neutral-600 mb-4">
-            Select existing students to enroll in this class. Use the student module to create new student profiles.
-        </p>
-
-        <div class="mb-3">
-            <label class="form-label">Grade (optional)</label>
+    <div class="modal-body row">
+        <div class="col-md-9 form-group" *ngIf="!addStudentEnabled">
+            <label class="font-weight-semibold d-block">Grade <small class="text-muted font-weight-normal">(optional)</small></label>
             <ng-select
-                [items]="addStudentGrades"
+                [items]="gradeData"
                 bindLabel="grade_name"
                 bindValue="grade_id"
                 [multiple]="true"
                 [loading]="isGradeListLoading"
-                placeholder="Select grade(s)"
-                [(ngModel)]="selectedAddStudentGrades"
-                (ngModelChange)="onAddStudentGradesChanged($event)">
+                placeholder="Select Grade"
+                [(ngModel)]="gradName"
+                (change)="getGradeValue($event)">
             </ng-select>
-            <div class="form-text" *ngIf="!addStudentGrades.length && !isGradeListLoading">
+            <div class="form-text" *ngIf="!gradeData.length && !isGradeListLoading">
                 No grades available for this school.
             </div>
         </div>
 
-        <div class="mb-3">
-            <label class="form-label">Students<span class="text-danger">*</span></label>
-            <ng-select
-                [items]="studentOptions"
-                bindLabel="displayLabel"
-                bindValue="student_id"
-                [multiple]="true"
-                [loading]="isStudentListLoading"
-                [disabled]="isStudentListLoading"
-                placeholder="Select students"
-                notFoundText="No students match your search."
-                [searchFn]="studentSearchFn"
-                appendTo="body"
-                [(ngModel)]="selectedStudentIds"
-                (ngModelChange)="onSelectedStudentIdsChange($event)">
-                <ng-template ng-option-tmp let-item="item">
-                    <div class="d-flex flex-column">
-                        <span class="fw-semibold">{{ item.displayLabel }}</span>
-                        <small class="text-muted" *ngIf="item.grade_name">{{ item.grade_name }}</small>
-                        <small class="text-muted" *ngIf="item.email_id">{{ item.email_id }}</small>
-                    </div>
-                </ng-template>
-            </ng-select>
-            <div class="form-text" *ngIf="studentOptions.length">
-                Selected students will be added as {{ studentAddedType === '0' ? 'regular' : 'make-up' }} participants.
-            </div>
+        <div class="col-md-9 form-group" *ngIf="!addStudentEnabled">
+            <label class="font-weight-semibold d-block">Student Name<span class="text-danger ml-1">*</span></label>
+            <ng-multiselect-dropdown
+                [placeholder]="'Select Student'"
+                [data]="studentDataList"
+                [settings]="settings"
+                [(ngModel)]="studentName"
+                (onSelect)="onItemSelect($event, 'single')"
+                (onDeSelect)="onDeSelect($event)"
+                (onSelectAll)="onItemSelect($event, 'all')"
+                (onDeSelectAll)="onDeSelectAll()">
+            </ng-multiselect-dropdown>
             <div class="text-muted small mt-2" *ngIf="isStudentListLoading">
                 Loading students...
             </div>
             <div class="text-danger small mt-2" *ngIf="addStudentLoadError">{{ addStudentLoadError }}</div>
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label d-block">Class Type</label>
-            <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" id="addStudentRegular" value="0" [(ngModel)]="studentAddedType">
-                <label class="form-check-label" for="addStudentRegular">Regular</label>
-            </div>
-            <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" id="addStudentMakeup" value="1" [(ngModel)]="studentAddedType">
-                <label class="form-check-label" for="addStudentMakeup">Make-up</label>
+            <div class="text-muted small mt-2" *ngIf="!isStudentListLoading && !studentDataList.length && !addStudentLoadError">
+                No available students found.
             </div>
         </div>
 
-        <div class="mb-3" *ngIf="studentAddedType === '1'">
-            <label class="form-label">Effective Date<span class="text-danger">*</span></label>
-            <input type="date" class="form-control" [(ngModel)]="effectiveStartDate">
+        <div class="col-md-3 form-group align-content-end" *ngIf="!addStudentEnabled">
+            <button (click)="addStudentClicked()" class="btn btn-primary w-100">
+                <i class="fa fa-plus-circle mr-1"></i>Add Student
+            </button>
         </div>
 
-        <div class="text-danger small" *ngIf="addStudentError">{{ addStudentError }}</div>
+        <div class="col-md-9 row" *ngIf="!addStudentEnabled">
+            <label class="col-12 font-weight-semibold">Class Type<span class="text-danger ml-1">*</span></label>
+            <div class="col-3">
+                <div class="form-check">
+                    <input class="form-check-input cursor" id="overviewAddStudentRegular" type="radio" name="studentType" value="0" [(ngModel)]="studentAddedType">
+                    <label class="form-check-label cursor" for="overviewAddStudentRegular">Regular</label>
+                </div>
+            </div>
+            <div class="col-4">
+                <div class="form-check">
+                    <input class="form-check-input cursor" id="overviewAddStudentMakeup" type="radio" value="1" name="studentType" [(ngModel)]="studentAddedType">
+                    <label class="form-check-label cursor" for="overviewAddStudentMakeup">Make-up Class</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-9 row mt-3" *ngIf="!addStudentEnabled && studentAddedType === '1'">
+            <label class="col-12 font-weight-semibold">
+                Effective Date<span class="text-danger ml-1">*</span></label>
+            <div class="col-xl-8 col-md-7">
+                <div class="d-flex align-items-baseline">
+                    <input class="form-control" placeholder="mm/dd/yyyy"
+                           name="dpEffective" angular-mydatepicker (click)="dpEffective.toggleCalendar()"
+                           #dpEffective="angular-mydatepicker" [(ngModel)]="effectiveStartDate"
+                           [options]="myDpOptions1" autocomplete="off">
+                    <div class="input-group-append">
+                        <button type="button" class="btn btn-primary" (click)="dpEffective.toggleCalendar()">
+                            <i class="fa fa-calendar-o"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12" [ngbCollapse]="!addStudentEnabled">
+            <form [formGroup]="addStudentForm">
+                <div class="form-group row">
+                    <label for="overviewStudentFirst" class="col-xl-3 col-md-4">
+                        First Name<span class="text-danger ml-1">*</span></label>
+                    <div class="col-xl-8 col-md-7">
+                        <input class="form-control" formControlName="first_name" id="overviewStudentFirst" type="text" placeholder="First Name">
+                        <em class="error" *ngIf="addStudentForm.get('first_name')?.invalid && (addStudentForm.get('first_name')?.dirty || addStudentForm.get('first_name')?.touched)">
+                            First name is required
+                        </em>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label for="overviewStudentLast" class="col-xl-3 col-md-4">
+                        Last Name<span class="text-danger ml-1">*</span></label>
+                    <div class="col-xl-8 col-md-7">
+                        <input class="form-control" formControlName="last_name" id="overviewStudentLast" type="text" placeholder="Last Name">
+                        <em class="error" *ngIf="addStudentForm.get('last_name')?.invalid && (addStudentForm.get('last_name')?.dirty || addStudentForm.get('last_name')?.touched)">
+                            Last name is required
+                        </em>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label for="overviewStudentEmail" class="col-xl-3 col-md-4">
+                        Email Address<span class="text-danger ml-1">*</span></label>
+                    <div class="col-xl-8 col-md-7">
+                        <input class="form-control" formControlName="email_id" id="overviewStudentEmail" type="email" placeholder="Email">
+                        <em class="error" *ngIf="addStudentForm.get('email_id')?.hasError('required') && (addStudentForm.get('email_id')?.dirty || addStudentForm.get('email_id')?.touched)">
+                            Email is required
+                        </em>
+                        <em class="error" *ngIf="addStudentForm.get('email_id')?.hasError('email')">Invalid Email-Id</em>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label class="col-xl-3 col-md-4">
+                        Grade<span class="text-danger ml-1">*</span></label>
+                    <div class="col-xl-8 col-md-7">
+                        <ng-select [items]="gradeData"
+                                   bindLabel="grade_name"
+                                   bindValue="grade_id"
+                                   formControlName="grade"
+                                   placeholder="Select Grade">
+                        </ng-select>
+                        <em class="error" *ngIf="addStudentForm.get('grade')?.invalid && (addStudentForm.get('grade')?.dirty || addStudentForm.get('grade')?.touched)">
+                            Grade is required
+                        </em>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="col-12 text-danger small mt-3" *ngIf="addStudentError">{{ addStudentError }}</div>
     </div>
     <div class="modal-footer">
-        <button type="button" class="btn btn-outline-secondary" (click)="closeAddStudentModal()" [disabled]="isSubmittingStudents">
-            Cancel
-        </button>
-        <button type="button" class="btn btn-primary" (click)="submitSelectedStudents()" [disabled]="isSubmittingStudents || !selectedStudentIds.length">
+        <button class="btn btn-outline-primary" type="button" (click)="addStudentEnabled ? addstudent() : submitClass(1)" [disabled]="isSubmittingStudents">
             <span *ngIf="isSubmittingStudents" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-            Add students
+            Submit
+        </button>
+    </div>
+</ng-template>
+
+<ng-template #addMultipleEmailDialog>
+    <div class="modal-header align-items-center">
+        <h5 class="modal-title font-weight-bold mb-0">Invite By Email</h5>
+        <button type="button" class="btn-close" aria-label="Close" (click)="closeInviteEmailModal()"></button>
+    </div>
+    <div class="modal-body">
+        <div style="background-color: transparent !important;" id="overview-email-loader" *ngIf="showBulkEmailLoader">
+            <img style="height: 85px !important;" src="assets/images/pre-loader/loader-01.svg" alt="Loading">
+        </div>
+        <div class="col-sm-12 px-0">
+            <form [formGroup]="studentEmailForm">
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" id="overviewInviteMakeup" formControlName="is_makeup">
+                    <label class="form-check-label" for="overviewInviteMakeup">Mark as make-up class invite</label>
+                </div>
+
+                <div class="col-12 mt-3" [ngbCollapse]="!studentEmailForm.controls.is_makeup.value">
+                    <div class="form-group row">
+                        <label class="col-xl-3 col-md-4 align-self-center"><span class="text-danger">*</span>
+                            Make-up Class Date</label>
+                        <div class="col-xl-9 col-md-8">
+                            <div class="d-flex align-items-baseline">
+                                <input class="form-control" placeholder="mm/dd/yyyy" (click)="dpInvite.toggleCalendar()"
+                                       name="dpInvite" formControlName="start_date" angular-mydatepicker
+                                       #dpInvite="angular-mydatepicker"
+                                       [options]="myDpOptions1" autocomplete="off">
+                                <div class="input-group-append">
+                                    <button type="button" class="btn btn-primary" (click)="dpInvite.toggleCalendar()">
+                                        <i class="fa fa-calendar-o"></i></button>
+                                </div>
+                            </div>
+                            <em *ngIf="studentEmailForm.get('start_date')?.invalid && (studentEmailForm.get('start_date')?.dirty || studentEmailForm.get('start_date')?.touched)"
+                                class="error">Please Enter Make-up Class Date</em>
+                        </div>
+                    </div>
+                </div>
+
+                <mat-form-field class="col-12">
+                    <mat-chip-grid #chipList formArrayName="emails">
+                        <mat-chip-row [ngClass]="{'error-chip': item.invalid}"
+                                      *ngFor="let item of emailList"
+                                      [removable]="removable"
+                                      (removed)="removeEmail(item)" required name="chips">{{item.value}}
+                            <mat-icon matChipRemove *ngIf="removable">cancel</mat-icon>
+                        </mat-chip-row>
+                        <input style="font-size: 14px; height: 40px !important;" placeholder="Enter Email Id" [matChipInputFor]="chipList"
+                               [matChipInputSeparatorKeyCodes]="separatorKeysCodes" [matChipInputAddOnBlur]="true"
+                               (matChipInputTokenEnd)="add($event)"/>
+                    </mat-chip-grid>
+                </mat-form-field>
+                <mat-error class="col-12" *ngIf="!validationEmail && emailList.length">
+                    Invalid email ID
+                </mat-error>
+                <div class="col-12">
+                    <p class="small mb-3">Note: Separate multiple email IDs with a comma and press enter.</p>
+                </div>
+                <div class="col-12">
+                    <textarea class="form-control" rows="3" formControlName="message" placeholder="Message" maxlength="500"></textarea>
+                </div>
+                <div class="col-12 mt-3">
+                    <p class="mt-1 mb-0" style="color: black">{{studentEmailForm.controls.message.value}}</p>
+                    <p class="mt-{{studentEmailForm.controls.message.value ? '3' : '1'}} mb-0" style="color: black">
+                        You have been invited by <strong>{{auth.getSessionData('school_name')}}</strong> to join a class:
+                        <strong>{{selectClassData?.class_code}}</strong> - <strong>{{selectClassData?.class_name}}</strong>
+                    </p>
+                    <p class="mt-3 mb-0" style="color: black">Please click the below link to join the class</p>
+                    <a class="m-0 color-primary" [href]="env.envProperties.envURL + '#/auth/login/studentRegister/' + selectClassData?.class_code" target="_blank">
+                        {{env.envProperties.envURL + '#/auth/login/studentRegister/' + selectClassData?.class_code}}
+                    </a>
+                    <div class="row">
+                        <div class="col-6">
+                            <p class="text-center my-2">---------------(OR)---------------</p>
+                        </div>
+                    </div>
+                    <a class="m-0 color-primary" [href]="env.envProperties.envURL + '#/enrollclasscode/' + selectClassData?.class_code" target="_blank">
+                        {{env.envProperties.envURL + '#/enrollclasscode/' + selectClassData?.class_code}}
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-outline-primary" type="button" (click)="bulkMail()" [disabled]="!validationEmail && emailList.length">
+            Submit
         </button>
     </div>
 </ng-template>
 
 <ng-template #createTopicModal>
     <div class="modal-header">
-        <h2 class="modal-title h5 mb-0">Create Topic</h2>
+        <h3 class="modal-title h5 mb-0">Create Topic</h3>
         <button type="button" class="btn-close" aria-label="Close" (click)="closeTopicModal()"></button>
     </div>
     <form [formGroup]="topicForm" (ngSubmit)="submitTopic()">

@@ -216,11 +216,11 @@
                         <div class="card-body small-screen-group-btn {{env.deviceType() ? 'px-3 py-2' : 'p-3'}}">
                             <div class="row d-flex justify-content-between list-title {{env.deviceType() ? 'align-items-end mb-2 pb-2' : ''}}">
                                 <div class="col-6 col-md-5 col-xl-5 design {{!env.deviceType() ? 'pt-2' : ''}}">
-                                    <h4>Assessments</h4>
+                                    <h4>Quiz</h4>
                                 </div>
                                 <div class="col-6 col-xl-7 col-md-7 d-flex justify-content-end">
                                     <div class="input-group">
-                                        <input type="text" class="form-control" [ngStyle]="{'height' : env.deviceType() ? '34px' : '41px'}" size="50" placeholder="Search {{env.deviceType() ? '' : 'Assessment'}}" [(ngModel)]="searchAssess" (input)="updateFilter(searchAssess, 'assess')">
+                                        <input type="text" class="form-control" [ngStyle]="{'height' : env.deviceType() ? '34px' : '41px'}" size="50" placeholder="Search {{env.deviceType() ? '' : 'Quiz'}}" [(ngModel)]="searchAssess" (input)="updateFilter(searchAssess, 'assess')">
                                         <div class="input-group-append">
                                             <button class="btn btn-primary {{env.deviceType() ? 'py-0 border-radius-2' : ''}}" type="submit"><i class="fa fa-search" aria-hidden="true"></i></button>
                                         </div>
@@ -257,10 +257,10 @@
                                 <div class="btn-group dropup">
                                     <button class="col-12 btn btn-primary dropdown-toggle" data-toggle="dropdown"><i class="fa fa-check-circle-o" aria-hidden="true"></i> {{assessButton}} </button>
                                     <div class="dropdown-menu">
-<!--                                        <a class="dropdown-item dropdown-link" (click)="assessmentFilter('2')">Upcoming Assessments</a>-->
-                                        <a class="dropdown-item dropdown-link" (click)="assessmentFilter('3')">In Progress Assessments</a>
-                                        <a class="dropdown-item dropdown-link" (click)="assessmentFilter('4')">Completed Assessments</a>
-                                        <a class="dropdown-item dropdown-link" (click)="assessmentFilter('1')">All Assessments</a>
+<!--                                        <a class="dropdown-item dropdown-link" (click)="assessmentFilter('2')">Upcoming Quiz</a>-->
+                                        <a class="dropdown-item dropdown-link" (click)="assessmentFilter('3')">In Progress Quiz</a>
+                                        <a class="dropdown-item dropdown-link" (click)="assessmentFilter('4')">Completed Quiz</a>
+                                        <a class="dropdown-item dropdown-link" (click)="assessmentFilter('1')">All Quiz</a>
                                     </div>
                                 </div>
                                 <div class="btn-group dropup">

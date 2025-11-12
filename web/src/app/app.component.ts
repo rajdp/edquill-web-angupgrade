@@ -87,6 +87,7 @@ export class AppComponent {
     const checkForSetPassword = url.includes('setPassword');
     const checkEnrollClassCode = url.includes('enrollclasscode');
     const checkStudentRegister = url.includes('studentRegister');
+    const checkSelfRegistration = url.includes('#/register');
     const viewPDF = url.includes('viewAnswerKeyPdf');
     const preview = url.includes('contentFolder/preview');
     const googleSignIn = url.includes('googleSignIn');
@@ -95,7 +96,7 @@ export class AppComponent {
     const checkForIPADApp = url.includes('student-annotation') || url.includes('source-link') ||
       url.includes('student-scratch') || url.includes('graphing') || url.includes('ipad-question-view');
 
-    if (checkForForgotPassword || checkEnrollClassCode || checkStudentRegister || viewPDF || preview ||
+    if (checkForForgotPassword || checkEnrollClassCode || checkStudentRegister || checkSelfRegistration || viewPDF || preview ||
       googleSignIn || googleStudentRegister || tutorConnect || checkForSetPassword) {
       return;
     }

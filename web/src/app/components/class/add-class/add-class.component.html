@@ -2,182 +2,323 @@
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
-            <div class="card tab2-card">
-                <div class="card-header">
-                    <div class="row">
-                        <div class="col-6 col-md-6">
-                    <h5 class="text-capitalize">{{type == 'add'  || type == 'addEdit' ? 'Add' : 'Edit'}} Class</h5>
+            <div class="card shadow-sm">
+                <!-- Enhanced Header -->
+                <div class="card-header bg-light py-3">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <h5 class="mb-1 text-primary">
+                                <i class="fa fa-{{type == 'add' || type == 'addEdit' ? 'plus-circle' : 'edit'}} mr-2"></i>
+                                {{type == 'add' || type == 'addEdit' ? 'Create New' : 'Edit'}} Class
+                            </h5>
+                            <p class="text-muted mb-0 small">
+                                <i class="fa fa-info-circle mr-1"></i>
+                                Fields marked with <span class="text-danger font-weight-bold">*</span> are required
+                            </p>
                         </div>
-                        <div class="col-6 col-md-6">
-                    <div class="pull-right">
-<!--                        <button (click)="curicullum(type, 0)" *ngIf="type != 'add'" class="btn btn-outline-primary mr-2" type="button">Curriculum </button>-->
-                        <button type="button" (click)="addclass(type, 1)" class="btn btn-outline-primary mr-2">Save as draft</button>
-                        <button type="button" (click)="submitDraftClass()"  class="btn btn-primary">Save</button>
-<!--                        <button type="button" *ngIf="type == 'addEdit'" (click)="addclass('addEdit',2)" class="btn btn-primary">Student <i class="fa fa-long-arrow-right fa-1x" aria-hidden="true"></i> </button>-->
-<!--                        <button type="button" *ngIf="type == 'edit'" (click)="addclass('edit',2)" class="btn btn-primary">Student <i class="fa fa-long-arrow-right fa-1x" aria-hidden="true"></i> </button>-->
-                    </div>
+                        <div class="col-md-6">
+                            <div class="float-right">
+                                <button type="button" (click)="navigateBackToOrigin()" class="btn btn-outline-secondary btn-sm mr-2">
+                                    <i class="fa fa-arrow-left mr-1"></i> Back to List
+                                </button>
+                                <button type="button" (click)="addclass(type, 1)" class="btn btn-outline-primary mr-2">
+                                    <i class="fa fa-save mr-1"></i> Save as Draft
+                                </button>
+                                <button type="button" (click)="submitDraftClass()" class="btn btn-primary">
+                                    <i class="fa fa-check mr-1"></i> Save Class
+                                </button>
+                            </div>
                         </div>
                     </div>
-                    <label class="text-muted">All fields marked with <span class="text-danger">*</span> are required</label>
                 </div>
-                <div class="card-body tab2-card">
-                    <form [formGroup]="classform" class="needs-validation user-add">
 
+                <div class="card-body">
+                    <form [formGroup]="classform" class="needs-validation">
 
-<!--                        form input data designs started-->
+                        <!-- Basic Information Section -->
+                        <div class="mb-4">
+                            <h6 class="text-secondary mb-3 pb-2 border-bottom">
+                                <i class="fa fa-info-circle mr-2"></i>Basic Information
+                            </h6>
 
-                        <div class="container col-12 col-md-12 d-flex mb-5">
-<!--                            <div class="col-12 col-md-4 px-0" style="">-->
-<!--                                <div class="image-container-left">-->
-<!--                                        <img *ngIf="imagepath == ''" src="assets/images/ristaschool/Mask Group 35.png" alt="">-->
-<!--                                        <img  *ngIf="imagepath != ''"  [src]="sanitizer.bypassSecurityTrustResourceUrl(webhost + '/' + imagepath)" alt="" style="height: 300px; width: 400px">-->
-<!--                                        <i *ngIf="imagepath != ''" class="fa fa-times close-button float-right" title="close" (click)="deleteImg()" ></i>-->
-<!--                                    <div class="profileUrl" *ngIf="readOnly == false">-->
-<!--                                        <input style="display: none" type="file" class="custom-upload-input" (change)="encodeImageFileAsURL($event)" #myInput accept=".png, .jpeg, .jpg">-->
-<!--                                        <button type="button" class="btn btn-light btn-circle border-rista" title="upload Image" (click)="myInput.click()"> <i class="fa fa-upload fa-2x mb-3" aria-hidden="true"></i> </button>-->
-<!--                                    </div>-->
-<!--                                </div>-->
-<!--                            </div>-->
-                            <div class="container col-12 col-md-12">
-                                <div class="row">
-                                    <div class="col-12 col-md-{{showBatch == true ? 6 : 12}} form-group">
-                                        <input class="form-control" [readOnly]="!manageClass" formControlName="classname" id="validationCustom1"
-                                               type="text" placeholder="Class Name *" required>
-                                        <em class="error" *ngIf="!classform.get('classname').valid && (classform.get('classname').dirty || classform.get('classname').touched)">Class is required</em>
+                            <div class="container col-12 col-md-12 d-flex mb-4">
+                                <div class="container col-12 col-md-12">
+                                    <!-- Class Name & Batch -->
+                                    <div class="row mb-3">
+                                        <div class="col-12 col-md-{{showBatch == true ? 6 : 12}} form-group">
+                                            <label class="font-weight-bold mb-2">
+                                                <span class="text-danger mr-1">*</span>Class Name
+                                            </label>
+                                            <input 
+                                                class="form-control" 
+                                                [readOnly]="!manageClass" 
+                                                formControlName="classname" 
+                                                id="validationCustom1"
+                                                type="text" 
+                                                placeholder="Enter class name (e.g., Math 101, English Literature)"
+                                                required>
+                                            <em class="error d-block mt-1" *ngIf="!classform.get('classname').valid && (classform.get('classname').dirty || classform.get('classname').touched)">
+                                                <i class="fa fa-exclamation-circle mr-1"></i>Class name is required
+                                            </em>
+                                        </div>
+                                        <div class="col-12 col-md-6 form-group" *ngIf="showBatch">
+                                            <label class="font-weight-bold mb-2">
+                                                <span class="text-danger mr-1">*</span>Batch/Folder
+                                            </label>
+                                            <app-treeview-contentfolder
+                                                [type]="type" 
+                                                [calledForm]="'class'" 
+                                                [treeviewHeight]="300"
+                                                [selectedbatch]="batchId" 
+                                                (batchChange)="onBatchSelectionChange($event)"
+                                                [class_id]="type != 'add' ? class_id : ''"
+                                                [schoolId]="schoolIdNum">
+                                            </app-treeview-contentfolder>
+                                            <em class="error d-block mt-1" *ngIf="!classform.get('batch').valid && (classform.get('batch').dirty || classform.get('batch').touched)">
+                                                <i class="fa fa-exclamation-circle mr-1"></i>Batch is required
+                                            </em>
+                                        </div>
                                     </div>
-                                    <div class="col-12 col-md-6 form-group px-0" *ngIf="showBatch">
-                                        <app-treeview-contentfolder
-                                            [type]="type" [calledForm]="'class'" [treeviewHeight]="300"
-                                            [selectedbatch]="batchId" [class_id]="type != 'add' ? class_id : ''">
-                                        </app-treeview-contentfolder>
-                                        <em class="error" *ngIf="!classform.get('batch').valid && (classform.get('batch').dirty || classform.get('batch').touched)">Batch is required</em>
-                                    </div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-12 col-md-6 form-group">
-                                            <ng-select (change)="gradeCheck()"
-                                                    [items]="gradeData"
-                                                       [ngStyle]="{'pointer-events' : !manageClass ? 'none' : ''}"
-                                                       bindLabel="grade_name"
-                                                       bindValue="grade_id"
-                                                       formControlName="grade"
-                                                       placeholder="Select Grade"
-                                                       typeToSearchText=""
-                                                       multiple="true"
-                                            >
+
+                                    <!-- Grade & Subject -->
+                                    <div class="row mb-3">
+                                        <div class="col-12 col-md-6 form-group">
+                                            <label class="font-weight-bold mb-2">
+                                                Grade Level
+                                            </label>
+                                            <ng-select 
+                                                (change)="gradeCheck()"
+                                                [items]="gradeData"
+                                                [ngStyle]="{'pointer-events' : !manageClass ? 'none' : ''}"
+                                                bindLabel="grade_name"
+                                                bindValue="grade_id"
+                                                formControlName="grade"
+                                                placeholder="Select one or more grade levels"
+                                                typeToSearchText=""
+                                                [multiple]="true">
                                             </ng-select>
-                                            <em class="error" *ngIf="!classform.get('grade').valid && (classform.get('grade').dirty || classform.get('grade').touched)">Grade is required</em>
+                                            <small class="form-text text-muted">
+                                                <i class="fa fa-graduation-cap mr-1"></i>Select the grade levels for this class
+                                            </small>
+                                            <em class="error d-block mt-1" *ngIf="!classform.get('grade').valid && (classform.get('grade').dirty || classform.get('grade').touched)">
+                                                <i class="fa fa-exclamation-circle mr-1"></i>Grade is required
+                                            </em>
                                         </div>
-                                    <div class="col-12 col-md-6 form-group">
-                                        <ng-select [items]="subjectData"
-                                                   [ngStyle]="{'pointer-events' : !manageClass ? 'none' : ''}"
-                                                   bindLabel="subject_name"
-                                                   bindValue="subject_id"
-                                                   formControlName="subject"
-                                                   placeholder="Select Subject *"
-                                                   typeToSearchText=""
-                                                   multiple="true"
-                                        >
+                                        <div class="col-12 col-md-6 form-group">
+                                            <label class="font-weight-bold mb-2">
+                                                <span class="text-danger mr-1">*</span>Subject(s)
+                                            </label>
+                                            <ng-select 
+                                                [items]="subjectData"
+                                                [ngStyle]="{'pointer-events' : !manageClass ? 'none' : ''}"
+                                                bindLabel="subject_name"
+                                                bindValue="subject_id"
+                                                formControlName="subject"
+                                                placeholder="Select one or more subjects"
+                                                typeToSearchText=""
+                                                [multiple]="true">
+                                            </ng-select>
+                                            <small class="form-text text-muted">
+                                                <i class="fa fa-book mr-1"></i>Select subjects covered in this class
+                                            </small>
+                                            <em class="error d-block mt-1" *ngIf="!classform.get('subject').valid && (classform.get('subject').dirty || classform.get('subject').touched)">
+                                                <i class="fa fa-exclamation-circle mr-1"></i>Subject is required
+                                            </em>
+                                        </div>
+                                    </div>
+
+                                    <!-- Tags & Status -->
+                                    <div class="row mb-3">
+                                        <div class="col-12 col-md-6 form-group">
+                                            <label class="font-weight-bold mb-2">
+                                                Tags
+                                            </label>
+                                            <tag-input 
+                                                formControlName="tag"
+                                                [secondaryPlaceholder]="'Type and press Enter'"
+                                                [placeholder]="'Add tags (e.g., advanced, beginner)'"
+                                                [editable]='true'
+                                                [clearOnBlur]="true"
+                                                [addOnPaste]="true"
+                                                [addOnBlur]="true"
+                                                theme='bootstrap'
+                                                [disable]="readOnly">
+                                            </tag-input>
+                                            <small class="form-text text-muted">
+                                                <i class="fa fa-tags mr-1"></i>Add keywords to help organize and search for this class
+                                            </small>
+                                        </div>
+                                        <div class="col-12 col-md-6 form-group">
+                                            <label class="font-weight-bold mb-2">
+                                                <span class="text-danger mr-1">*</span>Status
+                                            </label>
+                                            <select class="form-control" formControlName="status" [disabled]="!manageClass">
+                                                <option value="1">
+                                                    <i class="fa fa-check-circle"></i> Active
+                                                </option>
+                                                <option value="2">
+                                                    <i class="fa fa-pause-circle"></i> Inactive
+                                                </option>
+                                            </select>
+                                            <small class="form-text text-muted">
+                                                <i class="fa fa-toggle-on mr-1"></i>Active classes are visible to students
+                                            </small>
+                                            <em class="error d-block mt-1" *ngIf="!classform.get('status').valid && (classform.get('status').dirty || classform.get('status').touched)">
+                                                <i class="fa fa-exclamation-circle mr-1"></i>Status is required
+                                            </em>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Class Delivery & Communication Section -->
+                        <div class="mb-4">
+                            <h6 class="text-secondary mb-3 pb-2 border-bottom">
+                                <i class="fa fa-laptop mr-2"></i>Class Delivery & Communication
+                            </h6>
+
+                            <div class="container col-12 col-md-12">
+                                <div class="row mb-3">
+                                    <!-- Delivery Method -->
+                                    <div class="form-group col-12 col-md-6">
+                                        <label class="font-weight-bold mb-2">
+                                            <span class="text-danger mr-1">*</span>Class Delivery Method
+                                        </label>
+                                        <div class="d-flex gap-4">
+                                            <div class="form-check">
+                                                <input 
+                                                    class="form-check-input" 
+                                                    id="online" 
+                                                    type="radio" 
+                                                    name="onlinePerson" 
+                                                    value="1" 
+                                                    formControlName="onlinePerson" 
+                                                    (change)="onlinePerson()">
+                                                <label class="form-check-label" for="online">
+                                                    <i class="fa fa-video mr-1"></i> Online
+                                                </label>
+                                            </div>
+                                            <div class="form-check ml-4">
+                                                <input 
+                                                    class="form-check-input" 
+                                                    id="inline" 
+                                                    type="radio" 
+                                                    value="2" 
+                                                    name="onlinePerson" 
+                                                    formControlName="onlinePerson" 
+                                                    (change)="onlinePerson()">
+                                                <label class="form-check-label" for="inline">
+                                                    <i class="fa fa-users mr-1"></i> In-Person
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <small class="form-text text-muted">
+                                            <i class="fa fa-info-circle mr-1"></i>Choose how the class will be delivered
+                                        </small>
+                                    </div>
+
+                                    <!-- Announcement Type -->
+                                    <div class="form-group col-12 col-md-6">
+                                        <label class="font-weight-bold mb-2">
+                                            <span class="text-danger mr-1">*</span>Announcement Type
+                                        </label>
+                                        <ng-select 
+                                            [items]="announcementListData"
+                                            [ngStyle]="{'pointer-events' : !manageClass ? 'none' : ''}"
+                                            bindLabel="text"
+                                            bindValue="value"
+                                            formControlName="announcement_type"
+                                            placeholder="Select how announcements are sent"
+                                            typeToSearchText=""
+                                            [clearable]="false">
                                         </ng-select>
-                                        <em class="error" *ngIf="!classform.get('subject').valid && (classform.get('subject').dirty || classform.get('subject').touched)">Subject is required</em>
-                                        </div>
+                                        <small class="form-text text-muted">
+                                            <i class="fa fa-bell mr-1"></i>Choose notification method for students
+                                        </small>
+                                        <em class="error d-block mt-1" *ngIf="!classform.get('announcement_type').valid && (classform.get('announcement_type').dirty || classform.get('announcement_type').touched)">
+                                            <i class="fa fa-exclamation-circle mr-1"></i>Announcement type is required
+                                        </em>
+                                    </div>
                                 </div>
 
-                                <div class="row form-group pb-0">
-                                    <div class="modal-body col-12 col-md-6 py-0">
-                                            <tag-input formControlName="tag"
-                                                    [secondaryPlaceholder]="'Enter tags'"
-                                                       [placeholder]="'Add tags'"
-                                                       [editable]='true'
-                                                       [clearOnBlur]="true"
-                                                       [addOnPaste]="true"
-                                                       [addOnBlur]="true"
-                                                       theme='bootstrap'
-                                                       [disable]="readOnly"
-                                            ></tag-input>
+                                <!-- Zoom Meeting Details (conditional) -->
+                                <div *ngIf="showZoomDetails && allowZoomApi">
+                                    <div class="alert alert-info mb-3">
+                                        <i class="fa fa-video-camera mr-2"></i>
+                                        <strong>Zoom Meeting Information</strong> - Enter the meeting details for online classes
                                     </div>
-                                    <div class="col-12 col-md-6" *ngIf="!manageClass">
-                                        <select class="form-control" formControlName="status" disabled>
-                                            <option value="1">Active</option>
-                                            <option value="2">Inactive</option>
-                                        </select>
-                                        <em class="error" *ngIf="!classform.get('status').valid && (classform.get('status').dirty || classform.get('status').touched)">status is required</em>
-                                    </div>
-                                    <div *ngIf="manageClass" class="col-12 col-md-6">
-                                        <select class="form-control" formControlName="status">
-                                            <option value="1">Active</option>
-                                            <option value="2">Inactive</option>
-                                        </select>
-                                        <em class="error" *ngIf="!classform.get('status').valid && (classform.get('status').dirty || classform.get('status').touched)">status is required</em>
-                                    </div>
-<!--                                    <div *ngIf="readOnly == false" class="col-6 col-md-3">-->
-<!--&lt;!&ndash;                                        <select class="form-control" formControlName="timezone" placehol>&ndash;&gt;-->
-<!--&lt;!&ndash;                                            <option value="{{item.id}}" *ngFor="let item of timeZoneList">{{item.time_zone}}</option>&ndash;&gt;-->
-<!--&lt;!&ndash;                                        </select>&ndash;&gt;-->
-<!--                                        <ng-select [items]="timeZoneList"-->
-<!--                                                   bindLabel="time_zone"-->
-<!--                                                   bindValue="id"-->
-<!--                                                   formControlName="timezone"-->
-<!--                                                   placeholder="Select TimeZone *"-->
-<!--                                                   typeToSearchText=""-->
-<!--                                        >-->
-<!--                                        </ng-select>-->
-<!--                                        <em *ngIf="!classform.get('timezone').valid && (classform.get('timezone').dirty || classform.get('timezone').touched)" class="error">timezone is required</em>-->
-<!--                                    </div>-->
-                                </div>
-                                <div class="row">
-                                    <div class="form-group col-6">
-                                        <div class="row">
-                                            <div class="col-4">
-                                                <div class="form-check">
-                                                    <input class="form-check-input" id="online" type="radio" name="onlinePerson" value="1" formControlName="onlinePerson" (change)="onlinePerson()">
-                                                    <label class="form-check-label" for="online"> Online</label>
-                                                </div>
-                                            </div>
-                                            <div class="col-5">
-                                                <div class="form-check">
-                                                    <input class="form-check-input" id="inline" type="radio" value="2" name="onlinePerson" formControlName="onlinePerson" (change)="onlinePerson()">
-                                                    <label class="form-check-label" for="inline"> In-Person</label>
-                                                </div>
-                                            </div>
+
+                                    <div class="row mb-3">
+                                        <div class="form-group col-12 col-md-6">
+                                            <label class="font-weight-bold mb-2">
+                                                <span class="text-danger mr-1">*</span>Zoom Meeting Link
+                                            </label>
+                                            <input 
+                                                class="form-control" 
+                                                [readOnly]="!manageClass" 
+                                                type="url" 
+                                                pattern="https?://.+" 
+                                                formControlName="meetingLink" 
+                                                placeholder="https://zoom.us/j/..." 
+                                                (ngModelChange)="changeZoomLink()">
+                                            <em class="error d-block mt-1" *ngIf="classform.get('meetingLink').hasError('pattern')">
+                                                <i class="fa fa-exclamation-circle mr-1"></i>Please enter a valid URL
+                                            </em>
+                                            <em class="error d-block mt-1" *ngIf="!classform.get('meetingLink').valid && (classform.get('meetingLink').dirty || classform.get('meetingLink').touched)">
+                                                <i class="fa fa-exclamation-circle mr-1"></i>Zoom meeting link is required
+                                            </em>
+                                        </div>
+                                        <div class="form-group col-12 col-md-6">
+                                            <label class="font-weight-bold mb-2">
+                                                <span class="text-danger mr-1">*</span>Meeting ID
+                                            </label>
+                                            <input 
+                                                (ngModelChange)="changeZoomLink()" 
+                                                [readOnly]="!manageClass" 
+                                                class="form-control" 
+                                                formControlName="meetingId" 
+                                                placeholder="123 456 7890" 
+                                                type="text">
+                                            <em class="error d-block mt-1" *ngIf="!classform.get('meetingId').valid && (classform.get('meetingId').dirty || classform.get('meetingId').touched)">
+                                                <i class="fa fa-exclamation-circle mr-1"></i>Meeting ID is required
+                                            </em>
                                         </div>
                                     </div>
-                                    <div class="form-group col-md-6">
-                                        <ng-select [items]="announcementListData"
-                                                   [ngStyle]="{'pointer-events' : !manageClass ? 'none' : ''}"
-                                                   bindLabel="text"
-                                                   bindValue="value"
-                                                   formControlName="announcement_type"
-                                                   placeholder="Select Announcement Type *"
-                                                   typeToSearchText=""
-                                                   [clearable]="false"
-                                        >
-                                        </ng-select>
-                                        <em class="error" *ngIf="!classform.get('announcement_type').valid && (classform.get('announcement_type').dirty || classform.get('announcement_type').touched)">Announcement Type is required</em>
+
+                                    <div class="row mb-3">
+                                        <div class="form-group col-12 col-md-6">
+                                            <label class="font-weight-bold mb-2">
+                                                Meeting Passcode
+                                            </label>
+                                            <input 
+                                                (ngModelChange)="changeZoomLink()" 
+                                                [readOnly]="!manageClass" 
+                                                class="form-control" 
+                                                formControlName="passcode" 
+                                                placeholder="Enter passcode (if required)" 
+                                                type="text">
+                                            <small class="form-text text-muted">
+                                                <i class="fa fa-lock mr-1"></i>Optional passcode for meeting security
+                                            </small>
+                                        </div>
+                                        <div class="form-group col-12 col-md-6">
+                                            <label class="font-weight-bold mb-2">
+                                                Telephone Number
+                                            </label>
+                                            <input 
+                                                class="form-control" 
+                                                [readOnly]="!manageClass" 
+                                                type="text" 
+                                                formControlName="telephone" 
+                                                placeholder="Dial-in number (optional)">
+                                            <small class="form-text text-muted">
+                                                <i class="fa fa-phone mr-1"></i>For students joining by phone
+                                            </small>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="row mt-2" *ngIf="showZoomDetails && allowZoomApi">
-                                    <div class="form-group col-12 col-md-6">
-                                        <input class="form-control" [readOnly]="!manageClass" type="link" pattern="https?://.+" formControlName="meetingLink" placeholder="Zoom Meeting Link *" (ngModelChange)="changeZoomLink()">
-                                        <em class="error" *ngIf="classform.get('meetingLink').hasError('pattern')">Please Enter valid Link</em>
-                                        <em class="error" *ngIf="!classform.get('meetingLink').valid && (classform.get('meetingLink').dirty || classform.get('meetingLink').touched)">Zoom Meeting Link is required</em>
-                                    </div>
-                                    <div class="form-group col-12 col-md-6">
-                                        <input (ngModelChange)="changeZoomLink()" [readOnly]="!manageClass" class="form-control" formControlName="meetingId" placeholder="Meeting ID" type="text">
-                                        <em class="error" *ngIf="!classform.get('meetingId').valid && (classform.get('meetingId').dirty || classform.get('meetingId').touched)">Meeting Id is required</em>
-                                    </div>
-                                </div>
-                                <div class="row" *ngIf="showZoomDetails && allowZoomApi">
-                                    <div class="form-group col-12 col-md-6">
-                                        <input (ngModelChange)="changeZoomLink()" [readOnly]="!manageClass" class="form-control" formControlName="passcode" placeholder="Zoom passcode" type="text">
-                                        <em class="error" *ngIf="!classform.get('passcode').valid && (classform.get('passcode').dirty || classform.get('passcode').touched)">Passcode is required</em>
-                                    </div>
-                                    <div class="form-group col-12 col-md-6">
-                                        <input class="form-control" [readOnly]="!manageClass" type="text" formControlName="telephone" placeholder="Enter Telephone Number">
-                                        <em class="error" *ngIf="!classform.get('telephone').valid && (classform.get('telephone').dirty || classform.get('telephone').touched)">Telephone Number is required</em>
-                                    </div>
-                                </div>
-                                <div class="row my-2" *ngIf="auth.getRoleId() == '2'">
+                                <div class="row my-2" *ngIf="manageClass || type === 'add' || type === 'edit' || type === 'addEdit'">
                                     <div class="col-md-12 col-xl-4">
                                         <div class="d-flex align-self-center align-items-center ml-3">
                                             <input (change)="updateCourseField()" formControlName="add_course" id="add_course" type="checkbox" class="form-check-input cursor">
@@ -204,7 +345,7 @@
                                             </div>
                                             <div class="form-group col-4">
                                                 <div class="input-group">
-                                                    <input class="form-control" name="registration_start_date" placeholder="Registration Start Date *" (keypress)="$event.preventDefault()" (click)="dp2.toggleCalendar()"
+                                                    <input class="form-control" name="registration_start_date" placeholder="Registration Start Date (optional)" (keypress)="$event.preventDefault()" (click)="dp2.toggleCalendar()"
                                                            formControlName="registration_start_date" angular-mydatepicker #dp2="angular-mydatepicker"
                                                            (dateChanged)="onDateChanged2($event)" [options]="myDpOptions2"/>
                                                     <div class="input-group-append">
@@ -213,12 +354,10 @@
                                                         </button>
                                                     </div>
                                                 </div>
-                                                <em class="error" *ngIf="!classform.get('registration_start_date').valid && (classform.get('registration_start_date').dirty|| classform.get('registration_start_date').touched)">
-                                                    Registration State Date is required</em>
                                             </div>
                                             <div class="form-group col-4">
                                                 <div class="input-group">
-                                                    <input class="form-control" name="registration_end_date" placeholder="Registration End Date *" (keypress)="$event.preventDefault()" (click)="dp3.toggleCalendar()"
+                                                    <input class="form-control" name="registration_end_date" placeholder="Registration End Date (optional)" (keypress)="$event.preventDefault()" (click)="dp3.toggleCalendar()"
                                                            formControlName="registration_end_date" angular-mydatepicker #dp3="angular-mydatepicker"
                                                            (dateChanged)="onDateChanged3($event)" [options]="myDpOptions3"/>
                                                     <div class="input-group-append">
@@ -227,71 +366,57 @@
                                                         </button>
                                                     </div>
                                                 </div>
-                                                <em class="error" *ngIf="!classform.get('registration_end_date').valid && (classform.get('registration_end_date').dirty|| classform.get('registration_end_date').touched)">
-                                                    Registration End Date is required</em>
                                             </div>
 
                                             <div class="form-group col-4">
                                                 <div class="input-group">
-                                                    <input class="form-control" placeholder="Amount *" formControlName="amount" (input)="calculateAmount()" (keypress)="numberValidation($event)">
+                                                    <input class="form-control" placeholder="Amount (optional)" formControlName="amount" (input)="calculateAmount()" (keypress)="numberValidation($event)">
                                                     <div class="input-group-append">
                                                         <button style="padding: 6px 18px" type="button" class="btn btn-primary">$</button>
                                                     </div>
                                                 </div>
-                                                <em class="error" *ngIf="!classform.get('amount').valid && (classform.get('amount').dirty || classform.get('amount').touched)">
-                                                    Amount is required</em>
                                             </div>
 
                                             <div class="form-group col-4">
                                                 <div class="input-group">
-                                                    <input class="form-control" placeholder="Discount Amount *" formControlName="discount" (input)="calculateAmount()" (keypress)="numberValidation($event)">
+                                                    <input class="form-control" placeholder="Discount Amount (optional)" formControlName="discount" (input)="calculateAmount()" (keypress)="numberValidation($event)">
                                                     <div class="input-group-append">
                                                         <button style="padding: 6px 18px" type="button" class="btn btn-primary">$</button>
                                                     </div>
                                                 </div>
-                                                <em class="error" *ngIf="!classform.get('discount').valid && (classform.get('discount').dirty || classform.get('discount').touched)">
-                                                    Discount Amount is required</em>
                                             </div>
 
                                             <div class="form-group col-4">
                                                 <div class="input-group">
-                                                    <input class="form-control" placeholder="Actual Amount *" formControlName="actual_amount" readonly>
+                                                    <input class="form-control" placeholder="Actual Amount" formControlName="actual_amount" readonly>
                                                     <div class="input-group-append">
                                                         <button style="padding: 6px 18px" type="button" class="btn btn-primary">$</button>
                                                     </div>
                                                 </div>
-                                                <em class="error" *ngIf="!classform.get('actual_amount').valid && (classform.get('actual_amount').dirty || classform.get('actual_amount').touched)">
-                                                    Actual Amount is required</em>
                                             </div>
 
                                             <div class="form-group col-4">
-                                                <input maxlength="4" class="form-control" id="inputSlot" placeholder="Slots Available *" formControlName="slot_available" (keypress)="numberValidation($event)">
-                                                <em class="error" *ngIf="!classform.get('slot_available').valid && (classform.get('slot_available').dirty || classform.get('slot_available').touched)">
-                                                    Slot Available is required</em>
+                                                <input maxlength="4" class="form-control" id="inputSlot" placeholder="Slots Available (optional)" formControlName="slot_available" (keypress)="numberValidation($event)">
                                             </div>
 
                                             <div class="form-group col-4">
                                                 <div class="main-content">
                                                     <select class="form-control" formControlName="payment_type" (change)="checkSelectedValue()">
-                                                        <option value="" selected disabled hidden>Select Payment Type *</option>
+                                                        <option value="">Use course payment settings (default)</option>
                                                         <option value="F">Fixed</option>
                                                         <option value="R">Recurring</option>
                                                     </select>
                                                 </div>
-                                                <em class="error" *ngIf="!classform.get('payment_type').valid && (classform.get('payment_type').dirty || classform.get('payment_type').touched)">
-                                                    Payment Type is required</em>
                                             </div>
                                             <div class="col-4 pr-0 form-group" *ngIf="classform.controls.payment_type.value == 'R'">
                                                 <select class="form-control" formControlName="payment_recurring">
-                                                    <option value="" selected disabled hidden>Select Recurring Type *</option>
+                                                    <option value="">Select Recurring Type</option>
                                                     <option value="W">Weekly</option>
                                                     <option value="M">Monthly</option>
                                                     <option value="Q">Quarterly</option>
                                                     <option value="H">Half Yearly</option>
                                                     <option value="A">Annual</option>
                                                 </select>
-                                                <em class="error" *ngIf="!classform.get('payment_recurring').valid && (classform.get('payment_recurring').dirty || classform.get('payment_recurring').touched)">
-                                                    Recurring Type is required</em>
                                             </div>
 
                                         </div>
@@ -1192,4 +1317,3 @@
         <button (click)="updateStudentAttendance(editData[0]?.students, 'all')" [disabled]="studentAttendanceDate != dateAddValue" class="btn btn-primary">Submit</button>
     </div>
 </ng-template>
-

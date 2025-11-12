@@ -1,7 +1,7 @@
-import {Component, OnDestroy, OnInit, TemplateRef, ViewChild} from '@angular/core';
+import {Component, ElementRef, OnDestroy, OnInit, TemplateRef, ViewChild} from '@angular/core';
 import {ActivatedRoute, Navigation, Router} from '@angular/router';
 import {forkJoin, Subscription} from 'rxjs';
-import {FormBuilder, FormGroup, Validators} from '@angular/forms';
+import {FormArray, FormBuilder, FormControl, FormGroup, Validators} from '@angular/forms';
 import {ClassService} from '../../../shared/service/class.service';
 import {AuthService} from '../../../shared/service/auth.service';
 import {CommonDataService} from '../../../shared/service/common-data.service';
@@ -12,6 +12,12 @@ import {DatePipe} from '@angular/common';
 import {CdkDragDrop} from '@angular/cdk/drag-drop';
 import {CreatorService} from '../../../shared/service/creator.service';
 import {ConfigurationService} from '../../../shared/service/configuration.service';
+import {IAngularMyDpOptions, IMyDateModel} from '@nodro7/angular-mydatepicker';
+import {COMMA, ENTER} from '@angular/cdk/keycodes';
+import {StudentService} from 'src/app/shared/service/student.service';
+import {ValidationService} from 'src/app/shared/service/validation.service';
+import {EnvironmentService} from 'src/app/environment.service';
+import {dateOptions, timeZone} from 'src/app/shared/data/config';
 
 type CurriculumStatus = 'all' | 'in-progress' | 'completed' | 'not-started';
 type ApiResponse<T = any> = {
@@ -21,6 +27,7 @@ type ApiResponse<T = any> = {
     ResponseCode?: string;
     Message?: string;
     ErrorObject?: any;
+    Contentdetails?: any;
 };
 
 type LibraryContentItem = {
@@ -38,6 +45,8 @@ type LibraryDragPayload = {
     source: 'library';
     item: LibraryContentItem;
 };
+
+type AssignMode = 'library' | 'upload' | 'link' | 'scratch';
 
 type AssignmentDraft = {
     id: string;
@@ -88,50 +97,79 @@ export class ClassOverviewComponent implements OnInit, OnDestroy {
     editingTopicId: string | number | null = null;
     readonly baseDropListId = 'overview-curriculum-drop';
     readonly libraryDropListId = 'overview-library-drop';
+    assignMode: AssignMode = 'library';
     showAssignDrawer = false;
     isLibraryLoading = false;
     libraryItems: LibraryContentItem[] = [];
     libraryLoadError = '';
     librarySearchTerm = '';
     pendingAssignments: AssignmentDraft[] = [];
+    uploadForm: FormGroup;
+    resourceLinkForm: FormGroup;
+    isFileUploading = false;
+    uploadFileName = '';
+    uploadPayload: any[] = [];
+    uploadError = '';
+    isDirectUploadSaving = false;
+    resourceLinkError = '';
+    isResourceLinkSaving = false;
     private draftCounter = 0;
-    studentSearchFn = (term: string, item: any): boolean => {
-        if (!term) {
-            return true;
+    private libraryRequestSeq = 0;
+    private readonly maxUploadSizeBytes = 25 * 1024 * 1024;
+    public setDate = new Date().toLocaleString('en-US', {timeZone: timeZone.location});
+    myDpOptions1: IAngularMyDpOptions = {
+        dateRange: false,
+        dateFormat: dateOptions.pickerFormat,
+        firstDayOfWeek: 'su',
+        disableUntil: {
+            year: new Date(this.setDate).getFullYear(),
+            month: new Date(this.setDate).getMonth() + 1,
+            day: new Date(this.setDate).getDate() - 1
+        },
+        calendarAnimation: {
+            in: 4,
+            out: 4
         }
-        const normalized = term.trim().toLowerCase();
-        if (!normalized) {
-            return true;
-        }
-        const name = (item?.displayLabel || '').toLowerCase();
-        const email = (item?.email_id || '').toLowerCase();
-        const altEmail = (item?.email || '').toLowerCase();
-        const grade = (item?.grade_name || '').toLowerCase();
-        return name.includes(normalized) || email.includes(normalized) || altEmail.includes(normalized) || grade.includes(normalized);
     };
     @ViewChild('createTopicModal', {static: true}) createTopicModal!: TemplateRef<any>;
     @ViewChild('addStudentModal', {static: true}) addStudentModal!: TemplateRef<any>;
+    @ViewChild('addMultipleEmailDialog', {static: true}) addMultipleEmailDialog!: TemplateRef<any>;
     @ViewChild('announcementModal', {static: true}) announcementModal!: TemplateRef<any>;
     @ViewChild('teacherVersionModal', {static: true}) teacherVersionModal!: TemplateRef<any>;
     @ViewChild('editContentModal', {static: true}) editContentModal!: TemplateRef<any>;
     @ViewChild('deleteContentModal', {static: true}) deleteContentModal!: TemplateRef<any>;
+    @ViewChild('directUploadInput', {static: false}) directUploadInput?: ElementRef<HTMLInputElement>;
     addStudentModalRef?: NgbModalRef;
+    inviteByEmailModalRef?: NgbModalRef;
     announcementModalRef?: NgbModalRef;
     announcementForm: FormGroup;
     isPostingAnnouncement = false;
     announcementFormErrors = '';
-    addStudentGrades: any[] = [];
+    gradeData: any[] = [];
     isGradeListLoading = false;
-    selectedAddStudentGrades: Array<string | number> = [];
-    studentOptions: any[] = [];
-    allStudentOptions: any[] = [];
-    selectedStudentIds: string[] = [];
+    gradName: any;
+    gradeValue: string[] = [];
+    studentDataList: any[] = [];
+    studentName: any[] = [];
+    newlySelectedStuent: any[] = [];
+    settings: any = {};
     isStudentListLoading = false;
     addStudentLoadError = '';
     addStudentError = '';
     isSubmittingStudents = false;
+    addStudentEnabled = false;
+    addStudentForm: FormGroup;
+    studentEmailForm: FormGroup;
     studentAddedType: '0' | '1' = '0';
-    effectiveStartDate = '';
+    effectiveStartDate: IMyDateModel | '' = '';
+    showStudentEmailId = true;
+    selectClassData: any;
+    emailList: Array<{value: string; invalid: boolean}> = [];
+    blukEmailValue: string[] = [];
+    removable = true;
+    validationEmail = false;
+    separatorKeysCodes = [ENTER, COMMA];
+    showBulkEmailLoader = false;
     teacherVersionUrl = '';
     teacherVersionModalRef?: NgbModalRef;
     editContentModalRef?: NgbModalRef;
@@ -154,7 +192,7 @@ export class ClassOverviewComponent implements OnInit, OnDestroy {
         private route: ActivatedRoute,
         public router: Router,
         private classService: ClassService,
-        private auth: AuthService,
+        public auth: AuthService,
         public commonData: CommonDataService,
         private commonService: CommonService,
         private toastr: ToastrService,
@@ -162,12 +200,31 @@ export class ClassOverviewComponent implements OnInit, OnDestroy {
         private modalService: NgbModal,
         private datePipe: DatePipe,
         private creatorService: CreatorService,
-        private configService: ConfigurationService
+        private configService: ConfigurationService,
+        private studentService: StudentService,
+        private validationService: ValidationService,
+        public env: EnvironmentService
     ) {
         this.topicForm = this.formBuilder.group({
             name: ['', Validators.required],
             startDate: [null],
             endDate: [null]
+        });
+        this.uploadForm = this.formBuilder.group({
+            title: ['', Validators.required],
+            description: [''],
+            topicId: [''],
+            startDate: [''],
+            endDate: [''],
+            allowDownload: [true]
+        });
+        this.resourceLinkForm = this.formBuilder.group({
+            title: ['', Validators.required],
+            url: ['', Validators.required],
+            description: [''],
+            topicId: [''],
+            startDate: [''],
+            endDate: ['']
         });
         this.editContentForm = this.formBuilder.group({
             startDate: [''],
@@ -181,6 +238,25 @@ export class ClassOverviewComponent implements OnInit, OnDestroy {
         this.announcementForm = this.formBuilder.group({
             message: ['', Validators.required]
         });
+        this.setStudentForm();
+        this.setStudentEmailForm();
+        this.settings = {
+            singleSelection: false,
+            idField: 'student_id',
+            textField: 'name_with_email',
+            enableCheckAll: true,
+            selectAllText: 'Select all',
+            unSelectAllText: 'UnSelect all',
+            allowSearchFilter: true,
+            limitSelection: -1,
+            clearSearchFilter: true,
+            maxHeight: 139,
+            itemsShowLimit: 3,
+            searchPlaceholderText: 'Search Student',
+            noDataAvailablePlaceholderText: 'No data available',
+            closeDropDownOnSelection: false,
+            showSelectedItemsAtTop: false
+        };
         this.mediaBaseUrl = this.normalizeBaseUrl(this.configService.getimgUrl());
     }
 
@@ -189,6 +265,7 @@ export class ClassOverviewComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit(): void {
+        this.showStudentEmailId = typeof this.auth.showStudentEmailId === 'boolean' ? this.auth.showStudentEmailId : true;
         this.classId = this.route.snapshot.paramMap.get('id') || '';
         this.captureNavigationState(this.router.getCurrentNavigation());
         if (!this.overview) {
@@ -241,7 +318,25 @@ export class ClassOverviewComponent implements OnInit, OnDestroy {
         this.loadLibraryContents(term);
     }
 
+    setAssignMode(mode: AssignMode): void {
+        this.assignMode = mode;
+        if (mode === 'library' && !this.libraryItems.length && !this.isLibraryLoading) {
+            this.loadLibraryContents();
+        }
+        if (mode !== 'upload') {
+            this.resetDirectUploadErrors(false);
+        }
+        if (mode !== 'link') {
+            this.resourceLinkError = '';
+        }
+    }
+
+    isAssignMode(mode: AssignMode): boolean {
+        return this.assignMode === mode;
+    }
+
     private loadLibraryContents(searchTerm: string = ''): void {
+        const requestSeq = ++this.libraryRequestSeq;
         this.isLibraryLoading = true;
         this.libraryLoadError = '';
         const payload: any = {
@@ -254,11 +349,17 @@ export class ClassOverviewComponent implements OnInit, OnDestroy {
         };
         const sub = this.creatorService.contentList(payload).subscribe({
             next: (response: ApiResponse<LibraryContentItem[]>) => {
+                if (requestSeq !== this.libraryRequestSeq) {
+                    return;
+                }
                 this.isLibraryLoading = false;
                 const items = this.normalizeLibraryItems(this.extractLibraryItems(response));
                 this.libraryItems = items;
             },
             error: () => {
+                if (requestSeq !== this.libraryRequestSeq) {
+                    return;
+                }
                 this.isLibraryLoading = false;
                 this.libraryLoadError = 'Unable to load content library right now.';
             }
@@ -285,6 +386,244 @@ export class ClassOverviewComponent implements OnInit, OnDestroy {
             content_name: item.content_name || item.name || 'Untitled content',
             subject_name: item.subject_name || item.subject || ''
         }));
+    }
+
+    triggerDirectUpload(): void {
+        this.directUploadInput?.nativeElement.click();
+    }
+
+    onDirectUploadFileSelected(event: Event): void {
+        const input = event.target as HTMLInputElement;
+        const file = input?.files && input.files.length ? input.files[0] : null;
+        if (!file) {
+            return;
+        }
+        this.uploadError = '';
+        if (file.size > this.maxUploadSizeBytes) {
+            this.uploadError = 'File exceeds the 25 MB limit.';
+            this.resetNativeFileInput();
+            return;
+        }
+        const reader = new FileReader();
+        this.isFileUploading = true;
+        reader.onload = (loadEvent: ProgressEvent<FileReader>) => {
+            const result = loadEvent.target?.result;
+            if (!result || typeof result !== 'string') {
+                this.uploadError = 'Unable to read the selected file.';
+                this.isFileUploading = false;
+                this.resetNativeFileInput();
+                return;
+            }
+            const base64 = result.split(',')[1];
+            if (!base64) {
+                this.uploadError = 'Unsupported file format.';
+                this.isFileUploading = false;
+                this.resetNativeFileInput();
+                return;
+            }
+            const payload = {
+                platform: 'web',
+                role_id: this.auth.getRoleId(),
+                user_id: this.auth.getUserId(),
+                image_path: [{
+                    image: base64,
+                    size: file.size,
+                    type: file.type,
+                    name: file.name
+                }],
+                uploadtype: 'content'
+            };
+            const sub = this.commonService.fileUpload(payload).subscribe({
+                next: (response: ApiResponse<any>) => {
+                    this.isFileUploading = false;
+                    this.resetNativeFileInput();
+                    if (response?.IsSuccess && Array.isArray(response?.ResponseObject?.imagepath)) {
+                        this.uploadPayload = response.ResponseObject.imagepath.map((item: any) => ({
+                            ...item,
+                            links: item?.links || []
+                        }));
+                        this.uploadFileName = file.name;
+                        this.toastr.success(response?.ResponseObject?.message || 'File uploaded');
+                    } else {
+                        this.uploadError = response?.Message || 'Unable to upload file.';
+                    }
+                },
+                error: () => {
+                    this.isFileUploading = false;
+                    this.resetNativeFileInput();
+                    this.uploadError = 'Unable to upload file right now.';
+                }
+            });
+            this.subscriptions.push(sub);
+        };
+        reader.onerror = () => {
+            this.uploadError = 'Unable to read the selected file.';
+            this.isFileUploading = false;
+            this.resetNativeFileInput();
+        };
+        reader.readAsDataURL(file);
+    }
+
+    removeDirectUpload(): void {
+        this.uploadPayload = [];
+        this.uploadFileName = '';
+        this.uploadError = '';
+    }
+
+    submitDirectUpload(): void {
+        this.uploadError = '';
+        if (this.uploadForm.invalid) {
+            this.uploadForm.markAllAsTouched();
+            return;
+        }
+        if (!this.uploadPayload.length) {
+            this.uploadError = 'Upload a file before assigning.';
+            return;
+        }
+        const {startDate, endDate} = this.uploadForm.value;
+        if (startDate && endDate && new Date(endDate) < new Date(startDate)) {
+            this.uploadError = 'End date cannot be earlier than start date.';
+            return;
+        }
+        const payload: any = {
+            platform: 'web',
+            role_id: this.auth.getRoleId(),
+            user_id: this.auth.getUserId(),
+            school_id: this.auth.getSessionData('school_id'),
+            name: (this.uploadForm.value.title || this.uploadFileName || '').trim(),
+            description: (this.uploadForm.value.description || '').trim(),
+            grade: this.resolveGradePayload(),
+            subject: this.resolveSubjectPayload(),
+            access: '1',
+            file_path: this.uploadPayload,
+            tags: [],
+            profile_url: '',
+            profile_thumb_url: '',
+            content_format: '1',
+            content_type: '1',
+            status: '1',
+            answers: [],
+            file_text: '',
+            links: [],
+            annotation: [],
+            assign: '0',
+            classdetails: [],
+            editor_type: '',
+            download: this.uploadForm.value.allowDownload ? '1' : '0'
+        };
+        this.isDirectUploadSaving = true;
+        const sub = this.creatorService.addAssignResourse(payload).subscribe({
+            next: (response: ApiResponse<any>) => {
+                this.isDirectUploadSaving = false;
+                if (response?.IsSuccess && response?.Contentdetails) {
+                    this.toastr.success('Content uploaded to the library. Assigning now...');
+                    this.assignNewlyCreatedContent(response.Contentdetails, {
+                        topicId: this.uploadForm.value.topicId || '',
+                        startDate: this.uploadForm.value.startDate || '',
+                        endDate: this.uploadForm.value.endDate || '',
+                        allowDownload: !!this.uploadForm.value.allowDownload
+                    });
+                    this.uploadForm.reset({
+                        title: '',
+                        description: '',
+                        topicId: '',
+                        startDate: '',
+                        endDate: '',
+                        allowDownload: true
+                    });
+                    this.removeDirectUpload();
+                } else {
+                    this.uploadError = response?.Message || 'Unable to save content.';
+                }
+            },
+            error: () => {
+                this.isDirectUploadSaving = false;
+                this.uploadError = 'Unable to save content.';
+            }
+        });
+        this.subscriptions.push(sub);
+    }
+
+    submitResourceLink(): void {
+        this.resourceLinkError = '';
+        if (this.resourceLinkForm.invalid) {
+            this.resourceLinkForm.markAllAsTouched();
+            return;
+        }
+        const formValue = this.resourceLinkForm.value;
+        if (formValue.startDate && formValue.endDate && new Date(formValue.endDate) < new Date(formValue.startDate)) {
+            this.resourceLinkError = 'End date cannot be earlier than start date.';
+            return;
+        }
+        const sanitizedUrl = this.sanitizeLink(formValue.url);
+        const payload: any = {
+            platform: 'web',
+            role_id: this.auth.getRoleId(),
+            user_id: this.auth.getUserId(),
+            school_id: this.auth.getSessionData('school_id'),
+            name: formValue.title.trim(),
+            description: (formValue.description || '').trim(),
+            grade: this.resolveGradePayload(),
+            subject: this.resolveSubjectPayload(),
+            access: '1',
+            file_path: [],
+            tags: [],
+            profile_url: '',
+            profile_thumb_url: '',
+            content_format: '2',
+            content_type: '1',
+            status: '1',
+            answers: [],
+            file_text: '',
+            links: [{
+                name: formValue.title.trim(),
+                link: sanitizedUrl,
+                description: (formValue.description || '').trim()
+            }],
+            annotation: [],
+            assign: '0',
+            classdetails: [],
+            editor_type: '',
+            download: '0'
+        };
+        this.isResourceLinkSaving = true;
+        const sub = this.creatorService.addAssignResourse(payload).subscribe({
+            next: (response: ApiResponse<any>) => {
+                this.isResourceLinkSaving = false;
+                if (response?.IsSuccess && response?.Contentdetails) {
+                    this.toastr.success('Resource link saved. Assigning now...');
+                    this.assignNewlyCreatedContent(response.Contentdetails, {
+                        topicId: formValue.topicId || '',
+                        startDate: formValue.startDate || '',
+                        endDate: formValue.endDate || '',
+                        allowDownload: false
+                    });
+                    this.resourceLinkForm.reset({
+                        title: '',
+                        url: '',
+                        description: '',
+                        topicId: '',
+                        startDate: '',
+                        endDate: ''
+                    });
+                } else {
+                    this.resourceLinkError = response?.Message || 'Unable to save the resource link.';
+                }
+            },
+            error: () => {
+                this.isResourceLinkSaving = false;
+                this.resourceLinkError = 'Unable to save the resource link.';
+            }
+        });
+        this.subscriptions.push(sub);
+    }
+
+    startCreateFromScratch(type: 'assignment' | 'assessment'): void {
+        this.persistEditContext();
+        this.auth.setSessionData('textType', type);
+        this.auth.setSessionData('assignedForm', 'class');
+        this.auth.setSessionData('redirect-toassign', '2');
+        this.router.navigate(['content-text-resource/text-assignment/add']);
     }
 
     private createAssignmentDraft(libraryItem: LibraryContentItem, topicId: string, topicName: string): AssignmentDraft {
@@ -371,11 +710,12 @@ export class ClassOverviewComponent implements OnInit, OnDestroy {
         if (!this.overview || !this.classId) {
             return;
         }
+        this.selectClassData = this.buildSelectClassData();
         this.resetAddStudentState();
-        if (!this.addStudentGrades.length) {
+        if (!this.gradeData.length) {
             this.loadAddStudentGrades();
         }
-        this.loadAvailableStudents();
+        this.searchStudentList();
         this.addStudentModalRef = this.modalService.open(this.addStudentModal, {
             size: 'lg',
             backdrop: 'static',
@@ -383,11 +723,32 @@ export class ClassOverviewComponent implements OnInit, OnDestroy {
         });
     }
 
+    private buildSelectClassData(): any {
+        const source = this.overview || this.classSummary || {};
+        return {
+            school_id: source.school_id || this.auth.getSessionData('school_id'),
+            teacher_id: source.teacher_id || source.teacherId || this.auth.getUserId(),
+            class_name: source.class_name || source.className || '',
+            subject: source.subject || source.subject_name || '',
+            start_date: source.start_date || source.startDate || '',
+            end_date: source.end_date || source.endDate || '',
+            start_time: source.start_time || source.startTime || '',
+            end_time: source.end_time || source.endTime || '',
+            meeting_link: source.meeting_link || '',
+            meeting_id: source.meeting_id || '',
+            passcode: source.passcode || '',
+            class_code: source.class_code || source.classCode || '',
+            status: source.status || '',
+            class_id: this.classId
+        };
+    }
+
     removeStudent(student: any): void {
         const studentId = student?.user_id || student?.student_id;
         if (!studentId || !this.classId) {
             return;
         }
+        const targetId = String(studentId);
         const confirmationMessage = `Remove ${student?.student_name || student?.name || 'this student'} from the class?`;
         if (!window.confirm(confirmationMessage)) {
             return;
@@ -407,9 +768,10 @@ export class ClassOverviewComponent implements OnInit, OnDestroy {
                 if (response?.IsSuccess) {
                     this.students = this.students.filter((item) => {
                         const itemId = item?.user_id || item?.student_id;
-                        return itemId !== studentId;
+                        return String(itemId) !== targetId;
                     });
                     this.toastr.success(response?.ResponseObject || 'Student removed');
+                    this.loadClassOverview();
                 } else {
                     this.toastr.error('Unable to remove student');
                 }
@@ -1060,10 +1422,12 @@ export class ClassOverviewComponent implements OnInit, OnDestroy {
             const firstName = (student?.first_name || '').trim();
             const lastName = (student?.last_name || '').trim();
             const gradeDisplay = student?.grade_name || student?.grade || student?.gradeLevel || student?.grade_level || '';
+            const studentId = student?.student_id || student?.user_id || student?.id || '';
             return {
                 ...student,
+                student_id: studentId,
+                user_id: student?.user_id || studentId,
                 displayName: [firstName, lastName].filter(Boolean).join(' ') || student?.student_name || student?.name || '',
-                user_id: student?.user_id || student?.student_id || student?.id,
                 gradeDisplay
             };
         });
@@ -1072,6 +1436,7 @@ export class ClassOverviewComponent implements OnInit, OnDestroy {
     private normalizeCurriculum(items: any[]): any[] {
         return items.map((item) => ({
             ...item,
+            class_content_id: item?.class_content_id ?? item?.id ?? item?.content_id,
             content_name: item?.content_name || item?.title || '',
             subject_name: item?.subject_name || item?.subject || '',
             due_date: item?.end_date || item?.due_date || item?.target_date || '',
@@ -1524,15 +1889,99 @@ export class ClassOverviewComponent implements OnInit, OnDestroy {
         this.subscriptions.push(sub);
     }
 
-    private formatDateForPayload(value: string): string {
+    private assignNewlyCreatedContent(contentDetails: any, options: {topicId: string; startDate?: string; endDate?: string; allowDownload?: boolean}): void {
+        if (!contentDetails) {
+            this.toastr.warning('Content saved but could not be assigned automatically. Please assign it from the library.');
+            return;
+        }
+        const libraryItem: LibraryContentItem = {
+            content_id: contentDetails.content_id || contentDetails.id || '',
+            content_name: contentDetails.content_name || contentDetails.name || 'Untitled content',
+            subject_name: contentDetails.subject_name || contentDetails.subject || '',
+            content_format: contentDetails.content_format || '1',
+            allow_autograde: contentDetails.allow_autograde,
+            download: options.allowDownload ? '1' : '0'
+        };
+        if (!libraryItem.content_id) {
+            this.toastr.warning('Content saved but could not be assigned automatically. Please assign it from the library.');
+            return;
+        }
+        const topicId = options.topicId || '';
+        const topicName = this.resolveTopicName(topicId);
+        const draft = this.createAssignmentDraft(libraryItem, topicId, topicName);
+        draft.startDate = options.startDate || '';
+        draft.endDate = options.endDate || '';
+        draft.allowDownload = options.allowDownload ?? true;
+        draft.allowWorkspace = false;
+        draft.allowFeedback = false;
+        draft.autoReview = false;
+        this.pendingAssignments = [...this.pendingAssignments, draft];
+        this.assignDraft(draft);
+    }
+
+    private resolveGradePayload(): string[] {
+        const grade = this.overview?.grade_id ?? this.overview?.grade ?? this.classSummary?.grade_id ?? '';
+        if (!grade) {
+            return [];
+        }
+        if (Array.isArray(grade)) {
+            return grade.filter((item) => item !== null && item !== undefined && item !== '').map((value) => value.toString());
+        }
+        return [grade.toString()];
+    }
+
+    private resolveSubjectPayload(): string[] {
+        const subject = this.overview?.subject_id ?? this.overview?.subject ?? this.classSummary?.subject_id ?? '';
+        if (!subject) {
+            return [];
+        }
+        if (Array.isArray(subject)) {
+            return subject.filter((item) => item !== null && item !== undefined && item !== '').map((value) => value.toString());
+        }
+        return [subject.toString()];
+    }
+
+    private sanitizeLink(url: string): string {
+        if (!url) {
+            return '';
+        }
+        try {
+            const normalized = new URL(url, url.startsWith('http://') || url.startsWith('https://') ? undefined : 'https://');
+            return normalized.href;
+        } catch {
+            return url;
+        }
+    }
+
+    private resetNativeFileInput(): void {
+        if (this.directUploadInput?.nativeElement) {
+            this.directUploadInput.nativeElement.value = '';
+        }
+    }
+
+    private resetDirectUploadErrors(clearFile: boolean): void {
+        this.uploadError = '';
+        if (clearFile) {
+            this.removeDirectUpload();
+        }
+    }
+
+    private formatDateForPayload(value: string | IMyDateModel | '' | null | undefined): string {
         if (!value) {
             return '';
         }
-        const date = new Date(value);
-        if (isNaN(date.getTime())) {
-            return '';
+        if (typeof value === 'string') {
+            const date = new Date(value);
+            if (isNaN(date.getTime())) {
+                return '';
+            }
+            return this.datePipe.transform(date, 'yyyy-MM-dd') || '';
         }
-        return this.datePipe.transform(date, 'yyyy-MM-dd') || '';
+        const jsDate = value?.singleDate?.jsDate;
+        if (jsDate) {
+            return this.datePipe.transform(jsDate, 'yyyy-MM-dd') || '';
+        }
+        return '';
     }
 
     private resolveBatchId(): string {
@@ -1547,94 +1996,169 @@ export class ClassOverviewComponent implements OnInit, OnDestroy {
         this.resetAddStudentState();
     }
 
-    onAddStudentGradesChanged(selected: string[] | null): void {
-        this.selectedAddStudentGrades = Array.isArray(selected)
-            ? selected.filter((value) => value !== null && value !== undefined && value !== '')
-            : [];
-        this.selectedAddStudentGrades = Array.from(new Set(this.selectedAddStudentGrades));
-        this.selectedStudentIds = [];
-        this.studentOptions = [];
-        this.allStudentOptions = [];
-        this.addStudentLoadError = '';
-        this.loadAvailableStudents();
+    addStudentClicked(): void {
+        this.addStudentEnabled = !this.addStudentEnabled;
+        if (this.addStudentEnabled) {
+            this.setStudentForm();
+        }
     }
 
-    onSelectedStudentIdsChange(selected: any[] | null): void {
-        const ids = Array.isArray(selected) ? selected : [];
-        this.selectedStudentIds = ids
+    getGradeValue(event: any): void {
+        if (!event || (Array.isArray(event) && !event.length)) {
+            this.gradName = event;
+            this.gradeValue = [];
+            this.studentDataList = [];
+            this.studentName = [];
+            this.newlySelectedStuent = [];
+            this.addStudentLoadError = '';
+            this.searchStudentList();
+            return;
+        }
+        const selections = Array.isArray(event) ? event : [event];
+        this.gradName = selections;
+        this.gradeValue = selections
+            .map((item: any) => item?.grade_id ?? item)
             .filter((value) => value !== null && value !== undefined && value !== '')
-            .map((value) => String(value));
+            .map((value) => value.toString());
+        this.searchStudentList();
     }
 
-    submitSelectedStudents(): void {
+    searchStudentList(): void {
+        this.isStudentListLoading = true;
+        this.addStudentLoadError = '';
+        const existingIds = new Set(
+            this.students.map((student) => String(student?.user_id || student?.student_id || student?.id || ''))
+        );
+        const payload: any = {
+            platform: 'web',
+            type: 'list',
+            role_id: this.auth.getRoleId(),
+            user_id: this.auth.getUserId(),
+            school_id: this.auth.getSessionData('school_id'),
+            end_date: this.formatDateForPayload(this.overview?.end_date || this.overview?.endDate || '')
+        };
+        if (this.gradeValue.length) {
+            payload.grade_id = this.gradeValue;
+        }
+        const sub = this.classService.searchList(payload).subscribe({
+            next: (response: ApiResponse<any[]>) => {
+                this.isStudentListLoading = false;
+                if (response?.IsSuccess && Array.isArray(response.ResponseObject)) {
+                    const options = response.ResponseObject
+                        .filter((student) => {
+                            const studentId = String(student?.student_id || student?.user_id || '');
+                            return !!studentId && !existingIds.has(studentId);
+                        })
+                        .map((student) => this.prepareStudentOption(student))
+                        .sort((a, b) => a.name_with_email.localeCompare(b.name_with_email));
+                    this.studentDataList = options;
+                    this.studentName = this.studentName
+                        .filter((item) => options.some((option) => option.student_id === item.student_id));
+                    this.newlySelectedStuent = [...this.studentName];
+                    if (!options.length) {
+                        this.addStudentLoadError = 'No eligible students found for the selected grade.';
+                    }
+                } else {
+                    this.studentDataList = [];
+                    this.addStudentLoadError = response?.Message || 'Unable to load students right now.';
+                }
+            },
+            error: () => {
+                this.isStudentListLoading = false;
+                this.studentDataList = [];
+                this.addStudentLoadError = 'Unable to load students right now.';
+            }
+        });
+        this.subscriptions.push(sub);
+    }
+
+    onItemSelect(event: any, select: 'single' | 'all'): void {
+        if (select === 'all' && Array.isArray(event)) {
+            event.forEach((item) => this.addSelectedStudent(item));
+        } else {
+            this.addSelectedStudent(event);
+        }
+        this.studentName = [...this.newlySelectedStuent];
+    }
+
+    onDeSelect(event: any): void {
+        if (!event) {
+            return;
+        }
+        this.newlySelectedStuent = this.newlySelectedStuent.filter((item) => item.student_id !== event.student_id);
+        this.studentName = [...this.newlySelectedStuent];
+    }
+
+    onDeSelectAll(): void {
+        this.newlySelectedStuent = [];
+        this.studentName = [];
+    }
+
+    submitClass(type: number = 1): void {
         if (!this.overview || !this.classId) {
             return;
         }
         this.addStudentError = '';
-        if (!this.selectedStudentIds.length) {
-            this.addStudentError = 'Select at least one student to continue.';
+        if (!this.newlySelectedStuent.length) {
+            this.addStudentError = 'Please Select Student';
+            this.toastr.error(this.addStudentError);
             return;
         }
         if (this.studentAddedType === '1' && !this.effectiveStartDate) {
-            this.addStudentError = 'Select an effective start date for make-up students.';
+            this.addStudentError = 'Please select effective start date';
+            this.toastr.error(this.addStudentError);
             return;
         }
-
-        const sourceOptions = this.allStudentOptions.length ? this.allStudentOptions : this.studentOptions;
-        const selectedStudents = sourceOptions.filter((student) => {
-            const id = String(student?.student_id || student?.user_id || '');
-            return this.selectedStudentIds.includes(id);
-        }).map((student) => ({
-            ...student,
-            student_id: student?.student_id || student?.user_id || '',
-            user_id: student?.user_id || student?.student_id || '',
-            student_name: student?.student_name || student?.name || [student?.first_name, student?.last_name].filter(Boolean).join(' ')
-        }));
-
+        const selectedStudents = this.newlySelectedStuent
+            .map((student) => {
+                const studentId = student?.student_id || student?.user_id || student?.id;
+                if (!studentId) {
+                    return null;
+                }
+                return {
+                    student_id: studentId,
+                    user_id: student?.user_id || studentId,
+                    student_class_type: student?.student_class_type || '1',
+                    first_name: student?.first_name || '',
+                    last_name: student?.last_name || '',
+                    email_id: student?.email_id || student?.email || '',
+                    grade_id: student?.grade_id || student?.gradeId || student?.grade || '',
+                    contact_no: student?.contact_no || student?.mobile || ''
+                };
+            })
+            .filter((student) => !!student);
         if (!selectedStudents.length) {
             this.addStudentError = 'Unable to resolve selected students.';
+            this.toastr.error(this.addStudentError);
             return;
         }
-
-        const formatDate = (value: string): string => {
-            if (!value) {
-                return '';
-            }
-            const parsed = new Date(value);
-            if (!isNaN(parsed.getTime())) {
-                return this.datePipe.transform(parsed, 'yyyy-MM-dd') || '';
-            }
-            return value;
-        };
-
-        const regularStart = this.overview?.start_date || this.overview?.startDate || '';
-        const regularEnd = this.overview?.end_date || this.overview?.endDate || '';
-        const startDate = this.studentAddedType === '0' ? regularStart : this.effectiveStartDate;
-        const endDate = this.studentAddedType === '0' ? regularEnd : this.effectiveStartDate;
-
+        const regularStart = this.selectClassData?.start_date || this.overview?.start_date || this.overview?.startDate || '';
+        const regularEnd = this.selectClassData?.end_date || this.overview?.end_date || this.overview?.endDate || '';
+        const formattedEffective = this.formatDateForPayload(this.effectiveStartDate);
+        const startDate = this.studentAddedType === '0' ? regularStart : formattedEffective;
+        const endDate = this.studentAddedType === '0' ? regularEnd : formattedEffective;
         const payload = {
             platform: 'web',
             role_id: this.auth.getRoleId(),
             user_id: this.auth.getUserId(),
-            school_id: this.overview?.school_id || this.auth.getSessionData('school_id'),
-            teacher_id: this.overview?.teacher_id || this.overview?.teacherId || this.auth.getUserId(),
-            class_name: this.overview?.class_name || this.classSummary?.class_name || '',
-            subject: this.overview?.subject || this.overview?.subject_name || this.classSummary?.subject || '',
-            start_date: formatDate(startDate || ''),
-            end_date: formatDate(endDate || ''),
-            start_time: this.overview?.start_time || this.overview?.startTime || '',
-            end_time: this.overview?.end_time || this.overview?.endTime || '',
-            grade: this.selectedAddStudentGrades,
-            meeting_link: this.overview?.meeting_link || '',
-            meeting_id: this.overview?.meeting_id || '',
-            passcode: this.overview?.passcode || '',
-            class_code: this.overview?.class_code || '',
-            status: this.overview?.status || '',
+            school_id: this.selectClassData?.school_id || this.auth.getSessionData('school_id'),
+            teacher_id: this.selectClassData?.teacher_id || this.auth.getUserId(),
+            class_name: this.selectClassData?.class_name || this.overview?.class_name || '',
+            subject: this.selectClassData?.subject || this.overview?.subject || this.overview?.subject_name || '',
+            start_date: this.formatDateForPayload(startDate || ''),
+            end_date: this.formatDateForPayload(endDate || ''),
+            start_time: this.selectClassData?.start_time || this.overview?.start_time || this.overview?.startTime || '',
+            end_time: this.selectClassData?.end_time || this.overview?.end_time || this.overview?.endTime || '',
+            grade: this.gradName === undefined ? '' : this.gradName,
+            meeting_link: this.selectClassData?.meeting_link || '',
+            meeting_id: this.selectClassData?.meeting_id || '',
+            passcode: this.selectClassData?.passcode || '',
+            class_code: this.selectClassData?.class_code || '',
+            status: this.selectClassData?.status || '',
             class_id: this.classId,
             students: selectedStudents,
             is_makeup: this.studentAddedType ?? '0'
         };
-
         this.isSubmittingStudents = true;
         const sub = this.classService.submit(payload).subscribe({
             next: (response: ApiResponse<any>) => {
@@ -1662,17 +2186,269 @@ export class ClassOverviewComponent implements OnInit, OnDestroy {
         this.subscriptions.push(sub);
     }
 
+    addstudent(): void {
+        if (!this.addStudentForm?.valid) {
+            this.validationService.validateAllFormFields(this.addStudentForm);
+            this.toastr.error('Please Fill All The Mandatory Fields');
+            return;
+        }
+        const addresslist = [
+            {address1: '', address2: '', city: '', state: '', country: '', postal_code: '', address_type: '2'},
+            {address1: '', address2: '', city: '', state: '', country: '', postal_code: '', address_type: '3'}
+        ];
+        const payload = {
+            platform: 'web',
+            role_id: this.auth.getRoleId(),
+            user_id: this.auth.getUserId(),
+            first_name: this.addStudentForm.controls.first_name.value,
+            last_name: this.addStudentForm.controls.last_name.value,
+            gender: '',
+            birthday: '',
+            school_id: this.auth.getSessionData('school_id'),
+            school_idno: '',
+            grade_id: this.addStudentForm.controls.grade.value ?? '',
+            email_id: this.addStudentForm.controls.email_id.value,
+            mobile: [],
+            batch_id: '',
+            registration_date: '',
+            dropped_date: '',
+            address: addresslist,
+            parent1_firstname: '',
+            parent1_lastname: '',
+            parent2_firstname: '',
+            parent2_lastname: '',
+            parent1_email_ids: [],
+            parent2_email_ids: [],
+            profile_url: '',
+            profile_thumb_url: '',
+            status: '1'
+        };
+        const sub = this.studentService.studentAdd(payload).subscribe({
+            next: (response: ApiResponse<any>) => {
+                if (response?.IsSuccess) {
+                    this.toastr.success(response?.ResponseObject || 'Student added', 'Student');
+                    this.addStudentEnabled = false;
+                    this.setStudentForm();
+                    this.searchStudentList();
+                } else {
+                    this.toastr.error(response?.ErrorObject || 'Unable to add student', 'Student');
+                }
+            },
+            error: () => {
+                this.toastr.error('Unable to add student right now.', 'Student');
+            }
+        });
+        this.subscriptions.push(sub);
+    }
+
+    shareEmail(value: any, calledForm?: string): void {
+        if (calledForm === 'addStudent') {
+            this.addStudentModalRef?.close();
+        }
+        this.selectClassData = value || this.buildSelectClassData();
+        this.emailList = [];
+        this.blukEmailValue = [];
+        this.validationEmail = false;
+        this.setStudentEmailForm();
+        this.inviteByEmailModalRef = this.modalService.open(this.addMultipleEmailDialog, {
+            size: 'lg',
+            backdrop: 'static',
+            keyboard: false
+        });
+    }
+
+    closeInviteEmailModal(): void {
+        this.setStudentEmailForm();
+        this.inviteByEmailModalRef?.close();
+    }
+
+    add(event: any): void {
+        const value = (event?.value || '').trim();
+        const entries = value ? value.split(/[ ,]+/) : [];
+        const tokens = entries.length ? entries : value ? [value] : [];
+        tokens.forEach((token: string) => {
+            if (!token) {
+                return;
+            }
+            if (this.validateEmail(token)) {
+                this.emailList.push({value: token, invalid: false});
+            } else {
+                this.emailList.push({value: token, invalid: true});
+                this.studentEmailForm.controls['emails'].setErrors({incorrectEmail: true});
+            }
+        });
+        if (event?.input) {
+            event.input.value = '';
+        }
+        this.emailList = this.removeDuplicates(this.emailList, 'value');
+        this.validationEmail = this.emailList.every((item) => !item.invalid);
+    }
+
+    removeEmail(item: any): void {
+        this.emailList = this.emailList.filter((email) => email !== item);
+        this.validationEmail = this.emailList.every((entry) => !entry.invalid);
+    }
+
+    bulkMail(): void {
+        const isMakeup = !!this.studentEmailForm.controls.is_makeup.value;
+        const startDateControl = this.studentEmailForm.controls.start_date.value;
+        if (!this.emailList.length) {
+            this.toastr.error('Please enter Email-Id');
+            return;
+        }
+        if (isMakeup && !startDateControl) {
+            this.toastr.error('Please Enter MakeUp Class Start Date');
+            this.validationService.validateAllFormFields(this.studentEmailForm);
+            return;
+        }
+        if (!this.validationEmail) {
+            this.toastr.error('Please fix invalid email IDs');
+            return;
+        }
+        this.showBulkEmailLoader = true;
+        this.blukEmailValue = this.emailList.map((item) => item.value);
+        const formattedDate = isMakeup ? this.formatDateForPayload(startDateControl) : '';
+        const payload = {
+            platform: 'web',
+            role_id: this.auth.getRoleId(),
+            user_id: this.auth.getUserId(),
+            school_id: this.auth.getSessionData('school_id'),
+            class_id: this.selectClassData?.class_id || this.classId,
+            student_id: [],
+            email_id: this.blukEmailValue,
+            message: this.studentEmailForm.controls.message.value,
+            is_makeup: isMakeup ? '1' : '0',
+            start_date: formattedDate,
+            end_date: formattedDate
+        };
+        const sub = this.classService.bulkMail(payload).subscribe({
+            next: (response: ApiResponse<any>) => {
+                this.showBulkEmailLoader = false;
+                if (response?.IsSuccess) {
+                    this.toastr.success(response?.ResponseObject || 'Invitation sent');
+                    this.closeInviteEmailModal();
+                } else {
+                    this.blukEmailValue = [];
+                    this.toastr.error(response?.ErrorObject || response?.Message || 'Unable to send invite.');
+                }
+            },
+            error: () => {
+                this.showBulkEmailLoader = false;
+                this.toastr.error('Unable to send invite right now.');
+            }
+        });
+        this.subscriptions.push(sub);
+    }
+
     private resetAddStudentState(): void {
         this.addStudentError = '';
         this.addStudentLoadError = '';
         this.isStudentListLoading = false;
         this.isSubmittingStudents = false;
-        this.selectedAddStudentGrades = [];
-        this.studentOptions = [];
-        this.allStudentOptions = [];
-        this.selectedStudentIds = [];
+        this.gradName = undefined;
+        this.gradeValue = [];
+        this.studentDataList = [];
+        this.studentName = [];
+        this.newlySelectedStuent = [];
+        this.addStudentEnabled = false;
         this.studentAddedType = '0';
         this.effectiveStartDate = '';
+        this.emailList = [];
+        this.blukEmailValue = [];
+        this.validationEmail = false;
+        this.showBulkEmailLoader = false;
+        this.setStudentForm();
+        this.setStudentEmailForm();
+    }
+
+    private setStudentForm(): void {
+        this.addStudentForm = this.formBuilder.group({
+            first_name: ['', Validators.required],
+            last_name: ['', Validators.required],
+            email_id: ['', [Validators.required, Validators.email]],
+            grade: [null, Validators.required]
+        });
+    }
+
+    private setStudentEmailForm(): void {
+        this.studentEmailForm = this.formBuilder.group({
+            emails: this.formBuilder.array([], [this.validateArrayNotEmpty.bind(this)]),
+            message: [''],
+            is_makeup: [false],
+            start_date: ['']
+        });
+    }
+
+    private addSelectedStudent(item: any): void {
+        if (!item || !item.student_id) {
+            return;
+        }
+        if (!this.newlySelectedStuent.some((student) => student.student_id === item.student_id)) {
+            this.newlySelectedStuent.push(item);
+        }
+    }
+
+    private prepareStudentOption(student: any): any {
+        if (!student) {
+            return student;
+        }
+        const studentId = String(student?.student_id || student?.user_id || student?.id || '');
+        const userId = String(student?.user_id || student?.student_id || studentId);
+        const firstName = student?.first_name || '';
+        const lastName = student?.last_name || '';
+        const displayName = student?.name || student?.student_name || [firstName, lastName].filter(Boolean).join(' ');
+        const email = student?.email_id || student?.email || '';
+        const gradeName = student?.grade_name || student?.grade || '';
+        return {
+            ...student,
+            student_id: studentId,
+            user_id: userId,
+            name: displayName || studentId,
+            student_name: displayName || studentId,
+            grade_name: gradeName,
+            email_id: email,
+            name_with_email: this.buildStudentLabel({
+                name: displayName || studentId,
+                email,
+                grade_name: gradeName,
+                student_id: studentId
+            })
+        };
+    }
+
+    private buildStudentLabel(student: {name: string; email?: string; grade_name?: string; student_id: string}): string {
+        const parts = [student.name];
+        if (this.showStudentEmailId && student.email) {
+            parts.push(`(${student.email})`);
+        } else if (this.showStudentEmailId) {
+            parts.push(`(${student.student_id})`);
+        }
+        if (student.grade_name) {
+            parts.push(`- ${student.grade_name}`);
+        }
+        return parts.join(' ');
+    }
+
+    private removeDuplicates(originalArray: Array<{[key: string]: any}>, prop: string) {
+        const lookupObject = originalArray.reduce((acc, item) => {
+            acc[item[prop]] = item;
+            return acc;
+        }, {} as Record<string, any>);
+        return Object.keys(lookupObject).map((key) => lookupObject[key]);
+    }
+
+    private validateArrayNotEmpty(control: FormControl) {
+        if (control.value && control.value.length === 0) {
+            return {
+                validateArrayNotEmpty: {valid: false}
+            };
+        }
+        return null;
+    }
+
+    private validateEmail(email: string): boolean {
+        const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@[A-Za-z0-9]+\.[A-Za-z]{2,}$/;
+        return re.test(String(email).toLowerCase());
     }
 
     private loadAddStudentGrades(): void {
@@ -1690,7 +2466,7 @@ export class ClassOverviewComponent implements OnInit, OnDestroy {
             next: (response: ApiResponse<any[]>) => {
                 this.isGradeListLoading = false;
                 if (response?.IsSuccess && Array.isArray(response.ResponseObject)) {
-                    this.addStudentGrades = response.ResponseObject;
+                    this.gradeData = response.ResponseObject;
                 } else {
                     this.addStudentLoadError = response?.Message || 'Unable to load grades.';
                 }
@@ -1703,78 +2479,6 @@ export class ClassOverviewComponent implements OnInit, OnDestroy {
         this.subscriptions.push(sub);
     }
 
-    private loadAvailableStudents(): void {
-        this.isStudentListLoading = true;
-        this.addStudentLoadError = '';
-        const existingIds = new Set(
-            this.students.map((student) => String(student?.user_id || student?.student_id || student?.id || ''))
-        );
-        const formatDate = (value: string): string => {
-            if (!value) {
-                return '';
-            }
-            const parsed = new Date(value);
-            if (!isNaN(parsed.getTime())) {
-                return this.datePipe.transform(parsed, 'yyyy-MM-dd') || '';
-            }
-            return value;
-        };
-        const payload: any = {
-            platform: 'web',
-            type: 'list',
-            role_id: this.auth.getRoleId(),
-            user_id: this.auth.getUserId(),
-            school_id: this.auth.getSessionData('school_id'),
-            end_date: formatDate(this.overview?.end_date || this.overview?.endDate || '')
-        };
-        if (this.selectedAddStudentGrades.length) {
-            payload.grade_id = this.selectedAddStudentGrades;
-        }
-        const sub = this.classService.searchList(payload).subscribe({
-            next: (response: ApiResponse<any[]>) => {
-                this.isStudentListLoading = false;
-                if (response?.IsSuccess && Array.isArray(response.ResponseObject)) {
-                    const options = response.ResponseObject
-                        .filter((student) => {
-                            const studentId = String(student?.student_id || student?.user_id || '');
-                            return !!studentId && !existingIds.has(studentId);
-                        })
-                        .map((student) => {
-                            const studentId = student?.student_id || student?.user_id || '';
-                            const firstName = student?.first_name || '';
-                            const lastName = student?.last_name || '';
-                            const displayName = student?.name || student?.student_name || [firstName, lastName].filter(Boolean).join(' ');
-                            return {
-                                ...student,
-                                student_id: studentId,
-                                displayLabel: displayName || studentId,
-                                grade_name: student?.grade_name || student?.grade || '',
-                                email_id: student?.email_id || student?.email || ''
-                            };
-                        })
-                        .sort((a, b) => a.displayLabel.localeCompare(b.displayLabel));
-                    this.allStudentOptions = options;
-                    this.studentOptions = options;
-                    const availableIds = new Set(options.map((option) => String(option.student_id)));
-                    this.selectedStudentIds = this.selectedStudentIds.filter((id) => availableIds.has(id));
-                    if (!options.length) {
-                        this.addStudentLoadError = this.selectedAddStudentGrades.length
-                            ? 'No eligible students found for the selected grade.'
-                            : 'No eligible students available.';
-                    } else {
-                        this.addStudentLoadError = '';
-                    }
-                } else {
-                    this.addStudentLoadError = response?.Message || 'Unable to load students right now.';
-                }
-            },
-            error: () => {
-                this.isStudentListLoading = false;
-                this.addStudentLoadError = 'Unable to load students right now.';
-            }
-        });
-        this.subscriptions.push(sub);
-    }
 
     private setCurriculumTopic(item: any, topicId: string | number | null, topicName: string | null): void {
         if (!item) {
@@ -1787,6 +2491,8 @@ export class ClassOverviewComponent implements OnInit, OnDestroy {
     private persistCurriculumAssignment(item: any, targetTopicId: string | number | null, previousTopicId: string | number | null, previousTopicName: string | null, position?: number): void {
         const classContentId = item?.class_content_id ?? item?.id ?? item?.content_id;
         if (!classContentId) {
+            console.warn('Cannot persist curriculum assignment: class_content_id is missing', item);
+            this.toastr.error('Unable to update curriculum topic: Missing content ID');
             return;
         }
         const payload: any = {
@@ -1807,12 +2513,15 @@ export class ClassOverviewComponent implements OnInit, OnDestroy {
                 if (response?.IsSuccess) {
                     this.fetchCurriculumData();
                 } else {
+                    console.error('Failed to update curriculum topic:', response);
                     this.setCurriculumTopic(item, previousTopicId, previousTopicName);
                     this.buildTopicGroups();
-                    this.toastr.error('Unable to update curriculum topic');
+                    const errorMsg = response?.ErrorObject || response?.Message || 'Unable to update curriculum topic';
+                    this.toastr.error(errorMsg);
                 }
             },
-            error: () => {
+            error: (err) => {
+                console.error('Error updating curriculum topic:', err);
                 this.isCurriculumLoading = false;
                 this.setCurriculumTopic(item, previousTopicId, previousTopicName);
                 this.buildTopicGroups();

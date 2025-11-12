@@ -9,8 +9,16 @@
             </div>
 
             <div class="row mt-2">
-                <div class="col-md-12 col-12 mb-2">
-                    <label style="font-size: 18px" class="font-weight-bold color-primary">Personal Details</label>
+                <div class="col-md-12 col-12 mb-2 d-flex justify-content-between align-items-center">
+                    <label style="font-size: 18px" class="font-weight-bold color-primary mb-0">Personal Details</label>
+                    <div class="btn-group-sm">
+                        <button type="button" class="btn btn-outline-primary mr-2" *ngIf="!studentTableEdit" (click)="startStudentEdit()">Edit</button>
+                        <button type="button" class="btn btn-outline-secondary mr-2" *ngIf="studentTableEdit" (click)="cancelStudentEdit()">Cancel</button>
+                        <button type="button" class="btn btn-primary" *ngIf="studentTableEdit" (click)="saveStudentDetails()" [disabled]="studentSaving">
+                            <span *ngIf="studentSaving" class="spinner-border spinner-border-sm mr-1" role="status" aria-hidden="true"></span>
+                            Save
+                        </button>
+                    </div>
                 </div>
                 <div class="col-12 text-center py-5" *ngIf="!studentProfileDetails || studentProfileDetails.length === 0">
                     <div class="spinner-border text-primary" role="status">

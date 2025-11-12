@@ -28,5 +28,12 @@
   "angularCompilerOptions": {
     "fullTemplateTypeCheck": true,
     "strictInjectionParameters": true
-  }
+  },
+  "exclude": [
+    "node_modules_angular16_backup",
+    "mcp-test",
+    "dist",
+    "tmp",
+    "src/**/*.spec.ts"
+  ]
 }

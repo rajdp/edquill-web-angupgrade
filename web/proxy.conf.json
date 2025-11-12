@@ -1,0 +1,7 @@
+{
+  "/rista_ci4/public": {
+    "target": "http://schoolnew.localhost:8888",
+    "secure": false,
+    "changeOrigin": true
+  }
+}

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, HostListener, ViewChild, TemplateRef, SecurityContext, Renderer2 } from '@angular/core';
+import { Component, OnInit, HostListener, ViewChild, TemplateRef, SecurityContext, Renderer2, AfterViewInit, OnDestroy } from '@angular/core';
 import {FormBuilder, FormGroup, Validators} from '@angular/forms';
 import {LoginService} from '../../../shared/service/login.service';
 import {AuthService} from '../../../shared/service/auth.service';
@@ -31,7 +31,7 @@ import { NgSelectModule } from '@ng-select/ng-select';
     styleUrls: ['./login.component.scss']
 })
 
-export class LoginComponent implements OnInit {
+export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
 
     public type: any;
     public checkbox: any;
@@ -69,6 +69,9 @@ export class LoginComponent implements OnInit {
     public siteName = '';
     public googleSignID = '';
     public studentRegistrationToken = '';
+    private googleClientId = '854159816646-f2oidr960elk0akcu27dddb9dveoj9r3.apps.googleusercontent.com';
+    private googleScriptLoaded = false;
+    private googleRenderTimeout: number | null = null;
 
     constructor(private formBuilder: FormBuilder, public activateRoute: ActivatedRoute, public loginService: LoginService, public env: EnvironmentService,
                 public commondata: CommonDataService, public common: CommonService, private deviceService: DeviceDetectorService,
@@ -86,6 +89,7 @@ export class LoginComponent implements OnInit {
             this.classCode = this.type == 'googleStudentRegister' ? '' : params.classCode ? params.classCode : '';
             this.classCode != '' ? localStorage.setItem('studentClassCode', this.classCode) : '';
             console.log(this.classCode, 'classCode');
+            setTimeout(() => this.queueGoogleButtonRender());
         });
         this.backEndURLSignIn = this.env.apiHost + 'user/googleLogin';
         this.backEndURLRegisterSignIn = this.env.apiHost + 'user/googleRegister';
@@ -146,7 +150,7 @@ export class LoginComponent implements OnInit {
     }
 
     ngOnInit() {
-        this.loadGoogleSignInScript();
+        this.ensureGoogleSignInScript();
         if (this.classCode != '') {
             this.enrollClassLogin();
         } else {
@@ -154,11 +158,110 @@ export class LoginComponent implements OnInit {
         }
     }
 
-    loadGoogleSignInScript() {
-        const script = this.renderer.createElement('script');
+    ngAfterViewInit() {
+        this.queueGoogleButtonRender();
+    }
+
+    ngOnDestroy() {
+        if (this.googleRenderTimeout !== null) {
+            window.clearTimeout(this.googleRenderTimeout);
+            this.googleRenderTimeout = null;
+        }
+    }
+
+    ensureGoogleSignInScript() {
+        if (typeof window === 'undefined') {
+            return;
+        }
+
+        if ((window as any).google?.accounts?.id) {
+            this.googleScriptLoaded = true;
+            this.queueGoogleButtonRender();
+            return;
+        }
+
+        const existingScript = document.getElementById('google-client-script') as HTMLScriptElement;
+        if (existingScript) {
+            if (existingScript.getAttribute('data-google-loaded') === 'true') {
+                this.googleScriptLoaded = true;
+                this.queueGoogleButtonRender();
+                return;
+            }
+            existingScript.addEventListener('load', () => {
+                this.googleScriptLoaded = true;
+                this.queueGoogleButtonRender();
+            });
+            return;
+        }
+
+        const script = this.renderer.createElement('script') as HTMLScriptElement;
+        script.id = 'google-client-script';
         script.src = 'https://accounts.google.com/gsi/client';
+        script.async = true;
         script.defer = true;
-        document.body.appendChild(script);
+        script.onload = () => {
+            script.setAttribute('data-google-loaded', 'true');
+            this.googleScriptLoaded = true;
+            this.queueGoogleButtonRender();
+        };
+        script.onerror = () => {
+            console.error('Google Identity Services script failed to load.');
+        };
+        this.renderer.appendChild(document.body, script);
+    }
+
+    private queueGoogleButtonRender() {
+        if (typeof window === 'undefined') {
+            return;
+        }
+
+        if (!this.googleScriptLoaded) {
+            return;
+        }
+
+        if (this.googleRenderTimeout !== null) {
+            window.clearTimeout(this.googleRenderTimeout);
+        }
+
+        this.googleRenderTimeout = window.setTimeout(() => {
+            this.renderGoogleButton();
+        }, 0);
+    }
+
+    private renderGoogleButton() {
+        const googleAccounts = (window as any).google?.accounts?.id;
+        if (!googleAccounts) {
+            return;
+        }
+
+        const isStudentFlow = this.type == 'studentRegister' || this.type == 'googleStudentRegister';
+        const targetId = isStudentFlow ? 'googleRegisterButton' : 'googleSignInButton';
+        const loginUri = isStudentFlow ? this.backEndURLRegisterSignIn : this.backEndURLSignIn;
+        const container = document.getElementById(targetId);
+
+        if (!container) {
+            return;
+        }
+
+        container.innerHTML = '';
+        googleAccounts.initialize({
+            client_id: this.googleClientId,
+            ux_mode: 'popup',
+            login_uri: loginUri,
+            auto_select: false,
+            context: 'use'
+        });
+
+        const computedWidth = Math.max(container.clientWidth, 240);
+        googleAccounts.renderButton(container, {
+            type: 'standard',
+            theme: 'outline',
+            text: 'signin_with',
+            shape: 'rectangular',
+            size: 'large',
+            logo_alignment: 'left',
+            width: computedWidth
+        });
     }
 
     numberValidate(event) {

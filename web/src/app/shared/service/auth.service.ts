@@ -26,6 +26,7 @@ export class AuthService {
     private dashboardRef: Dashboard3Component | null = null;
     private classDetailRef: ClassDetailComponent | null = null;
     private _sidebarOpened = new BehaviorSubject<boolean>(true); // default = open
+    private isLoggingOut = false;
     sidebarOpened$ = this._sidebarOpened.asObservable();
 
     setAssessmentRef(ref: AssessmentComponent) {
@@ -530,7 +531,11 @@ export class AuthService {
         return observableThrowError(error);
     }
 
-    logout(showMessage: boolean = true) {
+    logout(showMessage: boolean = true, message?: string) {
+        if (this.isLoggingOut) {
+            return;
+        }
+        this.isLoggingOut = true;
         // Check if we have a token before trying to logout
         const hasToken = this.getAccessToken() && this.getAccessToken() !== '';
         
@@ -548,19 +553,20 @@ export class AuthService {
                 },
                 error: (error) => {
                     console.error('Logout error:', error);
+                    this.performLogout(showMessage, message);
                 },
                 complete: () => {
                     // Clear local storage and redirect regardless of API response
-                    this.performLogout(showMessage);
+                    this.performLogout(showMessage, message);
                 }
             });
         } else {
             // No token, just clear storage and redirect
-            this.performLogout(showMessage);
+            this.performLogout(showMessage, message);
         }
     }
 
-    private performLogout(showMessage: boolean = true) {
+    private performLogout(showMessage: boolean = true, message?: string) {
         if (this.getRoleId() != '6') {
             this.router.navigate(['/auth/login']);
         } else {
@@ -568,11 +574,12 @@ export class AuthService {
         }
         
         if (showMessage) {
-            this.toastr.error('You have logged in another Device. Please Re-login');
+            this.toastr.error(message || 'You have logged in another Device. Please Re-login');
         }
 
         sessionStorage.clear();
         localStorage.clear();
+        this.isLoggingOut = false;
     }
 
 }

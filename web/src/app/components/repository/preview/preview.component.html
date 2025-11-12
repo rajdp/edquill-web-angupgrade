@@ -2,6 +2,9 @@
     <div *ngIf="!functionCalled" id="custom-pdf-loader" style="height: 80vh;">
         <img alt="" src="assets/images/pre-loader/loader-01.svg">
     </div>
+    <div *ngIf="loadError" class="alert alert-danger mt-3">
+        {{ loadError }}
+    </div>
     <div [hidden]="previewPdf == false" class="row">
         <div *ngIf="functionCalled" class="col-12 card p-3">
             <h4 class="mb-0 font-weight-bold color-primary align-items-center justify-content-between d-flex">{{detailData.name}}
@@ -229,7 +232,7 @@
                                         <div class="inner editor_bullet" *ngIf="list.question_type_id != 24 && list.question_type_id != 55"><b><h3 [innerHTML]="list.question | sanitizeHtml" class="mb-0 overflow-auto"></h3></b></div>
                                         <div class="editor_bullet col-md-12 px-0" *ngIf="list.question_type_id == 55">
                                             <div class="essay-box m-0">
-                                                <h2>Essay Prompt</h2>
+                                                <h3>Essay Prompt</h3>
                                                 <p>
                                                     <span [innerHTML]="convertMarkdownToHtml(list.question)" class="mb-0 overflow-auto"></span>
                                                 </p>
@@ -296,7 +299,7 @@
                                 </div>
                                 <div class="mt-3 editor_bullet col-md-12 ml-4" *ngIf="list.question_type_id == 55">
                                     <div class="essay-box" *ngIf="showAnswer">
-                                        <h2>Sample Essay</h2>
+                                        <h3>Sample Essay</h3>
                                         <p>
                                             <span *ngIf="showAnswer && list.answer[0]?.correctAnswer.trim() != ''" [innerHTML]="convertMarkdownToHtml(list.answer[0].correctAnswer)" class="mb-0 overflow-auto"></span>
                                             <span class="innerhtml-margin-clear color-primary" *ngIf="showAnswer && list.answer[0]?.correctAnswer.trim() == ''" >

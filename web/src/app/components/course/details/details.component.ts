@@ -16,6 +16,7 @@ import { NewsubjectService } from 'src/app/shared/service/newsubject.service';
 })
 export class DetailsComponent implements OnInit, DoCheck {
     rows: any = [];
+    filteredRows: any = [];
     public active = 1;
     item: any;
     public columnSize = 12;
@@ -24,6 +25,7 @@ export class DetailsComponent implements OnInit, DoCheck {
     public desktopView = window.screen.width > 768;
     public courseDetailsListSearchData = [];
     public webhost: any;
+    public courseSearchText = '';
 
     // @ViewChild('table') table: any;
 
@@ -65,6 +67,7 @@ export class DetailsComponent implements OnInit, DoCheck {
 
 
     ngOnInit() {
+        this.init();
     }
 
 
@@ -102,39 +105,64 @@ export class DetailsComponent implements OnInit, DoCheck {
         this.router.navigate(['/course/details/edit']);
     }
 
-    searchList() {
-        let arrayValue = [];
-        if (this.selectedCategory.length != 0) {
-            this.courseDetailsListSearchData.forEach((items) => {
-                this.selectedCategory.forEach((item1) => {
-                    if (items.category_id.includes(item1)) {
-                        const checkValueAlreadyExist = arrayValue.some((code => code.course_id == items.course_id));
-                        if (!checkValueAlreadyExist) {
-                            arrayValue.push(items);
-                        }
-                    }
-                });
-            });
-        } else {
-            arrayValue = this.courseDetailsListSearchData;
+    addClassForCourse(course: any) {
+        if (!course) {
+            return;
         }
-        this.selectedStatus.length != 0 ? arrayValue = arrayValue.filter(o1 => this.selectedStatus.some(o2 => o1.status === o2)) : '';
-        if (this.selectedCourseType && this.selectedCourseType != 'All') {
-            arrayValue = arrayValue.filter((o1) => {
-                const courseType = this.selectedCourseType;
-                return courseType === 'event' ? o1[courseType] === '1' : o1[courseType] === 'Y';
-            });
-        }
-        const searchValued = this.searchedValue;
-        arrayValue = arrayValue.filter(search => {
-            return search.course_name.toLowerCase().indexOf(searchValued) !== -1 || search.author.toLowerCase().indexOf(searchValued) !== -1 || search.lessons.toLowerCase().indexOf(searchValued) !== -1 || !searchValued;
+        this.auth.setSessionData('filter_course_id', course.course_id);
+        this.auth.setSessionData('filter_course_name', course.course_name);
+        this.router.navigate(['/class/create-class/add'], {
+            queryParams: {
+                course_id: course.course_id,
+                course_name: course.course_name
+            }
         });
-        this.rows = arrayValue;
-        this.auth.setSessionData('courseDetailsSearchValue', JSON.stringify({
-            category_id: this.selectedCategory,
-            status: this.selectedStatus,
-            searchValue: this.searchedValue
-        }));
+    }
+
+    viewClasses(course: any) {
+        console.log('View classes for course:', course);
+        // Store course info for filtering classes
+        this.auth.setSessionData('filter_course_id', course.course_id);
+        this.auth.setSessionData('filter_course_name', course.course_name);
+        // Navigate to class list with course filter
+        this.router.navigate(['/class/list-class'], {
+            queryParams: {
+                course_id: course.course_id,
+                course_name: course.course_name
+            }
+        });
+    }
+
+    navigateToSEO(course: any) {
+        console.log('Navigate to SEO for course:', course);
+        // Store course info for SEO page
+        this.auth.setSessionData('filter_course_id', course.course_id);
+        this.auth.setSessionData('filter_course_name', course.course_name);
+        // Navigate to Course SEO page
+        this.router.navigate(['/course/seo/list'], {
+            queryParams: {
+                course_id: course.course_id,
+                course_name: course.course_name
+            }
+        });
+    }
+
+    navigateToFAQ(course: any) {
+        console.log('Navigate to FAQ for course:', course);
+        // Store course info for FAQ page
+        this.auth.setSessionData('filter_course_id', course.course_id);
+        this.auth.setSessionData('filter_course_name', course.course_name);
+        // Navigate to Course FAQ page
+        this.router.navigate(['/course/faq/list'], {
+            queryParams: {
+                course_id: course.course_id,
+                course_name: course.course_name
+            }
+        });
+    }
+
+    searchList() {
+        this.applyAllFilters();
     }
 
     getListCourseDetails() {
@@ -158,9 +186,99 @@ export class DetailsComponent implements OnInit, DoCheck {
 
     listSuccess(successData) {
         this.rows = successData.IsSuccess ? successData.ResponseObject : [];
+        this.filteredRows = successData.IsSuccess ? successData.ResponseObject : [];
         this.courseDetailsListSearchData = successData.IsSuccess ? successData.ResponseObject : [];
         this.auth.setSessionData('course_detail_maximumCount', this.courseDetailsListSearchData.length);
         console.log(this.rows, 'rowa');
+        this.applyAllFilters();
+    }
+
+    searchCourses() {
+        this.applyAllFilters();
+    }
+
+    clearCourseSearch() {
+        this.courseSearchText = '';
+        this.applyAllFilters();
+    }
+
+    applyAllFilters() {
+        let results = [...this.courseDetailsListSearchData];
+
+        // Apply course search
+        if (this.courseSearchText && this.courseSearchText.trim()) {
+            const searchLower = this.courseSearchText.toLowerCase();
+            results = results.filter(course =>
+                course.course_name.toLowerCase().includes(searchLower) ||
+                (course.description && course.description.toLowerCase().includes(searchLower)) ||
+                (course.author && course.author.toLowerCase().includes(searchLower))
+            );
+        }
+
+        // Apply category filter
+        if (this.selectedCategory.length != 0) {
+            results = results.filter((course) => {
+                return this.selectedCategory.some((catId) => course.category_id.includes(catId));
+            });
+        }
+
+        // Apply status filter
+        if (this.selectedStatus.length != 0) {
+            results = results.filter(course => this.selectedStatus.includes(course.status));
+        }
+
+        // Apply course type filter
+        if (this.selectedCourseType && this.selectedCourseType != 'All') {
+            results = results.filter((course) => {
+                const courseType = this.selectedCourseType;
+                return courseType === 'event' ? course[courseType] === '1' : course[courseType] === 'Y';
+            });
+        }
+
+        this.filteredRows = results;
+    }
+
+    hasLinkedClasses(course: any): boolean {
+        const count = this.getCourseClassCount(course);
+        if (count === null) {
+            return false;
+        }
+        return count > 0;
+    }
+
+    getCourseClassCountDisplay(course: any): number {
+        const count = this.getCourseClassCount(course);
+        return count !== null ? count : 0;
+    }
+
+    private getCourseClassCount(course: any): number | null {
+        if (!course) {
+            return null;
+        }
+        const potentialKeys = [
+            'class_count',
+            'classes_count',
+            'classCount',
+            'total_class_count',
+            'total_classes',
+            'totalclass_count',
+            'class_total',
+            'class_list'
+        ];
+        for (const key of potentialKeys) {
+            const value = course[key];
+            if (value === undefined || value === null || value === '') {
+                continue;
+            }
+            if (Array.isArray(value)) {
+                return value.length;
+            }
+            const numericValue = Number(value);
+            if (!isNaN(numericValue)) {
+                return numericValue;
+            }
+        }
+        return null;
     }
 
     getCategoryList() {

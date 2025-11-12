@@ -108,6 +108,7 @@ export class PreviewComponent implements OnInit {
     public redoListArray: any = [];
     public additionalLinks = [];
     public showAnswer = true;
+    public loadError: string | null = null;
     page = 1;
     public expandPdf: any = false;
     public showQuestion = false;
@@ -154,17 +155,30 @@ export class PreviewComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        const data = JSON.parse(this.auth.getSessionData('editor'));
+        const data = JSON.parse(this.auth.getSessionData('editor') || '{}');
         console.log(data, 'data');
-        const responseData = this.calledBy == 'routes' ? this.route.snapshot.data['list'] : this.contentData;
-        console.log(responseData.ResponseObject, 'responseData');
-        this.responseData = responseData.ResponseObject;
-        if (this.calledBy == 'routes') {
+        const resolvedPayload = this.calledBy === 'routes'
+            ? this.route.snapshot.data['list']
+            : {IsSuccess: true, ResponseObject: this.contentData};
+
+        if (!resolvedPayload || resolvedPayload.IsSuccess !== true || !resolvedPayload.ResponseObject) {
+            console.error('Preview resolver returned invalid payload:', resolvedPayload);
+            this.loadError = resolvedPayload?.ErrorObject || 'Unable to load this content right now. Please try again.';
+            this.functionCalled = true;
+            return;
+        }
+
+        console.log(resolvedPayload.ResponseObject, 'responseData');
+        this.responseData = resolvedPayload.ResponseObject;
+
+        if (this.calledBy === 'routes') {
             try {
-                console.log(this.route.snapshot.data['list'], 'getData');
-                this.detailsSuccess(this.route.snapshot.data['list'], data);
+                console.log(resolvedPayload, 'getData');
+                this.detailsSuccess(resolvedPayload, data);
             } catch (e) {
                 console.log(e, 'ee');
+                this.loadError = 'Something went wrong while preparing the preview.';
+                this.functionCalled = true;
             }
         } else {
             this.detailsSuccess(this.contentData);
@@ -485,6 +499,10 @@ export class PreviewComponent implements OnInit {
                 this.functionCalled = true;
             }
             this.clickEvent();
+        } else {
+            console.error('detailsSuccess received unsuccessful response', successData);
+            this.loadError = successData?.ErrorObject || 'Unable to load this content preview.';
+            this.functionCalled = true;
         }
         this.modalRef?.close();
         this.common.showLoader(false);
@@ -492,6 +510,8 @@ export class PreviewComponent implements OnInit {
 
     detailsFailure(error) {
         console.error(error, 'error');
+        this.loadError = 'Unable to load this content preview.';
+        this.functionCalled = true;
         this.modalRef?.close();
     }
 

@@ -35,6 +35,34 @@ export class NavService {
     public allowNav: any;
     public permissionList: any;
 
+    private buildUsersMenu(): Menu {
+        return {
+            title: 'Users',
+            icon: 'users',
+            imgePath: 'assets/images/mob-side-icon/content-repository.png',
+            type: 'sub',
+            active: false,
+            children: [
+                {
+                    path: '/users/user-list',
+                    title: 'User Directory',
+                    icon: 'users',
+                    imgePath: 'assets/images/mob-side-icon/content-repository.png',
+                    type: 'link',
+                    active: false
+                },
+                {
+                    path: '/users/quick-create',
+                    title: 'Quick Add User',
+                    icon: 'user-plus',
+                    imgePath: 'assets/images/mob-side-icon/content-repository.png',
+                    type: 'link',
+                    active: false
+                }
+            ]
+        };
+    }
+
     constructor(@Inject(WINDOW) private window, public auth: AuthService, public login: LoginService, public newSubject: NewsubjectService,
                 public common: CommonService) {
 
@@ -109,19 +137,12 @@ export class NavService {
                             //     type: 'link',
                             //     active: false
                             // },
-                            {
-                                title: 'Users',
-                                icon: 'users',
-                                imgePath: 'assets/images/mob-side-icon/content-repository.png',
-                                path: '/users/user-list',
-                                type: 'link',
-                                active: false
-                            },
+                            this.buildUsersMenu(),
                             {
                                 title: 'Grading', icon: 'shield', type: 'sub', active: false, children: [
                                     {
                                         path: '/student-content/list-content/new',
-                                        title: 'Student-Work',
+                                        title: 'By Student',
                                         icon: 'graduation-cap',
                                         imgePath: 'assets/images/mob-side-icon/assignment-correction.png',
                                         type: 'link',
@@ -129,7 +150,7 @@ export class NavService {
                                     },
                                     {
                                         path: '/assessment-correction/list-correction',
-                                        title: 'Assessment-Correction',
+                                        title: 'Quizzes',
                                         icon: 'object-group',
                                         imgePath: 'assets/images/mob-side-icon/assessment-correction.png',
                                         type: 'link',
@@ -137,7 +158,7 @@ export class NavService {
                                     },
                                     {
                                         path: '/assignment-correction/list-correction',
-                                        title: 'Assignment-Correction',
+                                        title: 'Assignments',
                                         icon: 'object-ungroup',
                                         imgePath: 'assets/images/mob-side-icon/assignment-correction.png',
                                         type: 'link',
@@ -191,9 +212,19 @@ export class NavService {
                             // },
                             { title: 'Course', icon: 'file-minus', type: 'sub', active: false, children: [
                                     {
+                                        path: '/course/wizard',
+                                        title: 'Quick Setup Wizard',
+                                        icon: 'zap',
+                                        imgePath: 'assets/images/mob-side-icon/assignment-correction.png',
+                                        type: 'link',
+                                        active: false,
+/*                                         badgeType: 'success',
+                                        badgeValue: 'NEW'
+ */                                    },
+                                    {
                                         path: '/course/category/list',
                                         title: 'Course Category',
-                                        icon: 'list-alt',
+                                        icon: 'folder',
                                         imgePath: 'assets/images/mob-side-icon/assignment-correction.png',
                                         type: 'link',
                                         active: false
@@ -201,7 +232,7 @@ export class NavService {
                                     {
                                         path: '/course/details/list',
                                         title: 'Course Details',
-                                        icon: 'table',
+                                        icon: 'book',
                                         imgePath: 'assets/images/mob-side-icon/assignment-correction.png',
                                         type: 'link',
                                         active: false
@@ -209,49 +240,7 @@ export class NavService {
                                     {
                                         path: '/class/list-class',
                                         title: 'Classes',
-                                        icon: 'calendar-o',
-                                        imgePath: 'assets/images/mob-side-icon/assignment-correction.png',
-                                        type: 'link',
-                                        active: false
-                                    },
-                                    {
-                                        path: '/course/seo/list',
-                                        title: 'Course SEO',
-                                        icon: 'search',
-                                        imgePath: 'assets/images/mob-side-icon/assignment-correction.png',
-                                        type: 'link',
-                                        active: false
-                                    },
-                                    {
-                                        path: '/course/faq/list',
-                                        title: 'Course FAQ',
-                                        icon: 'question-circle-o',
-                                        imgePath: 'assets/images/mob-side-icon/assignment-correction.png',
-                                        type: 'link',
-                                        active: false
-                                    }
-                                ]},
-                            { title: 'Website Content', icon: 'book', type: 'sub', active: false, children: [
-                                    {
-                                        path: '/content/category/list',
-                                        title: 'Content Category',
-                                        icon: 'list-alt',
-                                        imgePath: 'assets/images/mob-side-icon/assignment-correction.png',
-                                        type: 'link',
-                                        active: false
-                                    },
-                                    {
-                                        path: '/content/content-list/list',
-                                        title: 'Content List',
-                                        icon: 'list',
-                                        imgePath: 'assets/images/mob-side-icon/assignment-correction.png',
-                                        type: 'link',
-                                        active: false
-                                    },
-                                    {
-                                        path: '/content/seo/list',
-                                        title: 'content SEO',
-                                        icon: 'search',
+                                        icon: 'users',
                                         imgePath: 'assets/images/mob-side-icon/assignment-correction.png',
                                         type: 'link',
                                         active: false
@@ -306,7 +295,6 @@ export class NavService {
                                 ]
                             },
 
-                            {title: 'Self Enrollments', icon: 'list', type: 'link', active: false, path: '/orders/list'},
 
                             // {
                             // 	title: 'Users', icon: 'users', type: 'sub', active: false, children: [
@@ -575,14 +563,14 @@ export class NavService {
                                 title: 'Grading', icon: 'shield', type: 'sub', active: false, children: [
                                     {
                                         path: '/student-content/list-content/new',
-                                        title: 'Student-Work',
+                                        title: 'Assignments',
                                         icon: 'graduation-cap',
                                         imgePath: 'assets/images/mob-side-icon/assignment-correction.png',
                                         type: 'link',
                                         active: false
                                     }, {
                                         path: '/assessment-correction/list-correction',
-                                        title: 'Assessment-Correction',
+                                        title: 'Quizzes',
                                         icon: 'object-group',
                                         imgePath: 'assets/images/mob-side-icon/assessment-correction.png',
                                         type: 'link',
@@ -719,14 +707,7 @@ export class NavService {
                                 }
                             // } else if (this.permissionList.permissions[i].allowNav && (this.permissionList.permissions[i].group_name == 'Students' || this.permissionList.permissions[i].group_name == 'Content-Creator')) {
                             } else if (this.permissionList.permissions[i].allowNav && this.permissionList.permissions[i].group_name == 'Student') {
-                                const user = {
-                                    title: 'Users',
-                                    icon: 'users',
-                                    imgePath: 'assets/images/mob-side-icon/content-repository.png',
-                                    path: '/users/user-list',
-                                    type: 'link',
-                                    active: false
-                                };
+                                const user = this.buildUsersMenu();
                                 if (this.MENUITEMS[2].title != 'Users') {
                                     this.MENUITEMS.splice(3, 0, user);
                                 }
@@ -827,7 +808,7 @@ export class NavService {
                         },
                         {
                             path: '/studentlogin/assessment',
-                            title: 'Assessment',
+                            title: 'Quizzes',
                             icon: 'layers',
                             imgePath: 'assets/images/mob-side-icon/assessment-correction.png',
                             type: 'link',
@@ -835,7 +816,7 @@ export class NavService {
                         },
                         {
                             path: '/studentlogin/assignment',
-                            title: 'Assignment',
+                            title: 'Assignments',
                             icon: 'at-sign',
                             imgePath: 'assets/images/mob-side-icon/assignment-correction.png',
                             type: 'link',
@@ -894,14 +875,7 @@ export class NavService {
                         // },
 
 
-                        {
-                            title: 'Users',
-                            icon: 'users',
-                            imgePath: 'assets/images/mob-side-icon/content-repository.png',
-                            path: '/users/user-list',
-                            type: 'link',
-                            active: false
-                        },
+                        this.buildUsersMenu(),
                         // {
                         //     title: 'Users', icon: 'users', type: 'sub', active: false, children: [
                         // 		{
@@ -1106,12 +1080,20 @@ export class NavService {
             type: 'sub',
             active: false,
             children: [
+                { path: '/crm/registrations', title: 'Enrollments', icon: 'clipboard-check', type: 'link', active: false },
                 { path: '/crm/guardians', title: 'Guardians', icon: 'user-plus', type: 'link', active: false },
                 { path: '/crm/fees', title: 'Fees', icon: 'dollar-sign', type: 'link', active: false },
                 { path: '/crm/notifications', title: 'Notifications', icon: 'bell', type: 'link', active: false },
                 { path: '/crm/reports', title: 'Report Cards', icon: 'file-text', type: 'link', active: false }
             ]
         };
+
+        const usersIndex = items.findIndex(menu => menu.title === 'Users');
+        if (usersIndex !== -1) {
+            const reordered = [...items];
+            reordered.splice(usersIndex, 0, crmMenu);
+            return reordered;
+        }
 
         return [...items, crmMenu];
     }

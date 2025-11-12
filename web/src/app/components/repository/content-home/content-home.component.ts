@@ -99,6 +99,7 @@ export class ContentHomeComponent implements OnInit, OnDestroy {
     public filterselection: any;
     public response: any;
     public teacherData: any = [];
+    private teacherNameMap: Map<string, string> = new Map<string, string>();
     public typeid: any;
     public contentDetaildata: any;
     public sortfilter: any;
@@ -918,7 +919,10 @@ export class ContentHomeComponent implements OnInit, OnDestroy {
             this.contentFormat = this.contentDetaildata.content_format;
             this.checkQuestion = this.contentDetaildata.without_question;
             this.profileurl = this.contentDetaildata.profile_url;
-            this.createdby = this.contentDetaildata.created_by;
+            this.createdby = this.resolveCreatorDisplayName(
+                this.getCreatorIdCandidates(this.contentDetaildata),
+                this.collectCreatorFallbackNames(this.contentDetaildata)
+            );
             this.gradename = this.contentDetaildata.grade_name;
             this.subjectname = this.contentDetaildata.subject_name;
             this.tags = this.contentDetaildata.tags;
@@ -1448,11 +1452,126 @@ export class ContentHomeComponent implements OnInit, OnDestroy {
                 if (successData.IsSuccess) {
                     this.teacherData = successData.ResponseObject;
                     console.log(this.teacherData, 'teacherData');
+                    this.buildTeacherNameLookup();
+                    this.decorateContentCreatorNames();
+                    if (this.contentDetaildata) {
+                        this.createdby = this.resolveCreatorDisplayName(
+                            this.getCreatorIdCandidates(this.contentDetaildata),
+                            this.collectCreatorFallbackNames(this.contentDetaildata)
+                        );
+                    }
                 }
             },
             (error) => {
                 console.log(error, 'error');
             });
+    }
+
+    private buildTeacherNameLookup(): void {
+        this.teacherNameMap.clear();
+        if (!Array.isArray(this.teacherData)) {
+            return;
+        }
+
+        this.teacherData.forEach((teacher) => {
+            const teacherName = teacher?.teacher_name || teacher?.name || teacher?.user_name;
+            if (!teacherName) {
+                return;
+            }
+
+            const possibleIds = [teacher?.teacher_id, teacher?.user_id];
+            possibleIds
+                .filter((id) => id !== undefined && id !== null && id !== '')
+                .forEach((id) => this.teacherNameMap.set(String(id), teacherName));
+        });
+    }
+
+    private decorateContentCreatorNames(): void {
+        if (!Array.isArray(this.contentdata) || !this.contentdata.length) {
+            return;
+        }
+
+        this.contentdata.forEach((content) => {
+            content.creatorDisplayName = this.resolveCreatorDisplayName(
+                this.getCreatorIdCandidates(content),
+                this.collectCreatorFallbackNames(content)
+            );
+        });
+    }
+
+    private normalizeCreatorId(value: any): string {
+        if (value === undefined || value === null) {
+            return '';
+        }
+
+        const normalized = String(value).trim();
+        return normalized;
+    }
+
+    private getCreatorIdCandidates(source: any, ...additionalIds: any[]): string[] {
+        const candidateValues = [
+            ...additionalIds,
+            source?.created_by,
+            source?.createdBy,
+            source?.creator_id,
+            source?.creatorId,
+            source?.created_user_id,
+            source?.createdUserId,
+            source?.user_id,
+            source?.owner_id
+        ];
+
+        const normalized = candidateValues
+            .map((value) => this.normalizeCreatorId(value))
+            .filter((value) => !!value);
+
+        return Array.from(new Set(normalized));
+    }
+
+    private collectCreatorFallbackNames(source: any): string[] {
+        if (!source) {
+            return [];
+        }
+
+        const candidateNames = [
+            source?.creatorDisplayName,
+            source?.created_by_name,
+            source?.createdByName,
+            source?.creator_name,
+            source?.creatorName,
+            source?.created_by_username,
+            source?.createdUserName,
+            source?.created_user_name,
+            source?.owner_name,
+            source?.user_name,
+            source?.teacher_name,
+            source?.created_by_full_name,
+            source?.created_by_fullname
+        ];
+
+        const normalized = candidateNames
+            .map((value) => typeof value === 'string' ? value.trim() : '')
+            .filter((value) => !!value);
+
+        return Array.from(new Set(normalized));
+    }
+
+    private resolveCreatorDisplayName(idCandidates: string[], fallbackNames: string[]): string {
+        const directName = fallbackNames.find((name) => !!name);
+        if (directName) {
+            return directName;
+        }
+
+        for (const id of idCandidates) {
+            if (this.teacherNameMap.has(id)) {
+                const mappedName = this.teacherNameMap.get(id);
+                if (mappedName && mappedName.trim()) {
+                    return mappedName;
+                }
+            }
+        }
+
+        return idCandidates[0] ?? '';
     }
 
     tagList() {
@@ -1583,6 +1702,8 @@ export class ContentHomeComponent implements OnInit, OnDestroy {
                 console.log('📄 PAGINATION DEBUG - More pages likely, totalPages:', this.totalPages);
             }
             
+            this.decorateContentCreatorNames();
+
             this.totalRecords = this.contentdata.length;
             this.threshhold = this.totalRecords - 2;
             this.contentdatabackup = this.contentdata;

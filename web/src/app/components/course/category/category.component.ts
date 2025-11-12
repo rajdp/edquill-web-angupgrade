@@ -20,12 +20,15 @@ export class CategoryComponent implements OnInit, DoCheck, OnDestroy {
     @ViewChild('categoryViewList') categoryViewList: TemplateRef<any>;
     public categoryListData = [];
     public categoryListSearchData = [];
+    public filteredCategoryList = [];
     public selectedCategoryList: any;
     public searchedValue: any = '';
+    public courseList: any[] = [];
 
     constructor(public auth: AuthService, public router: Router,
                 public modalService: NgbModal, public env: EnvironmentService, public builder: FormBuilder) {
         this.getCategoryList();
+        this.loadCourses();
     }
 
 
@@ -83,6 +86,7 @@ export class CategoryComponent implements OnInit, DoCheck, OnDestroy {
         if (successData.IsSuccess) {
             this.categoryListData = successData.ResponseObject;
             this.categoryListSearchData = successData.ResponseObject;
+            this.filteredCategoryList = successData.ResponseObject;
             this.auth.setSessionData('course_category_maximumCount', this.categoryListData.length);
             this.searchedValue = this.auth.getInputSearchValue('courseCategory');
             this.searchFunction();
@@ -90,16 +94,61 @@ export class CategoryComponent implements OnInit, DoCheck, OnDestroy {
         } else {
             this.categoryListData = [];
             this.categoryListSearchData = [];
+            this.filteredCategoryList = [];
         }
+    }
+
+    loadCourses() {
+        const data = {
+            platform: 'web',
+            role_id: this.auth.getRoleId(),
+            user_id: this.auth.getUserId(),
+            school_id: this.auth.getSessionData('school_id')
+        };
+        
+        this.auth.postService(data, urls.courseList).subscribe(
+            (response: any) => {
+                if (response.IsSuccess) {
+                    this.courseList = response.ResponseObject;
+                    this.calculateCourseCounts();
+                }
+            },
+            (error) => {
+                console.error('Error loading courses:', error);
+            }
+        );
+    }
+
+    calculateCourseCounts() {
+        this.categoryListData.forEach(category => {
+            const count = this.courseList.filter(course => 
+                course.category_id && course.category_id.includes(category.category_id.toString())
+            ).length;
+            category.course_count = count;
+        });
+        this.filteredCategoryList = [...this.categoryListData];
     }
 
     searchFunction() {
         const searchValued = this.searchedValue.toLowerCase();
         this.auth.setInputSearchValue('courseCategory', this.searchedValue);
+        
+        if (!searchValued.trim()) {
+            this.filteredCategoryList = [...this.categoryListSearchData];
+            return;
+        }
+        
         const temp = this.categoryListSearchData.filter(search => {
-            return search.category_name.toLowerCase().indexOf(searchValued) !== -1 || !searchValued;
+            return search.category_name.toLowerCase().indexOf(searchValued) !== -1 ||
+                   (search.description && search.description.toLowerCase().indexOf(searchValued) !== -1) ||
+                   !searchValued;
         });
-        this.categoryListData = temp;
-        console.log(this.categoryListData, 'categoryListSearchData');
+        this.filteredCategoryList = temp;
+        console.log(this.filteredCategoryList, 'filteredCategoryList');
+    }
+
+    clearSearch() {
+        this.searchedValue = '';
+        this.searchFunction();
     }
 }

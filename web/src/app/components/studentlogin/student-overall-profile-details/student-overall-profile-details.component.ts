@@ -4,7 +4,7 @@ import {CategoryService} from '../../../shared/service/category.service';
 import {ConfigurationService} from '../../../shared/service/configuration.service';
 import {StudentService} from '../../../shared/service/student.service';
 import {ValidationService} from '../../../shared/service/validation.service';
-import {IAngularMyDpOptions} from '@nodro7/angular-mydatepicker';
+import {IAngularMyDpOptions, IMyDateModel} from '@nodro7/angular-mydatepicker';
 import {ToastrService} from 'ngx-toastr';
 import {CommonService} from '../../../shared/service/common.service';
 import {FormArray, FormBuilder, FormGroup, Validators, AbstractControl} from '@angular/forms';
@@ -77,6 +77,8 @@ export class StudentOverallProfileDetailsComponent implements OnInit, OnDestroy 
     public guardianSaving = false;
     public guardianForm: FormGroup;
     private guardianSnapshot: any[] = [];
+    public studentSaving = false;
+    private studentSnapshot: any = null;
     public schoolId: string | null = null;
     @ViewChild('viewoveralldetails') viewoveralldetails: TemplateRef<any>;
     public voidClassData: any = {};
@@ -905,6 +907,8 @@ export class StudentOverallProfileDetailsComponent implements OnInit, OnDestroy 
         console.log(successData, 'successData');
         this.studentProfileDetails = successData.ResponseObject || [];
         this.serviceCalled = true;
+        this.populateStudentForm();
+        this.studentSnapshot = this.studentForm.getRawValue();
         this.gradeList();
         this.studentFullClassList();
         console.log(this.studentProfileDetails, 'studentProfileDetails');
@@ -966,6 +970,262 @@ export class StudentOverallProfileDetailsComponent implements OnInit, OnDestroy 
         } else {
             this.toastr.error(successData.ResponseObject);
         }
+    }
+
+    startStudentEdit() {
+        if (!this.studentProfileDetails?.length) {
+            return;
+        }
+        this.studentSnapshot = this.studentForm.getRawValue();
+        this.studentTableEdit = true;
+        this.imagepath = [];
+        this.imagepaththumb = [];
+    }
+
+    cancelStudentEdit() {
+        this.studentTableEdit = false;
+        if (this.studentSnapshot) {
+            this.studentForm.reset(this.studentSnapshot);
+        } else {
+            this.populateStudentForm();
+        }
+        this.imagepath = [];
+        this.imagepaththumb = [];
+        this.studentForm.markAsPristine();
+        this.studentForm.markAsUntouched();
+    }
+
+    saveStudentDetails() {
+        if (!this.studentTableEdit) {
+            return;
+        }
+
+        if (this.studentForm.invalid) {
+            this.validation.validateAllFormFields(this.studentForm);
+            this.toastr.error('Please complete required fields before saving');
+            return;
+        }
+
+        const formValue = this.studentForm.value;
+        const profile = this.studentProfileDetails?.[0] || {};
+        const mobileArray = [
+            (formValue.mobile || '').toString().trim(),
+            (formValue.mobile1 || '').toString().trim(),
+            (formValue.mobile2 || '').toString().trim()
+        ];
+        const parent1EmailsExisting = Array.isArray(profile.parent1_email_ids) ? profile.parent1_email_ids : [];
+        const parent2EmailsExisting = Array.isArray(profile.parent2_email_ids) ? profile.parent2_email_ids : [];
+        const parent1Emails = [
+            (formValue.parent1email_id1 !== undefined && formValue.parent1email_id1 !== null && formValue.parent1email_id1 !== '') ?
+                formValue.parent1email_id1.trim() :
+                (parent1EmailsExisting[0] || '')
+        ];
+        if (parent1EmailsExisting.length > 1) {
+            parent1Emails.push(parent1EmailsExisting[1]);
+        }
+        const parent2Emails = [
+            (formValue.parent2email_id1 !== undefined && formValue.parent2email_id1 !== null && formValue.parent2email_id1 !== '') ?
+                formValue.parent2email_id1.trim() :
+                (parent2EmailsExisting[0] || '')
+        ];
+        if (parent2EmailsExisting.length > 1) {
+            parent2Emails.push(parent2EmailsExisting[1]);
+        }
+
+        const addressList = this.buildAddressList(profile, formValue);
+
+        const payload: any = {
+            platform: 'web',
+            role_id: this.auth.getRoleId(),
+            user_id: this.auth.getUserId(),
+            school_id: this.auth.getSessionData('school_id'),
+            selected_user_id: this.studentId,
+            first_name: (formValue.first_name || '').trim(),
+            last_name: (formValue.last_name || '').trim(),
+            email_id: (formValue.email_id || '').trim(),
+            gender: formValue.gender || '',
+            birthday: this.formatDateForApi(formValue.dob),
+            grade_id: formValue.grade || '',
+            school_idno: (formValue.studentid || '').trim(),
+            mobile: mobileArray,
+            registration_date: this.formatDateForApi(formValue.registration_date),
+            status: formValue.status || '',
+            parent1_firstname: (formValue.parent1first_name || profile.parent1_firstname || '').trim(),
+            parent1_lastname: (formValue.parent1last_name || profile.parent1_lastname || '').trim(),
+            parent2_firstname: (formValue.parent2first_name || profile.parent2_firstname || '').trim(),
+            parent2_lastname: (formValue.parent2last_name || profile.parent2_lastname || '').trim(),
+            parent1_email_ids: parent1Emails,
+            parent2_email_ids: parent2Emails,
+            address: addressList,
+            profile_url: (this.imagepath && this.imagepath.length > 0) ? this.imagepath[0] : (profile.profile_url || ''),
+            profile_thumb_url: (this.imagepaththumb && this.imagepaththumb.length > 0) ? this.imagepaththumb[0] : (profile.profile_thumb_url || '')
+        };
+
+        this.studentSaving = true;
+        this.student.studentEdit(payload).subscribe({
+            next: (successData: any) => {
+                this.studentSaving = false;
+                if (successData?.IsSuccess) {
+                    const message = successData.ResponseObject || 'Student details updated';
+                    this.toastr.success(message);
+                    this.studentTableEdit = false;
+                    this.imagepath = [];
+                    this.imagepaththumb = [];
+                    this.studentDetails();
+                } else {
+                    this.toastr.error(successData?.ErrorObject || 'Unable to update student details');
+                }
+            },
+            error: (error) => {
+                console.error('Failed to update student details', error);
+                this.studentSaving = false;
+                this.toastr.error('Unable to update student details');
+            }
+        });
+    }
+
+    private populateStudentForm() {
+        const profile = this.studentProfileDetails?.[0];
+        this.studentForm.reset({
+            first_name: '',
+            last_name: '',
+            email_id: '',
+            gender: '',
+            dob: null,
+            grade: '',
+            studentid: '',
+            mobile: '',
+            mobile1: '',
+            mobile2: '',
+            status: '',
+            registration_date: null,
+            parent1first_name: '',
+            parent2first_name: '',
+            parent1last_name: '',
+            parent2last_name: '',
+            parent1email_id1: '',
+            parent2email_id1: '',
+            parent1address1: '',
+            parent2address1: '',
+            parent1address2: '',
+            parent2address2: '',
+            parent1city: '',
+            parent2city: '',
+            parent1state: '',
+            parent2state: '',
+            parent1country: '',
+            parent2country: ''
+        });
+
+        if (!profile) {
+            this.studentForm.markAsPristine();
+            this.studentForm.markAsUntouched();
+            return;
+        }
+
+        const mobiles = Array.isArray(profile.mobile) ? profile.mobile : [];
+        const parent1Emails = Array.isArray(profile.parent1_email_ids) ? profile.parent1_email_ids : [];
+        const parent2Emails = Array.isArray(profile.parent2_email_ids) ? profile.parent2_email_ids : [];
+        const addresses = Array.isArray(profile.address) ? profile.address : [];
+        const address1 = addresses[0] || {};
+        const address2 = addresses[1] || {};
+
+        this.studentForm.patchValue({
+            first_name: profile.first_name || '',
+            last_name: profile.last_name || '',
+            email_id: profile.email_id || '',
+            gender: profile.gender || '',
+            dob: this.buildDateModel(profile.birthday),
+            grade: profile.grade_id && profile.grade_id !== '0' ? profile.grade_id : '',
+            studentid: profile.school_idno || '',
+            mobile: mobiles[0] || '',
+            mobile1: mobiles[1] || '',
+            mobile2: mobiles[2] || '',
+            status: profile.status ? profile.status.toString() : '',
+            registration_date: this.buildDateModel(profile.registration_date),
+            parent1first_name: profile.parent1_firstname || '',
+            parent1last_name: profile.parent1_lastname || '',
+            parent2first_name: profile.parent2_firstname || '',
+            parent2last_name: profile.parent2_lastname || '',
+            parent1email_id1: parent1Emails[0] || '',
+            parent2email_id1: parent2Emails[0] || '',
+            parent1address1: address1.address1 || '',
+            parent1address2: address1.address2 || '',
+            parent1city: address1.city || '',
+            parent1state: address1.state_id || '',
+            parent1country: address1.country_id || '',
+            parent2address1: address2.address1 || '',
+            parent2address2: address2.address2 || '',
+            parent2city: address2.city || '',
+            parent2state: address2.state_id || '',
+            parent2country: address2.country_id || ''
+        });
+
+        this.studentForm.markAsPristine();
+        this.studentForm.markAsUntouched();
+    }
+
+    private buildDateModel(dateValue: string | null | undefined): IMyDateModel | null {
+        if (!dateValue || dateValue === '0000-00-00') {
+            return null;
+        }
+        const parts = dateValue.split('-');
+        if (parts.length !== 3) {
+            return null;
+        }
+        const year = Number(parts[0]);
+        const month = Number(parts[1]) - 1;
+        const day = Number(parts[2]);
+        if (isNaN(year) || isNaN(month) || isNaN(day)) {
+            return null;
+        }
+        const jsDate = new Date(year, month, day);
+        if (isNaN(jsDate.getTime())) {
+            return null;
+        }
+        return {
+            isRange: false,
+            singleDate: {jsDate},
+            dateRange: null
+        };
+    }
+
+    private formatDateForApi(value: any): string {
+        if (!value) {
+            return '';
+        }
+        if (value?.singleDate?.jsDate instanceof Date) {
+            const formatted = this.datePipe.transform(value.singleDate.jsDate, 'yyyy-MM-dd');
+            return formatted || '';
+        }
+        if (value instanceof Date) {
+            const formatted = this.datePipe.transform(value, 'yyyy-MM-dd');
+            return formatted || '';
+        }
+        return '';
+    }
+
+    private buildAddressList(profile: any, formValue: any): any[] {
+        const addresses = Array.isArray(profile?.address) ? profile.address : [];
+        const addressTypes = ['2', '3'];
+        return [0, 1].map((index) => {
+            const existing = addresses[index] || {};
+            const isPrimary = index === 0;
+            const address1Control = isPrimary ? formValue.parent1address1 : formValue.parent2address1;
+            const address2Control = isPrimary ? formValue.parent1address2 : formValue.parent2address2;
+            const cityControl = isPrimary ? formValue.parent1city : formValue.parent2city;
+            const stateControl = isPrimary ? formValue.parent1state : formValue.parent2state;
+            const countryControl = isPrimary ? formValue.parent1country : formValue.parent2country;
+            return {
+                address1: (address1Control !== undefined && address1Control !== null && address1Control !== '') ? address1Control : (existing.address1 || ''),
+                address2: (address2Control !== undefined && address2Control !== null && address2Control !== '') ? address2Control : (existing.address2 || ''),
+                city: (cityControl !== undefined && cityControl !== null && cityControl !== '') ? cityControl : (existing.city || ''),
+                state: (stateControl !== undefined && stateControl !== null && stateControl !== '') ? stateControl : (existing.state_id || existing.state || ''),
+                country: (countryControl !== undefined && countryControl !== null && countryControl !== '') ? countryControl : (existing.country_id || existing.country || ''),
+                postal_code: existing.postal_code || '',
+                address_type: existing.address_type || addressTypes[index] || '2'
+            };
+        });
     }
 
     viewClassDetails(classData) {

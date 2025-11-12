@@ -1,0 +1,894 @@
+<div class="crm-registrations">
+  <form [formGroup]="filtersForm" (ngSubmit)="onFilterSubmit()" class="filters card mb-3">
+    <div class="card-body row g-3 align-items-end">
+      <div class="col-md-5">
+        <label class="form-label">Search</label>
+        <input class="form-control" placeholder="Student, parent, email, phone" formControlName="search" />
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Status</label>
+        <ng-select
+          [items]="statusOptions"
+          bindLabel="label"
+          bindValue="value"
+          [multiple]="true"
+          placeholder="All statuses"
+          formControlName="status">
+        </ng-select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Priority</label>
+        <select class="form-select" formControlName="priority">
+          <option *ngFor="let option of priorityOptions" [value]="option.value">{{ option.label }}</option>
+        </select>
+      </div>
+      <div class="col-md-2 text-md-end">
+        <button class="btn btn-primary w-100" type="submit" [disabled]="listLoading">
+          {{ listLoading ? 'Loading…' : 'Apply Filters' }}
+        </button>
+      </div>
+    </div>
+  </form>
+
+  <div class="list card">
+    <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-3">
+      <div>
+        <h5 class="mb-0">Registrations</h5>
+        <small class="text-muted">{{ pagination.total }} total records</small>
+      </div>
+      <div class="list-statuses">
+        <span class="status-pill" *ngFor="let option of statusOptions" [class.active]="filtersForm.value.status?.includes(option.value)">
+          {{ option.label }}
+        </span>
+      </div>
+    </div>
+    <div class="card-body p-0">
+      <div *ngIf="listLoading" class="loading-state">
+        <div class="spinner-border" role="status"></div>
+        <span class="ms-2">Loading registrations…</span>
+      </div>
+      <table class="table table-hover mb-0" *ngIf="!listLoading && registrations.length">
+        <thead>
+          <tr>
+            <th>Candidate</th>
+            <th>Submitted</th>
+            <th>Status</th>
+            <th>Docs</th>
+            <th>Courses</th>
+            <th>Priority</th>
+            <th>Owner</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            *ngFor="let registration of registrations"
+            (click)="selectRegistration(registration)"
+            [class.active]="registration.id === selectedRegistrationId">
+            <td>
+              <div class="fw-semibold">{{ registration.student_first_name }} {{ registration.student_last_name }}</div>
+              <div class="text-muted small">{{ registration.email }}</div>
+              <div class="text-muted small" *ngIf="registration.mobile">{{ registration.mobile }}</div>
+            </td>
+            <td>{{ registration.submitted_at | date:'medium' }}</td>
+            <td>
+              <span class="badge" [ngClass]="'status-' + registration.status">{{ registration.status | titlecase }}</span>
+            </td>
+            <td>{{ registration.document_count || 0 }}</td>
+            <td>{{ registration.course_count || 0 }}</td>
+            <td>{{ registration.priority ? (registration.priority | titlecase) : 'Normal' }}</td>
+            <td>{{ registration.assigned_name || '—' }}</td>
+            <td class="text-end">
+              <button class="btn btn-sm btn-outline-primary" type="button">Open</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div *ngIf="!listLoading && !registrations.length" class="empty-state">
+        <p>No registrations found. Adjust filters and try again.</p>
+      </div>
+    </div>
+    <div class="card-footer d-flex justify-content-between align-items-center" *ngIf="pagination.pages > 1">
+      <button class="btn btn-link" (click)="onPageChange(pagination.page - 1)" [disabled]="pagination.page === 1">Previous</button>
+      <div>Page {{ pagination.page }} of {{ pagination.pages }}</div>
+      <button class="btn btn-link" (click)="onPageChange(pagination.page + 1)" [disabled]="pagination.page === pagination.pages">Next</button>
+    </div>
+  </div>
+</div>
+
+<div class="workspace" *ngIf="workspaceOpen">
+  <div class="workspace__shell">
+    <div class="workspace__header">
+      <button class="btn btn-link px-0" type="button" (click)="closeWorkspace()">
+        <i class="bi bi-arrow-left me-1"></i>
+        Back to registrations
+      </button>
+      <div class="workspace__title" *ngIf="selectedRegistration">
+        <div class="workspace__name">
+          {{ selectedRegistration.student_first_name }} {{ selectedRegistration.student_last_name }}
+          <span class="badge ms-2" [ngClass]="'status-' + (selectedRegistration.status || 'pending')">
+            {{ selectedRegistration.status | titlecase }}
+          </span>
+        </div>
+        <div class="text-muted small">
+          Submitted {{ selectedRegistration.submitted_at | date:'medium' }} · {{ selectedRegistration.email }}
+        </div>
+      </div>
+      <div class="workspace__actions">
+        <button class="btn btn-outline-secondary me-2" type="button" (click)="setWorkspaceTab('timeline')">
+          <i class="bi bi-journal-text me-1"></i>
+          Timeline
+        </button>
+        <button class="btn btn-primary" type="button" (click)="promoteRegistration()" [disabled]="promoteSaving || isConverted">
+          {{ promoteSaving ? 'Converting…' : (isConverted ? 'Converted' : 'Convert to Student') }}
+        </button>
+      </div>
+    </div>
+
+    <ng-container *ngIf="!detailLoading && registrationDetail; else workspaceLoading">
+      <div class="workspace__content">
+        <aside class="workspace__column workspace__column--snapshot">
+          <div class="snapshot-card">
+            <div class="snapshot-card__header">
+              <h6>Candidate</h6>
+            </div>
+            <div class="snapshot-card__body" *ngIf="selectedRegistration">
+              <div class="snapshot-name">{{ selectedRegistration.student_first_name }} {{ selectedRegistration.student_last_name }}</div>
+              <p class="mb-2 text-muted">{{ selectedRegistration.email }}</p>
+              <div class="d-flex flex-column gap-2">
+                <a *ngIf="selectedRegistration.email" class="btn btn-sm btn-light" [href]="'mailto:' + selectedRegistration.email">
+                  <i class="bi bi-envelope me-1"></i> Email
+                </a>
+                <a *ngIf="selectedRegistration.mobile" class="btn btn-sm btn-light" [href]="'tel:' + selectedRegistration.mobile">
+                  <i class="bi bi-telephone me-1"></i> Call
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <div class="snapshot-card">
+            <div class="snapshot-card__header">
+              <h6>Status &amp; Assignment</h6>
+            </div>
+            <form [formGroup]="statusForm" (ngSubmit)="saveStatus()" class="row g-3">
+              <div class="col-12">
+                <label class="form-label">Status</label>
+                <select class="form-select" formControlName="status">
+                  <option *ngFor="let option of statusOptions" [value]="option.value">{{ option.label }}</option>
+                </select>
+              </div>
+              <div class="col-12">
+                <label class="form-label">Priority</label>
+                <select class="form-select" formControlName="priority">
+                  <option value="">Default</option>
+                  <option value="high">High</option>
+                  <option value="normal">Normal</option>
+                  <option value="low">Low</option>
+                </select>
+              </div>
+              <div class="col-12">
+                <label class="form-label">Assigned user</label>
+                <select
+                  class="form-select"
+                  formControlName="assigned_to_user_id"
+                  [disabled]="assigneesLoading">
+                  <option value="">Unassigned</option>
+                  <option *ngFor="let user of assignableUsers" [value]="user.user_id">
+                    {{ assigneeLabel(user) }}
+                  </option>
+                </select>
+                <div class="form-text text-muted" *ngIf="assigneesLoading">Loading team members…</div>
+                <div class="form-text text-danger" *ngIf="!assigneesLoading && assigneesError">{{ assigneesError }}</div>
+              </div>
+              <div class="col-12">
+                <label class="form-label">Status note</label>
+                <textarea class="form-control" rows="2" formControlName="note" placeholder="Add context for this change"></textarea>
+              </div>
+              <div class="col-12">
+                <label class="form-label">Note type</label>
+                <select class="form-select" formControlName="note_type">
+                  <option *ngFor="let type of noteTypes" [value]="type.value">{{ type.label }}</option>
+                </select>
+              </div>
+              <div class="col-12">
+                <button class="btn btn-primary w-100" type="submit" [disabled]="statusSaving">
+                  {{ statusSaving ? 'Saving…' : 'Update status' }}
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <div class="snapshot-card">
+            <div class="snapshot-card__header d-flex justify-content-between align-items-center">
+              <h6 class="mb-0">Follow-up actions</h6>
+            </div>
+            <form [formGroup]="followUpForm" (ngSubmit)="scheduleFollowUp()" class="row g-3">
+              <div class="col-12">
+                <label class="form-label">Action</label>
+                <input class="form-control" placeholder="Call parent, send docs…" formControlName="action" />
+                <div class="invalid-feedback d-block" *ngIf="followUpForm.get('action')?.invalid && followUpForm.get('action')?.touched">
+                  Describe the follow-up.
+                </div>
+              </div>
+              <div class="col-12">
+                <label class="form-label">Owner</label>
+                <select
+                  class="form-select"
+                  formControlName="owner"
+                  [disabled]="assigneesLoading">
+                  <option value="">Unassigned</option>
+                  <option *ngFor="let user of assignableUsers" [value]="user.user_id">
+                    {{ assigneeLabel(user) }}
+                  </option>
+                </select>
+              </div>
+              <div class="col-12">
+                <label class="form-label">Due date</label>
+                <input class="form-control" type="date" formControlName="due_date" />
+              </div>
+              <div class="col-12">
+                <button class="btn btn-outline-primary w-100" type="submit" [disabled]="followUpSaving">
+                  {{ followUpSaving ? 'Logging…' : 'Log follow-up' }}
+                </button>
+              </div>
+            </form>
+          </div>
+        </aside>
+
+        <section class="workspace__column workspace__column--main">
+          <nav class="workspace-tabs">
+            <button type="button" [class.active]="workspaceTab === 'overview'" (click)="setWorkspaceTab('overview')">Overview</button>
+            <button type="button" [class.active]="workspaceTab === 'timeline'" (click)="setWorkspaceTab('timeline')">Timeline</button>
+            <button type="button" [class.active]="workspaceTab === 'messages'" (click)="setWorkspaceTab('messages')">Messaging</button>
+          </nav>
+
+          <div class="workspace-panel" *ngIf="workspaceTab === 'overview'">
+            <div class="detail-card">
+              <div class="detail-card__header">
+                <div>
+                  <h6>Applicant summary</h6>
+                  <small class="text-muted">Primary contact &amp; guardians</small>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-secondary" (click)="toggleSummaryEditor()">
+                  {{ showSummaryEditor ? 'Close editor' : 'Edit' }}
+                </button>
+              </div>
+              <form *ngIf="showSummaryEditor" [formGroup]="summaryForm" (ngSubmit)="saveSummary()">
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label class="form-label">First name</label>
+                    <input class="form-control" formControlName="student_first_name" />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Last name</label>
+                    <input class="form-control" formControlName="student_last_name" />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Student email</label>
+                    <input class="form-control" formControlName="student_email" />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Student mobile</label>
+                    <input class="form-control" formControlName="student_mobile" />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Primary guardian</label>
+                    <input class="form-control" formControlName="guardian1_name" />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Primary email</label>
+                    <input class="form-control" formControlName="guardian1_email" />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Primary phone</label>
+                    <input class="form-control" formControlName="guardian1_phone" />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Secondary guardian</label>
+                    <input class="form-control" formControlName="guardian2_name" />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Secondary email</label>
+                    <input class="form-control" formControlName="guardian2_email" />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Secondary phone</label>
+                    <input class="form-control" formControlName="guardian2_phone" />
+                  </div>
+                </div>
+                <div class="text-end gap-2 mt-3">
+                  <button type="button" class="btn btn-link" (click)="cancelSummaryEdit()">Cancel</button>
+                  <button type="submit" class="btn btn-primary" [disabled]="summarySaving">
+                    {{ summarySaving ? 'Saving…' : 'Save changes' }}
+                  </button>
+                </div>
+              </form>
+              <div class="detail-card__body" *ngIf="!showSummaryEditor && registrationDetail">
+                <dl>
+                  <div>
+                    <dt>Student email</dt>
+                    <dd>{{ registrationDetail.registration.email || '—' }}</dd>
+                  </div>
+                  <div>
+                    <dt>Student mobile</dt>
+                    <dd>{{ registrationDetail.registration.mobile || '—' }}</dd>
+                  </div>
+                  <div>
+                    <dt>Primary guardian</dt>
+                    <dd>
+                      {{ registrationDetail.registration.guardian1_name || '—' }}
+                      <div class="text-muted small" *ngIf="registrationDetail.registration.guardian1_email">{{ registrationDetail.registration.guardian1_email }}</div>
+                      <div class="text-muted small" *ngIf="registrationDetail.registration.guardian1_phone">{{ registrationDetail.registration.guardian1_phone }}</div>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Secondary guardian</dt>
+                    <dd>
+                      {{ registrationDetail.registration.guardian2_name || '—' }}
+                      <div class="text-muted small" *ngIf="registrationDetail.registration.guardian2_email">{{ registrationDetail.registration.guardian2_email }}</div>
+                      <div class="text-muted small" *ngIf="registrationDetail.registration.guardian2_phone">{{ registrationDetail.registration.guardian2_phone }}</div>
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+            </div>
+
+            <div class="detail-card">
+              <div class="detail-card__header">
+                <div>
+                  <h6>Student profile</h6>
+                  <small class="text-muted">Demographics &amp; payment</small>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-secondary" (click)="toggleStudentEditor()">
+                  {{ showStudentEditor ? 'Close editor' : 'Edit' }}
+                </button>
+              </div>
+              <form *ngIf="showStudentEditor" [formGroup]="studentDetailsForm" (ngSubmit)="saveStudentDetails()">
+                <div class="row g-3">
+                  <div class="col-md-4">
+                    <label class="form-label">Date of birth</label>
+                    <input class="form-control" type="date" formControlName="date_of_birth" />
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Student mobile</label>
+                    <input class="form-control" formControlName="student_mobile" />
+                  </div>
+                  <div class="col-md-4 d-flex align-items-end">
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" id="studentIsMinor" formControlName="is_minor" />
+                      <label class="form-check-label" for="studentIsMinor">Minor</label>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Address line 1</label>
+                    <input class="form-control" formControlName="address_line1" />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Address line 2</label>
+                    <input class="form-control" formControlName="address_line2" />
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">City</label>
+                    <input class="form-control" formControlName="city" />
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">State</label>
+                    <input class="form-control" formControlName="state" />
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Postal code</label>
+                    <input class="form-control" formControlName="postal_code" />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Country</label>
+                    <input class="form-control" formControlName="country" />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Schedule preference</label>
+                    <input class="form-control" formControlName="schedule_preference" />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Payment method</label>
+                    <select class="form-select" formControlName="payment_method">
+                      <option *ngFor="let option of paymentMethodOptions" [value]="option.value">
+                        {{ option.label }}
+                      </option>
+                    </select>
+                    <div class="invalid-feedback d-block" *ngIf="studentDetailsForm.get('payment_method')?.hasError('required') && studentDetailsForm.get('payment_method')?.touched">
+                      Payment method is required.
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Payment reference</label>
+                    <input class="form-control" formControlName="payment_reference" />
+                  </div>
+                  <div class="col-12">
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" id="autopayAuthorized" formControlName="autopay_authorized" />
+                      <label class="form-check-label" for="autopayAuthorized">Autopay authorized</label>
+                    </div>
+                  </div>
+                </div>
+                <div class="text-end gap-2 mt-3">
+                  <button type="button" class="btn btn-link" (click)="cancelStudentEdit()">Cancel</button>
+                  <button type="submit" class="btn btn-primary" [disabled]="studentSaving">
+                    {{ studentSaving ? 'Saving…' : 'Save changes' }}
+                  </button>
+                </div>
+              </form>
+              <div class="detail-card__body" *ngIf="!showStudentEditor && registrationDetail">
+                <dl>
+                  <div>
+                    <dt>Date of birth</dt>
+                    <dd>
+                      {{
+                        registrationDetail.registration.date_of_birth
+                          ? (registrationDetail.registration.date_of_birth | date:'MM/dd/yyyy')
+                          : '—'
+                      }}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Minor</dt>
+                    <dd>{{ isTruthy(registrationDetail.registration.is_minor) ? 'Yes' : 'No' }}</dd>
+                  </div>
+                  <div>
+                    <dt>Address</dt>
+                    <dd>
+                      <div *ngIf="registrationDetail.registration.address_line1">{{ registrationDetail.registration.address_line1 }}</div>
+                      <div *ngIf="registrationDetail.registration.address_line2">{{ registrationDetail.registration.address_line2 }}</div>
+                      <div class="text-muted small" *ngIf="registrationDetail.registration.city || registrationDetail.registration.state">
+                        {{ registrationDetail.registration.city }} {{ registrationDetail.registration.state }} {{ registrationDetail.registration.postal_code }}
+                      </div>
+                      <div *ngIf="registrationDetail.registration.country">{{ registrationDetail.registration.country }}</div>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Schedule preference</dt>
+                    <dd>{{ registrationDetail.registration.schedule_preference || '—' }}</dd>
+                  </div>
+                  <div>
+                    <dt>Payment</dt>
+                    <dd>
+                      Method: {{ registrationDetail.registration.payment_method || 'Pending' }}<br />
+                      Reference: {{ registrationDetail.registration.payment_reference || '—' }}<br />
+                      Autopay: {{ isTruthy(registrationDetail.registration.autopay_authorized) ? 'Authorized' : 'Not authorized' }}
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+            </div>
+
+            <div class="detail-card">
+              <div class="detail-card__header">
+                <div>
+                  <h6>Guardian details</h6>
+                  <small class="text-muted">Updates sync back to CRM</small>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-secondary" (click)="toggleGuardianEditor()">
+                  {{ showGuardianEditor ? 'Close editor' : 'Edit' }}
+                </button>
+              </div>
+              <form *ngIf="showGuardianEditor" [formGroup]="guardianDetailsForm" (ngSubmit)="saveGuardianDetails()">
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label class="form-label">Primary guardian</label>
+                    <input class="form-control" formControlName="guardian1_name" />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Primary email</label>
+                    <input class="form-control" type="email" formControlName="guardian1_email" />
+                    <div class="invalid-feedback d-block" *ngIf="guardianDetailsForm.get('guardian1_email')?.hasError('email') && guardianDetailsForm.get('guardian1_email')?.touched">
+                      Enter a valid email address.
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Primary phone</label>
+                    <input class="form-control" formControlName="guardian1_phone" />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Secondary guardian</label>
+                    <input class="form-control" formControlName="guardian2_name" />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Secondary email</label>
+                    <input class="form-control" type="email" formControlName="guardian2_email" />
+                    <div class="invalid-feedback d-block" *ngIf="guardianDetailsForm.get('guardian2_email')?.hasError('email') && guardianDetailsForm.get('guardian2_email')?.touched">
+                      Enter a valid email address.
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Secondary phone</label>
+                    <input class="form-control" formControlName="guardian2_phone" />
+                  </div>
+                </div>
+                <div class="text-end gap-2 mt-3">
+                  <button type="button" class="btn btn-link" (click)="cancelGuardianEdit()">Cancel</button>
+                  <button type="submit" class="btn btn-primary" [disabled]="guardiansSaving">
+                    {{ guardiansSaving ? 'Saving…' : 'Save changes' }}
+                  </button>
+                </div>
+              </form>
+              <div class="detail-card__body" *ngIf="!showGuardianEditor">
+                <dl>
+                  <div>
+                    <dt>Primary guardian</dt>
+                    <dd>
+                      {{ registrationDetail.registration.guardian1_name || '—' }}
+                      <div class="text-muted small" *ngIf="registrationDetail.registration.guardian1_email">{{ registrationDetail.registration.guardian1_email }}</div>
+                      <div class="text-muted small" *ngIf="registrationDetail.registration.guardian1_phone">{{ registrationDetail.registration.guardian1_phone }}</div>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Secondary guardian</dt>
+                    <dd>
+                      {{ registrationDetail.registration.guardian2_name || '—' }}
+                      <div class="text-muted small" *ngIf="registrationDetail.registration.guardian2_email">{{ registrationDetail.registration.guardian2_email }}</div>
+                      <div class="text-muted small" *ngIf="registrationDetail.registration.guardian2_phone">{{ registrationDetail.registration.guardian2_phone }}</div>
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+            </div>
+
+            <div class="detail-card" *ngIf="registrationDetail.courses?.length">
+              <div class="detail-card__header">
+                <div>
+                  <h6>Course decisions</h6>
+                  <small class="text-muted">Confirm placement, schedule, and tuition before conversion</small>
+                </div>
+              </div>
+              <ng-container *ngIf="courseDecisions.controls.length; else courseSummaryList">
+                <form [formGroup]="conversionForm" class="conversion-form">
+                  <div formArrayName="course_decisions" class="conversion-form__course-list">
+                    <div
+                      class="course-decision"
+                      *ngFor="let decisionGroup of courseDecisions.controls; let i = index"
+                      [formGroupName]="i">
+                      <div class="course-decision__header">
+                        <div>
+                          <div class="course-decision__title">
+                            {{ decisionGroup.get('course_label')?.value }}
+                          </div>
+                          <div class="course-decision__meta text-muted small" *ngIf="decisionGroup.get('available_schedules')?.value?.length">
+                            {{ decisionGroup.get('available_schedules')?.value?.length }} schedule option{{ decisionGroup.get('available_schedules')?.value?.length > 1 ? 's' : '' }}
+                          </div>
+                          <div class="course-decision__meta text-muted small" *ngIf="decisionGroup.get('approved_schedule_title')?.value">
+                            Requested: {{ decisionGroup.get('approved_schedule_title')?.value }}
+                          </div>
+                        </div>
+                        <span class="badge bg-light text-dark">
+                          {{ decisionGroup.get('decision_status')?.value | titlecase }}
+                        </span>
+                      </div>
+                      <div class="row g-3">
+                        <div class="col-md-4">
+                          <label class="form-label">Decision</label>
+                          <select class="form-select" formControlName="decision_status" (change)="onDecisionChanged(i)">
+                            <option *ngFor="let option of decisionOptions" [value]="option.value">
+                              {{ option.label }}
+                            </option>
+                          </select>
+                        </div>
+                        <div class="col-md-4" *ngIf="decisionGroup.get('available_schedules')?.value?.length">
+                          <label class="form-label">Schedule</label>
+                          <select
+                            class="form-select"
+                            formControlName="approved_schedule_id"
+                            (change)="onScheduleSelected(i)"
+                            [disabled]="decisionGroup.get('decision_status')?.value !== 'approved'">
+                            <option value="">Select schedule</option>
+                            <option
+                              *ngFor="let schedule of decisionGroup.get('available_schedules')?.value"
+                              [value]="schedule.schedule_id">
+                              {{ schedule.schedule_title || ('Schedule #' + schedule.schedule_id) }}
+                            </option>
+                          </select>
+                          <div class="invalid-feedback d-block" *ngIf="decisionGroup.get('approved_schedule_id')?.hasError('required') && decisionGroup.get('approved_schedule_id')?.touched">
+                            Choose a schedule before approving.
+                          </div>
+                          <div class="form-text" *ngIf="selectedSchedule(decisionGroup) as selected">
+                            {{ selected.course_start_date | date:'MMM d, y' }}
+                            –
+                            {{ selected.course_end_date | date:'MMM d, y' }}
+                          </div>
+                        </div>
+                        <div class="col-md-4">
+                          <label class="form-label">Approved fee</label>
+                          <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input
+                              class="form-control"
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              formControlName="approved_fee_amount"
+                              [disabled]="decisionGroup.get('decision_status')?.value !== 'approved'">
+                          </div>
+                          <div class="invalid-feedback d-block" *ngIf="decisionGroup.get('approved_fee_amount')?.invalid && decisionGroup.get('approved_fee_amount')?.touched">
+                            Enter a valid amount.
+                          </div>
+                        </div>
+                        <div class="col-12">
+                          <label class="form-label">Decision notes</label>
+                          <textarea class="form-control" rows="2" formControlName="decision_notes" placeholder="Internal notes about this course"></textarea>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row g-3 mt-2">
+                    <div class="col-md-6 d-flex align-items-center">
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="sendWelcomeEmail" formControlName="send_welcome_email" />
+                        <label class="form-check-label" for="sendWelcomeEmail">Send welcome email with class details</label>
+                      </div>
+                    </div>
+                    <div class="col-md-6 d-flex align-items-center justify-content-md-end text-muted small">
+                      <i class="bi bi-info-circle me-1"></i> Login instructions are emailed after conversion when messaging is configured.
+                    </div>
+                    <div class="col-12">
+                      <label class="form-label">Conversion notes (internal)</label>
+                      <textarea class="form-control" rows="2" formControlName="notes" placeholder="Optional notes about this conversion"></textarea>
+                    </div>
+                  </div>
+                </form>
+              </ng-container>
+              <ng-template #courseSummaryList>
+                <ul class="list-group list-group-flush">
+                  <li class="list-group-item" *ngFor="let course of registrationDetail.courses">
+                    <div class="fw-semibold">{{ course.course_name || ('Course #' + course.course_id) }}</div>
+                    <div class="text-muted small" *ngIf="course.schedule_title || course.schedule_id">
+                      Schedule: {{ course.schedule_title || ('#' + course.schedule_id) }}
+                    </div>
+                    <div class="text-muted small" *ngIf="course.fee_amount">
+                      Fee: {{ course.fee_amount | currency:'USD':'symbol':'1.0-2' }}
+                    </div>
+                  </li>
+                </ul>
+              </ng-template>
+            </div>
+
+            <div class="detail-card">
+              <div class="detail-card__header">
+                <div>
+                  <h6>Documents</h6>
+                  <small class="text-muted" *ngIf="documentReviewSummary.total">
+                    {{ documentReviewSummary.meta || documentReviewSummary.description }}
+                  </small>
+                </div>
+              </div>
+              <div *ngIf="documentWorkflows.length; else noDocs" class="document-workflows">
+                <div class="document-workflow" *ngFor="let doc of documentWorkflows">
+                  <div class="document-workflow__header">
+                    <div class="document-workflow__info">
+                      <div class="fw-semibold">
+                        <a
+                          *ngIf="doc.document?.storage_path; else docName"
+                          [href]="documentUrl(doc.document.storage_path)"
+                          target="_blank"
+                          rel="noopener"
+                        >
+                          {{ doc.document?.original_name || 'Document' }}
+                        </a>
+                        <ng-template #docName>
+                          {{ doc.document?.original_name || 'Document' }}
+                        </ng-template>
+                      </div>
+                      <div class="text-muted small" *ngIf="doc.steps[0]?.meta">
+                        {{ doc.steps[0]?.meta }}
+                      </div>
+                      <div class="text-muted small" *ngIf="doc.document?.uploaded_at || doc.document?.created_at">
+                        Uploaded {{ doc.document?.uploaded_at || doc.document?.created_at | date:'medium' }}
+                      </div>
+                    </div>
+                    <span class="badge" [ngClass]="documentStatusClass(doc.status)">{{ doc.status | titlecase }}</span>
+                  </div>
+                  <div class="document-workflow__steps">
+                    <div
+                      *ngFor="let step of doc.steps"
+                      [ngClass]="documentStepClasses(step, doc.status)">
+                      <div class="doc-step__marker">
+                        <i class="bi" [ngClass]="documentStepIcon(step, doc.status)"></i>
+                      </div>
+                      <div>
+                        <div class="doc-step__label">{{ step.label }}</div>
+                        <div class="doc-step__desc">{{ step.description }}</div>
+                        <div class="doc-step__meta" *ngIf="step.meta">{{ step.meta }}</div>
+                      </div>
+                    </div>
+                  </div>
+                  <ng-container *ngIf="documentId(doc) as docId">
+                    <form
+                      *ngIf="documentReviewForm(docId) as reviewForm"
+                      [formGroup]="reviewForm"
+                      class="document-review-form">
+                      <label class="form-label form-label-sm text-muted">Decision notes</label>
+                      <textarea
+                        class="form-control form-control-sm"
+                        rows="2"
+                        maxlength="255"
+                        formControlName="review_notes"
+                        placeholder="Add an optional note for this document"></textarea>
+                      <div class="document-review-buttons">
+                        <button
+                          type="button"
+                          class="btn btn-sm btn-success"
+                          (click)="submitDocumentReview(doc, 'approved')"
+                          [disabled]="documentReviewSaving[docId]">
+                          <span *ngIf="documentReviewSaving[docId]" class="spinner-border spinner-border-sm me-1"></span>
+                          Approve
+                        </button>
+                        <button
+                          type="button"
+                          class="btn btn-sm btn-outline-danger"
+                          (click)="submitDocumentReview(doc, 'rejected')"
+                          [disabled]="documentReviewSaving[docId]">
+                          <span *ngIf="documentReviewSaving[docId]" class="spinner-border spinner-border-sm me-1"></span>
+                          Reject
+                        </button>
+                        <button
+                          type="button"
+                          class="btn btn-sm btn-outline-secondary"
+                          (click)="submitDocumentReview(doc, 'pending')"
+                          [disabled]="documentReviewSaving[docId] || doc.status === 'pending'">
+                          <span *ngIf="documentReviewSaving[docId]" class="spinner-border spinner-border-sm me-1"></span>
+                          Reset to Pending
+                        </button>
+                      </div>
+                    </form>
+                  </ng-container>
+                </div>
+              </div>
+              <ng-template #noDocs>
+                <div class="text-muted">No documents uploaded yet.</div>
+              </ng-template>
+            </div>
+          </div>
+
+          <div class="workspace-panel" *ngIf="workspaceTab === 'timeline'">
+            <div class="detail-card">
+              <div class="detail-card__header">
+                <h6>New note</h6>
+              </div>
+              <form [formGroup]="noteForm" (ngSubmit)="addNote()" class="row g-3 align-items-end">
+                <div class="col-md-8">
+                  <label class="form-label">Note</label>
+                  <textarea class="form-control" rows="2" formControlName="message" placeholder="Record an update"></textarea>
+                </div>
+                <div class="col-md-2">
+                  <label class="form-label">Type</label>
+                  <select class="form-select" formControlName="note_type">
+                    <option *ngFor="let type of noteTypes" [value]="type.value">{{ type.label }}</option>
+                  </select>
+                </div>
+                <div class="col-md-2 text-end">
+                  <button class="btn btn-outline-primary w-100" type="submit" [disabled]="noteSaving">
+                    {{ noteSaving ? 'Adding…' : 'Add note' }}
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <div class="detail-card">
+              <div class="detail-card__header">
+                <h6>Activity timeline</h6>
+              </div>
+              <div class="timeline-container" *ngIf="timelineEntries.length; else noTimeline">
+                <div class="timeline">
+                  <div class="timeline__item" *ngFor="let item of timelineEntries">
+                    <div class="timeline__badge">{{ item.type | titlecase }}</div>
+                    <div class="timeline__content">
+                      <div class="timeline__timestamp">{{ item.created_at | date:'medium' }}</div>
+                      <div class="timeline__message">{{ item.message }}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <ng-template #noTimeline>
+                <div class="text-muted">No activity recorded yet.</div>
+              </ng-template>
+            </div>
+          </div>
+
+          <div class="workspace-panel" *ngIf="workspaceTab === 'messages'">
+            <div class="detail-card">
+              <div class="detail-card__header">
+                <h6>Compose message</h6>
+                <button class="btn btn-sm btn-outline-secondary" type="button" (click)="toggleMessageForm()">
+                  {{ showMessageForm ? 'Hide composer' : 'New message' }}
+                </button>
+              </div>
+              <form *ngIf="showMessageForm" [formGroup]="communicationForm" (ngSubmit)="sendMessage()" class="row g-3">
+                <div class="col-md-3">
+                  <label class="form-label">Channel</label>
+                  <select class="form-select" formControlName="channel">
+                    <option value="email">Email</option>
+                    <option value="sms">SMS</option>
+                  </select>
+                </div>
+                <div class="col-md-9" *ngIf="communicationForm.value.channel === 'email'">
+                  <label class="form-label">Subject</label>
+                  <input class="form-control" formControlName="subject" />
+                </div>
+                <div class="col-12">
+                  <label class="form-label">Message</label>
+                  <textarea class="form-control" rows="4" formControlName="message"></textarea>
+                </div>
+                <div class="col-12">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="sendCopy" formControlName="send_copy" />
+                    <label class="form-check-label" for="sendCopy">Send me a copy</label>
+                  </div>
+                </div>
+                <div class="col-12 text-end">
+                  <button class="btn btn-primary" type="submit" [disabled]="messageSending">
+                    {{ messageSending ? 'Sending…' : 'Send message' }}
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <div class="detail-card">
+              <div class="detail-card__header">
+                <h6>Message history</h6>
+              </div>
+              <div *ngIf="registrationDetail.messages?.length; else noMessages" class="message-thread">
+                <div class="message-thread__item" *ngFor="let msg of registrationDetail.messages">
+                  <div class="message-thread__meta">
+                    <span class="badge" [ngClass]="'channel-' + (msg.channel || 'email')">{{ (msg.channel || 'email') | uppercase }}</span>
+                    <span>{{ msg.sent_at | date:'medium' }}</span>
+                  </div>
+                  <div class="message-thread__body">
+                    <div class="fw-semibold">To: {{ msg.recipient }}</div>
+                    <div>{{ msg.message }}</div>
+                  </div>
+                </div>
+              </div>
+              <ng-template #noMessages>
+                <div class="text-muted">No outbound messages yet.</div>
+              </ng-template>
+            </div>
+          </div>
+        </section>
+
+        <aside class="workspace__column workspace__column--workflow">
+          <div class="workflow-card">
+            <div class="workflow-card__header">
+              <div>
+                <h6>Conversion checklist</h6>
+                <small class="text-muted">{{ workflowProgress }}% complete</small>
+              </div>
+              <div class="workflow-card__progress">
+                <div class="workflow-card__progress-bar" [style.width.%]="workflowProgress"></div>
+              </div>
+            </div>
+            <div class="workflow-step" *ngFor="let step of workflowSteps" [class.complete]="step.complete">
+              <div class="workflow-step__marker">
+                <i class="bi" [ngClass]="step.complete ? 'bi-check-circle-fill' : 'bi-circle'"></i>
+              </div>
+              <div>
+                <div class="workflow-step__label">{{ step.label }}</div>
+                <div class="workflow-step__desc">{{ step.description }}</div>
+                <div class="workflow-step__meta" *ngIf="step.meta">{{ step.meta }}</div>
+              </div>
+            </div>
+          </div>
+          <div class="workflow-card">
+            <h6>Next steps</h6>
+            <p class="text-muted small">Complete the checklist and capture follow-ups before converting.</p>
+            <button class="btn btn-primary w-100" type="button" (click)="promoteRegistration()" [disabled]="promoteSaving || isConverted">
+              {{ promoteSaving ? 'Converting…' : (isConverted ? 'Converted' : 'Convert to student') }}
+            </button>
+          </div>
+        </aside>
+      </div>
+    </ng-container>
+
+    <ng-template #workspaceLoading>
+      <div class="workspace__loading">
+        <div class="spinner-border" role="status"></div>
+        <span class="ms-2">Loading registration…</span>
+      </div>
+    </ng-template>
+  </div>
+</div>

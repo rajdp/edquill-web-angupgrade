@@ -61,19 +61,19 @@ export class ServerHttpInterceptor implements HttpInterceptor {
                     val.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
                     authReq = req.clone({
                         url: requestUrl,
-                        setHeaders: {'Content-Type': 'application/json', 'accesstoken': authToken},
+                        setHeaders: {'Content-Type': 'application/json', 'Accesstoken': authToken},
                         body: JSON.stringify(val)
                     });
                 } else {
                     authReq = req.clone({
                         url: requestUrl,
-                        setHeaders: {'Content-Type': 'application/json', 'accesstoken': authToken},
+                        setHeaders: {'Content-Type': 'application/json', 'Accesstoken': authToken},
                     });
                 }
             } else {
                 authReq = req.clone({
                     url: requestUrl,
-                    setHeaders: authToken ? {'accesstoken': authToken} : {}
+                    setHeaders: authToken ? {'Accesstoken': authToken} : {}
                 });
             }
 
@@ -89,13 +89,33 @@ export class ServerHttpInterceptor implements HttpInterceptor {
                                     this.commondata.showLoader(false);
                                 }
                             }
-                            if (eve.status == 401) {
-                                this.auth.logout();
+                            if (eve.status == 401 && this.auth.loggedIn()) {
+                                this.auth.logout(true, 'Authentication error. Please log in again.');
                             }
                         },
                         error => {
                             if (error.status == 401) {
-                                this.auth.logout();
+                                console.error('🔴 401 Error', error);
+                                console.log('Request URL:', error.url);
+                                console.log('Error details:', error.error);
+
+                                if (this.auth.loggedIn()) {
+                                    const errorMessage = typeof error.error === 'object' && error.error
+                                        ? (error.error.ErrorObject || error.error.message || error.message)
+                                        : error.message;
+                                    const normalized = (errorMessage || '').toLowerCase();
+                                    const tokenExpired = normalized.includes('token') && normalized.includes('expire');
+                                    const logoutMessage = tokenExpired
+                                        ? 'Your session has expired. Please log in again.'
+                                        : 'Authentication error. Please log in again.';
+                                    this.auth.logout(true, logoutMessage);
+                                }
+                            }
+                            if (error.status == 400) {
+                                console.error('🟡 400 Bad Request Error', error);
+                                console.log('Request URL:', error.url);
+                                console.log('Request payload:', error.error);
+                                console.log('Full error:', error);
                             }
                             if (error instanceof HttpErrorResponse) {
                                 if (error.error instanceof ErrorEvent) {

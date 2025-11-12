@@ -5174,7 +5174,7 @@ export class AnsweringComponent {
             if (this.getData?.is_test == '1') {
                 this.contentName = this.getData?.content_name + ' - ' + this.getData?.subject + ' - ' + this.getData?.module_name;
                 const contentType = this.auth.getSessionData('ContentType');
-                this.contentType = contentType == 'Assessments' ? 'Assessment' : 'Assignment';
+                this.contentType = contentType == 'Quiz' ? 'Assessment' : 'Assignment';
             }
             else {
                 this.contentName = this.questionData.name;

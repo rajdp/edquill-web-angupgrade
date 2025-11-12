@@ -5,6 +5,7 @@ import { CrmGuardiansComponent } from './guardians/guardians.component';
 import { CrmFeesComponent } from './fees/fees.component';
 import { CrmNotificationsComponent } from './notifications/notifications.component';
 import { CrmReportCardsComponent } from './report-cards/report-cards.component';
+import { CrmRegistrationsComponent } from './registrations/registrations.component';
 
 const routes: Routes = [
   {
@@ -14,8 +15,13 @@ const routes: Routes = [
     children: [
       {
         path: '',
-        redirectTo: 'guardians',
+        redirectTo: 'registrations',
         pathMatch: 'full'
+      },
+      {
+        path: 'registrations',
+        component: CrmRegistrationsComponent,
+        data: { breadcrumb: 'Registrations' }
       },
       {
         path: 'guardians',

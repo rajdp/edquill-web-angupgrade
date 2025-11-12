@@ -15,6 +15,8 @@ import {CourseCategoryAddComponent} from './category/course-category-add/course-
 import {CourseFaqAddComponent} from './faq/course-faq-add/course-faq-add.component';
 import {PipesModule} from '../../shared/pipes/pipes.module';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { CourseWizardComponent } from './course-wizard/course-wizard.component';
+
 @NgModule({
     declarations: [
         CategoryComponent,
@@ -24,6 +26,7 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
         CourseCategoryAddComponent,
         CourseDetailsAddComponent,
         CourseFaqAddComponent,
+        CourseWizardComponent,
     ],
     imports: [
         CommonModule,

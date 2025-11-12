@@ -274,10 +274,10 @@
                                             <span class="meta-label">Subject</span>
                                             <span class="meta-value">{{ list.subject_name }}</span>
                                         </span>
-                                        <span class="meta-item" *ngIf="list.created_by">
+                                        <span class="meta-item" *ngIf="list.creatorDisplayName || list.created_by_name || list.created_by">
                                             <i class="fa fa-user" aria-hidden="true"></i>
                                             <span class="meta-label">Created</span>
-                                            <span class="meta-value">{{ list.created_by }}</span>
+                                            <span class="meta-value">{{ list.creatorDisplayName || list.created_by_name || list.created_by }}</span>
                                         </span>
                                         <span class="meta-item" *ngIf="list.created_date">
                                             <i class="fa fa-calendar" aria-hidden="true"></i>
@@ -349,9 +349,9 @@
                         </div>
                         <section class="content-card__details" *ngIf="list.showDetails" (click)="$event.stopPropagation()">
                             <dl class="details-list">
-                                <ng-container *ngIf="list.created_by">
+                                <ng-container *ngIf="list.creatorDisplayName || list.created_by_name || list.created_by">
                                     <dt>Created by</dt>
-                                    <dd>{{ list.created_by }}</dd>
+                                    <dd>{{ list.creatorDisplayName || list.created_by_name || list.created_by }}</dd>
                                 </ng-container>
                                 <ng-container *ngIf="list.created_date">
                                     <dt>Created on</dt>

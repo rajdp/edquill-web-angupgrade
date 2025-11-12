@@ -11,7 +11,7 @@
             <div class="card-body p-5 d-flex flex-column justify-content-between">
               <div>
                 <span class="badge rounded-pill text-bg-light mb-3">Welcome back</span>
-                <h2 class="fw-bold text-neutral-900">Keep your institution moving forward.</h2>
+                <h3 class="fw-bold text-neutral-900">Keep your institution moving forward.</h3>
                 <p class="text-neutral-600 mb-4">
                   Access the EdQuill enterprise platform to manage classes, content, assessments and communication at scale.
                 </p>
@@ -44,21 +44,7 @@
               <p class="text-neutral-600 mb-4">Access your {{ siteName }} workspace with your enterprise credentials.</p>
 
               <div class="d-grid gap-3 mb-4">
-                <button id="googleSignInButton" class="btn btn-outline-primary btn-lg w-100" type="button">
-                  <div id="g_id_onload"
-                       data-client_id="854159816646-f2oidr960elk0akcu27dddb9dveoj9r3.apps.googleusercontent.com"
-                       data-context="use"
-                       data-ux_mode="popup"
-                       [attr.data-login_uri]="backEndURLSignIn"
-                       data-auto_prompt="false"></div>
-                  <div class="g_id_signin"
-                       data-type="standard"
-                       data-shape="rectangular"
-                       data-theme="outline"
-                       data-text="signin_with"
-                       data-size="large"
-                       data-logo_alignment="left"></div>
-                </button>
+                <div id="googleSignInButton" class="google-signin-container"></div>
               </div>
 
               <div class="divider text-center text-neutral-500 my-4">
@@ -134,26 +120,11 @@
         <div class="col-12 col-lg-5">
           <div class="card shadow-xl border-0">
             <div class="card-body p-4 p-md-5">
-              <h2 class="h3 fw-bold text-neutral-900 mb-3">Student registration</h2>
+              <h1 class="h3 fw-bold text-neutral-900 mb-3">Student registration</h1>
               <p class="text-neutral-600 mb-4">Connect with your learning workspace using your class code or Google account.</p>
 
               <div class="d-grid gap-3 mb-4">
-                <button id="googleRegisterButton" class="btn btn-outline-primary btn-lg w-100" type="button">
-                  <div id="g_id_onload"
-                       data-client_id="854159816646-f2oidr960elk0akcu27dddb9dveoj9r3.apps.googleusercontent.com"
-                       data-context="use"
-                       data-ux_mode="popup"
-                       [attr.data-login_uri]="backEndURLRegisterSignIn"
-                       data-auto_prompt="false"></div>
-
-                  <div class="g_id_signin"
-                       data-type="standard"
-                       data-shape="rectangular"
-                       data-theme="outline"
-                       data-text="signin_with"
-                       data-size="large"
-                       data-logo_alignment="left"></div>
-                </button>
+                <div id="googleRegisterButton" class="google-signin-container"></div>
               </div>
 
               <div class="divider text-center text-neutral-500 my-4">
@@ -241,7 +212,7 @@
         <section class="container-fluid" *ngIf="type == 'student'">
             <div class="row justify-content-center">
                 <div class="col-12 col-md-5 loginWith mt-2">
-                    <h2>Student</h2>
+                    <h1>Student</h1>
                     <div class="card">
                         <div class="card-body">
                             <h3 class="mb-3">Login</h3>

@@ -1,8 +1,25 @@
 <section>
   <div class="container-fluid card px-0">
-    <div class="card-header my-2" style="border-bottom: 1px solid #e7e7e7; padding: 24px">
-      <h5 class="text-capitalize mb-2"> {{type == 'add' ? 'Add' : 'Update'}} Course Details</h5>
-      <label class="mb-0">All fields marked with <span class="text-danger">*</span>  are required</label>
+    <div class="card-header my-2" style="border-bottom: 1px solid #e7e7e7; padding: 24px" 
+         [class.bg-info]="isWizardMode" [class.text-white]="isWizardMode">
+      <div class="row align-items-center">
+        <div class="col">
+          <div *ngIf="isWizardMode" class="badge badge-warning mb-2">
+            <i class="fa fa-magic mr-1"></i> Wizard Mode
+          </div>
+          <h5 class="text-capitalize mb-2" [class.text-white]="isWizardMode">
+            <i class="fa fa-book mr-2"></i> {{type == 'add' ? 'Add' : 'Update'}} Course Details
+          </h5>
+          <label class="mb-0" [class.text-white-50]="isWizardMode">
+            All fields marked with <span [class.text-danger]="!isWizardMode" [class.text-warning]="isWizardMode">*</span> are required
+          </label>
+        </div>
+        <div class="col-auto" *ngIf="isWizardMode">
+          <button class="btn btn-outline-light btn-sm" (click)="returnToWizard()">
+            <i class="fa fa-magic mr-1"></i> Back to Wizard
+          </button>
+        </div>
+      </div>
     </div>
     <div class="card-body">
       <form [formGroup]="CourseDetails">
@@ -140,6 +157,17 @@
                 <app-tiny-mice [height]="300" [hideMatEditor]="true" [editorPatchValue]="type == 'add' ? false : emittedEditorValue?.other_details"
                                (emitEditorValue)="editorValue($event, 'other_details')"></app-tiny-mice>
               </div>
+            </div>
+          </div>
+          <div class="form-group row mt-2">
+            <label  class="col-sm-2 col-form-label"><span style="visibility: hidden;" class="mr-1">*</span>Documentation Requirements</label>
+            <div class="col-sm-10">
+              <textarea class="form-control" rows="4" formControlName="documentation_requirements" 
+                        placeholder="Enter documentation requirements for student self-registration (e.g., Birth Certificate, Previous School Report Card, Medical Records, etc.)"></textarea>
+              <small class="form-text text-muted">
+                <i class="fa fa-info-circle mr-1"></i>
+                These requirements will be displayed to students during self-registration. List each required document on a new line or separated by commas.
+              </small>
             </div>
           </div>
           <div class="form-group row mt-2">
@@ -419,9 +447,24 @@
         </div>
       </form>
     </div>
-    <div class="card-footer" *ngIf="selectedToogleStatus != '-'">
-      <button class="button float-right btn btn-primary mb-2" (click)="addOrEditCourseDetails()">{{type == 'add' ? 'Add' : 'Update'}} Course</button>
-      <a class="float-right btn cancel mb-2 mr-2" routerLink="/course/category/list">Close</a>
+    <div class="card-footer bg-light" *ngIf="selectedToogleStatus != '-'">
+      <div class="row">
+        <div class="col">
+          <button *ngIf="isWizardMode" class="btn btn-outline-info" (click)="returnToWizard()">
+            <i class="fa fa-magic mr-1"></i> Return to Wizard
+          </button>
+          <a *ngIf="!isWizardMode" class="btn btn-outline-secondary" routerLink="/course/details/list">
+            <i class="fa fa-times mr-1"></i> Cancel
+          </a>
+        </div>
+        <div class="col text-right">
+          <button class="btn btn-primary px-4" (click)="addOrEditCourseDetails()">
+            <i class="fa fa-{{type == 'add' ? 'plus' : 'save'}} mr-2"></i>
+            {{type == 'add' ? 'Create' : 'Update'}} Course
+            <span *ngIf="isWizardMode"> & Continue</span>
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </section>

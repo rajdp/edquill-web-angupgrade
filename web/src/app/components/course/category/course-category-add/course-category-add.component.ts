@@ -26,6 +26,7 @@ export class CourseCategoryAddComponent implements OnInit, OnDestroy {
     public errorMessage = '';
     public maximumCount = 100;
     public description: any = '';
+    public isWizardMode = false;
     @ViewChild('myInput') myInputVariable: ElementRef<any>;
 
     constructor(public auth: AuthService, public fb: FormBuilder, public router: Router, public route: ActivatedRoute, public validationService: ValidationService,
@@ -36,6 +37,10 @@ export class CourseCategoryAddComponent implements OnInit, OnDestroy {
         this.route.params.forEach((params) => {
             this.type = params.type;
         });
+        
+        // Check if coming from wizard
+        this.isWizardMode = this.auth.getSessionData('wizard_return') === 'true';
+        
         this.form = this.fb.group({
             category_name: ['', Validators.required],
             description: '',
@@ -47,11 +52,9 @@ export class CourseCategoryAddComponent implements OnInit, OnDestroy {
         this.getSubjectList();
         setTimeout(() => {
                 if (this.type == 'edit') {
-                    this.maximumCount = parseInt(this.auth.getSessionData('course_category_maximumCount'));
+                    const sessionMaxCount = this.auth.getSessionData('course_category_maximumCount');
+                    this.maximumCount = sessionMaxCount ? parseInt(sessionMaxCount) : 100;
                     this.getEditableform(JSON.parse(this.auth.getSessionData('edit_course_category_Data')));
-                } else {
-                    this.maximumCount = parseInt(this.auth.getSessionData('course_category_maximumCount')) + 1;
-                    this.form.controls.display_order.patchValue(this.maximumCount);
                 }
             }, 0
         );
@@ -104,6 +107,13 @@ export class CourseCategoryAddComponent implements OnInit, OnDestroy {
     listSuccess(successData) {
         if (successData.IsSuccess) {
             this.categoryList = successData.ResponseObject;
+            // Set the maximum count and display order when category list is loaded
+            if (this.type !== 'edit') {
+                const maxCount = this.categoryList.length || 0;
+                this.auth.setSessionData('course_category_maximumCount', maxCount);
+                this.maximumCount = maxCount + 1;
+                this.form.controls.display_order.patchValue(this.maximumCount);
+            }
         }
     }
 
@@ -234,10 +244,20 @@ export class CourseCategoryAddComponent implements OnInit, OnDestroy {
     categoryAddSuccess(successData) {
         if (successData.IsSuccess) {
             this.toastr.success(successData.ResponseObject);
-            this.router.navigate(['/course/category/list']);
+            
+            // Return to wizard if in wizard mode
+            if (this.isWizardMode) {
+                this.router.navigate(['/course/wizard']);
+            } else {
+                this.router.navigate(['/course/category/list']);
+            }
         } else {
             this.toastr.error(successData.ErrorObject);
         }
+    }
+
+    returnToWizard() {
+        this.router.navigate(['/course/wizard']);
     }
 
 }

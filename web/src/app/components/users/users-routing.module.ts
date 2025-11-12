@@ -1,8 +1,8 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
 import { ListUserComponent } from './list-user/list-user.component';
-import { CreateUserComponent } from './create-user/create-user.component';
 import {ChangePasswordComponent} from './change-password/change-password.component';
+import { QuickCreateUserComponent } from './quick-create-user/quick-create-user.component';
 
 const routes: Routes = [
   {
@@ -18,6 +18,13 @@ const routes: Routes = [
     data: {
       title: 'Change Password',
       breadcrumb: 'Change Password'
+    }
+  }, {
+    path: 'quick-create',
+    component: QuickCreateUserComponent,
+    data: {
+      title: 'Quick Add User',
+      breadcrumb: 'Quick Add User'
     }
   }
 ];

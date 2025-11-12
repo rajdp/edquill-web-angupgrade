@@ -1,4 +1,4 @@
-import {Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, TemplateRef, ViewChild} from '@angular/core';
+import {Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, TemplateRef, ViewChild} from '@angular/core';
 import {DefaultTreeviewI18n, DropdownTreeviewComponent, OrderDownlineTreeviewEventParser, TreeviewConfig,
     TreeviewEventParser, TreeviewI18n, TreeviewItem} from '@soy-andrey-semyonov/ngx-treeview';
 import {ClassroomService} from '../../../shared/service/classroom.service';
@@ -34,7 +34,7 @@ export class TreeviewContentfolderComponent implements OnInit, OnChanges, OnDest
     public items: any;
     public branchListData = [];
     public addItemsData: any;
-    public batchid = [];
+    public batchid: string[] = [];
     private modalRef: NgbModalRef;
     public teacherschool: any;
     public calledValue = '';
@@ -80,6 +80,7 @@ export class TreeviewContentfolderComponent implements OnInit, OnChanges, OnDest
     @Input() schoolId?: string = '';
     @Input() class_id?: string = '';
     @Input() content_id?: string = '';
+    @Output() batchChange: EventEmitter<string[]> = new EventEmitter<string[]>();
     @ViewChild('addBranch') addBranchTemp: TemplateRef<any>;
     @ViewChild('preview') previewContentFolder: TemplateRef<any>;
     @ViewChild('deleteBatch') deleteBatch: TemplateRef<any>;
@@ -106,7 +107,10 @@ export class TreeviewContentfolderComponent implements OnInit, OnChanges, OnDest
     }
 
     ngOnInit(): void {
-        this.batchid = this.selectedbatch;
+        this.setSelectedBatch(this.selectedbatch);
+        if (this.schoolId) {
+            this.schoolStoredInitially = this.schoolId;
+        }
         this.getBranchList();
     }
 
@@ -116,7 +120,147 @@ export class TreeviewContentfolderComponent implements OnInit, OnChanges, OnDest
         });
     }
 
+    private updateDropdownButtonLabel(): void {
+        if (this.child) {
+            this.child.buttonLabel = this.batchid.length === 0 ? 'Select Content Folder' :
+                `${this.batchid.length} Content Folder Selected`;
+        }
+        console.log('[Treeview] updateDropdownButtonLabel -> count:', this.batchid.length,
+            'label:', this.child ? this.child.buttonLabel : 'Dropdown component not ready');
+    }
+
+    private emitBatchSelection(): void {
+        console.log('[Treeview] emitBatchSelection ->', this.batchid);
+        this.batchChange.emit([...this.batchid]);
+    }
+
+    private getBatchIdFromValue(value: any): string {
+        if (value === undefined || value === null) {
+            return '';
+        }
+        const parts = String(value).split('/');
+        return parts.length > 0 ? parts[0].trim() : '';
+    }
+
+    private updateSelectedBatchNamesFromItems(): void {
+        if (this.batchid.length === 0) {
+            this.selectedBacthName = [];
+            console.log('[Treeview] updateSelectedBatchNamesFromItems -> no selection');
+            return;
+        }
+        if (!this.items || this.items.length === 0) {
+            console.log('[Treeview] updateSelectedBatchNamesFromItems -> items not ready');
+            return;
+        }
+        const selectedIds = new Set(this.batchid);
+        const names: string[] = [];
+        const traverse = (item: TreeviewItem) => {
+            const batchId = this.getBatchIdFromValue(item.value);
+            if (selectedIds.has(batchId) && item.value.split('/')[1] === 'folder') {
+                names.push(' ' + ' ' + item.text + ' ' + ' ');
+            }
+            if (item.children && item.children.length) {
+                item.children.forEach(traverse);
+            }
+        };
+        this.items.forEach(traverse);
+        this.selectedBacthName = Array.from(new Set(names));
+        console.log('[Treeview] updateSelectedBatchNamesFromItems -> selected names:', this.selectedBacthName);
+    }
+
+    private extractBatchIdsFromEvent(event: any): string[] {
+        if (!event) {
+            return [];
+        }
+        if (Array.isArray(event)) {
+            const ids = event.flatMap((item) => {
+                if (item && typeof item === 'object' && item.value !== undefined) {
+                    return [this.getBatchIdFromValue(item.value)];
+                }
+                if (item === null || item === undefined) {
+                    return [];
+                }
+                return this.normalizeSelectedBatchValue(item);
+            });
+            return ids.filter((id) => id !== '');
+        }
+        if (typeof event === 'object' && event.value !== undefined) {
+            const id = this.getBatchIdFromValue(event.value);
+            return id ? [id] : [];
+        }
+        return this.normalizeSelectedBatchValue(event);
+    }
+
+    private handleBatchSelectionChange(): void {
+        this.batchid = Array.from(new Set(this.batchid.filter((id) => id !== '' && id !== '0')));
+        console.log('[Treeview] handleBatchSelectionChange -> normalized selection:', this.batchid);
+        this.updateSelectedBatchNamesFromItems();
+        this.updateDropdownButtonLabel();
+        this.emitBatchSelection();
+    }
+
+    private normalizeSelectedBatchValue(selected: any): string[] {
+        if (selected === undefined || selected === null) {
+            console.log('[Treeview] normalizeSelectedBatchValue -> empty input', selected);
+            return [];
+        }
+
+        const values = Array.isArray(selected) ? selected : [selected];
+        const normalizedArray = values
+            .map((entry) => this.resolveBatchSelectionEntry(entry))
+            .filter((id) => id !== '' && id !== '0');
+
+        console.log('[Treeview] normalizeSelectedBatchValue ->', selected, '=>', normalizedArray);
+        return normalizedArray;
+    }
+
+    private resolveBatchSelectionEntry(entry: any): string {
+        if (entry === undefined || entry === null) {
+            return '';
+        }
+
+        if (typeof entry === 'object') {
+            if (entry.value !== undefined) {
+                return this.getBatchIdFromValue(entry.value);
+            }
+
+            if (entry.item && entry.item.value !== undefined) {
+                return this.getBatchIdFromValue(entry.item.value);
+            }
+
+            if (entry.batch_id !== undefined) {
+                return String(entry.batch_id).trim();
+            }
+
+            if (entry.id !== undefined) {
+                return String(entry.id).trim();
+            }
+        }
+
+        const selectedValue = String(entry).trim();
+
+        if (selectedValue === '' || selectedValue === '0' || selectedValue === '[object Object]') {
+            return '';
+        }
+
+        return selectedValue;
+    }
+
+    private setSelectedBatch(selected: any): void {
+        const normalizedSelection = this.normalizeSelectedBatchValue(selected);
+        this.batchid = Array.from(new Set(normalizedSelection));
+        console.log('[Treeview] setSelectedBatch -> raw:', selected, 'normalized:', normalizedSelection);
+        this.updateSelectedBatchNamesFromItems();
+        this.updateDropdownButtonLabel();
+    }
+
     ngOnChanges(changes: SimpleChanges): void {
+        if (changes.selectedbatch && !changes.selectedbatch.firstChange) {
+            this.setSelectedBatch(changes.selectedbatch.currentValue);
+            if (this.items && this.items.length) {
+                this.items.forEach((item) => this.selectChildren(item));
+            }
+        }
         if (this.calledForm == 'contentFolder') {
             this.showLoader = true;
             this.totalBatchIds = [];
@@ -132,6 +276,15 @@ export class TreeviewContentfolderComponent implements OnInit, OnChanges, OnDest
             this.configTree.maxHeight = this.treeviewHeight - 250;
         } else {
             this.configTree.maxHeight = this.treeviewHeight;
+        }
+        if (this.calledForm === 'class' && changes.class_id && !changes.class_id.firstChange &&
+            changes.class_id.currentValue !== changes.class_id.previousValue) {
+            console.log('[Treeview] class_id changed, fetching branch list:', changes.class_id.currentValue);
+            this.getBranchList();
+        }
+        if (this.calledForm === 'class' && changes.schoolId && !changes.schoolId.firstChange &&
+            changes.schoolId.currentValue !== changes.schoolId.previousValue) {
+            this.getBranchList();
         }
     }
 
@@ -324,13 +477,16 @@ export class TreeviewContentfolderComponent implements OnInit, OnChanges, OnDest
     }
 
     getBranchList() {
+        console.log('[Treeview] Fetching branch list for school:', this.schoolId || this.auth.getSessionData('school_id'),
+            'calledForm:', this.calledForm, 'class_id:', this.class_id);
         this.commondata.showLoader(true);
+        const schoolId = this.schoolId || this.auth.getSessionData('school_id');
         const data = {
             platform: 'web',
             type: '1',
             role_id: this.auth.getRoleId(),
             user_id: this.auth.getUserId(),
-            school_id: this.auth.getSessionData('school_id'),
+            school_id: schoolId,
             sort_type: this.filterType == 'Latest' ? '1' : this.filterType == 'Oldest' ? '2' : this.filterType == 'A - Z' ? '3' : '4',
             corporate_id: this.auth.getRoleId() == '2' || this.auth.getRoleId() == '4' ? '0' : this.auth.getSessionData('corporate_id')
         };
@@ -348,15 +504,20 @@ export class TreeviewContentfolderComponent implements OnInit, OnChanges, OnDest
         if (successData.IsSuccess) {
             this.commondata.showLoader(false);
             this.branchListData = successData.ResponseObject;
+            console.log('[Treeview] Branch list response:', this.branchListData);
             this.items = [];
             this.branchListData.forEach((item) => {
                 this.items.push(new TreeviewItem(item));
                 this.valueCheckArray.push(new TreeviewItem(item));
             });
+            console.log('[Treeview] Treeview items built:', this.items);
             this.items.forEach((item) => {
                 this.selectChildren(item, item);
             });
             this.showLoader = false;
+            this.handleBatchSelectionChange();
+        } else {
+            console.warn('[Treeview] Failed to load branch list:', successData);
         }
     }
 
@@ -384,10 +545,15 @@ export class TreeviewContentfolderComponent implements OnInit, OnChanges, OnDest
 
     onSelectedChange(event) {
 
-        if (!this.batchid || this.batchid.length == 0) {
-            this.child.buttonLabel = 'Select Content Folder';
+        if (this.calledForm === 'class') {
+            const selectedIds = this.extractBatchIdsFromEvent(event);
+            console.log('[Treeview] onSelectedChange -> event:', event, 'extracted ids:', selectedIds);
+            this.batchid = Array.from(new Set(selectedIds));
+            this.updateSelectedBatchNamesFromItems();
+            this.updateDropdownButtonLabel();
+            this.emitBatchSelection();
         } else {
-            this.child.buttonLabel = this.batchid.length + ' ' + 'Content Folder Selected';
+            this.updateDropdownButtonLabel();
         }
     }
 
@@ -436,6 +602,7 @@ export class TreeviewContentfolderComponent implements OnInit, OnChanges, OnDest
                     }
                 });
             }
+            this.handleBatchSelectionChange();
         } else if (selectedForm == 'classCheck') {
             i.checked = checked;
             const batchValue = value.value.split('/');
@@ -450,6 +617,7 @@ export class TreeviewContentfolderComponent implements OnInit, OnChanges, OnDest
                     }
                 });
             }
+            this.handleBatchSelectionChange();
         } else {
             i.checked = false;
             if (this.calledForm == 'contentFolder' && this.totalBatchIds.length == 0) {
@@ -493,6 +661,7 @@ export class TreeviewContentfolderComponent implements OnInit, OnChanges, OnDest
                         }
                     });
                 }
+                this.handleBatchSelectionChange();
             } else if (selectedForm == 'classCheck') {
                 i.checked = checked;
                 const batchValue = i.value.split('/');
@@ -507,6 +676,7 @@ export class TreeviewContentfolderComponent implements OnInit, OnChanges, OnDest
                         }
                     });
                 }
+                this.handleBatchSelectionChange();
             } else {
                 i.collapsed = this.calledForm != 'contentFolder';
                 if (this.calledForm == 'contentFolder' && this.totalBatchIds.length == 0) {

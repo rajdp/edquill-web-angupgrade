@@ -182,6 +182,9 @@ export class AddClassComponent implements OnInit, OnChanges, AfterViewInit {
     public slotCheck: boolean;
     public choosedData: any;
     public temp: any;
+    public isEditingExistingClass = false;
+    private readonly listClassRoute = ['/class/list-class'];
+    private readonly scheduleRoute = ['/schedule/schedule-page'];
 
     //// availability seciton//
     public startTime: any;
@@ -328,6 +331,10 @@ export class AddClassComponent implements OnInit, OnChanges, AfterViewInit {
         this.route.params.forEach((params) => {
             this.type = params.type;
         });
+        this.isEditingExistingClass = this.type === 'edit' || this.type === 'addEdit';
+        if (this.isEditingExistingClass) {
+            this.allowPastDateSelectionForEdit();
+        }
         this.readonlyAllData = this.auth.getSessionData('readonly_data');
         if (this.readonlyAllData == 'true') {
             this.readOnly = true;
@@ -485,12 +492,11 @@ export class AddClassComponent implements OnInit, OnChanges, AfterViewInit {
             // this.notesGroup.controls.notes.patchValue(this.editData[0].notes);
             this.classform.controls.meetingLink.patchValue(this.editData[0].meeting_link);
             this.classform.controls.meetingId.patchValue(this.editData[0].meeting_id);
-            this.batchId = this.editData[0].batch_id;
-            if (this.editData[0].batch_id != 0) {
-                this.classform.controls.batch.patchValue(this.editData[0].batch_id);
-            } else {
-                this.classform.controls.batch.patchValue([]);
-            }
+            console.log('[Class Edit] Raw batch_id from API:', this.editData[0].batch_id);
+            this.batchId = this.normalizeBatchIds(this.editData[0].batch_id);
+            console.log('[Class Edit] Normalized batch IDs:', this.batchId);
+            this.classform.controls.batch.patchValue(this.batchId);
+            console.log('[Class Edit] Form batch control value after patch:', this.classform.controls.batch.value);
             this.classform.controls.passcode.patchValue(this.editData[0].passcode);
             this.classform.controls.status.patchValue(this.editData[0].status);
             this.classform.controls.telephone.patchValue(this.editData[0].telephone_number);
@@ -622,6 +628,133 @@ export class AddClassComponent implements OnInit, OnChanges, AfterViewInit {
         this.toTime = {hour: 23, minute: 59, seconds: 0};
     }
 
+    onBatchSelectionChange(batchIds: string[]): void {
+        console.log('[Batch Selection] Incoming selection:', batchIds);
+        const normalizedBatchIds = this.normalizeBatchIds(batchIds);
+        console.log('[Batch Selection] Normalized selection:', normalizedBatchIds);
+        const previousBatchIds = this.classform?.controls?.batch ? this.classform.controls.batch.value ?? [] : [];
+        console.log('[Batch Selection] Previous form value:', previousBatchIds);
+        const hasChanged = !this.areArraysEqual(previousBatchIds, normalizedBatchIds);
+        this.batchId = normalizedBatchIds;
+        if (this.classform?.controls?.batch) {
+            this.classform.controls.batch.patchValue([...normalizedBatchIds]);
+            if (hasChanged) {
+                this.classform.controls.batch.markAsDirty();
+                console.log('[Batch Selection] Marking batch control as dirty');
+            }
+            this.classform.controls.batch.updateValueAndValidity();
+            console.log('[Batch Selection] Batch control value after update:', this.classform.controls.batch.value);
+        }
+    }
+
+    private normalizeBatchIds(batch: any): string[] {
+        if (batch === undefined || batch === null || batch === '' || batch === 0 || batch === '0') {
+            console.log('[Normalize Batch] Received empty batch identifier', batch);
+            return [];
+        }
+
+        const values = Array.isArray(batch) ? batch : [batch];
+        const normalizedArray = values
+            .map((entry) => this.resolveBatchIdentifier(entry))
+            .filter((id) => id !== '' && id !== '0');
+
+        console.log('[Normalize Batch] Input normalized to:', normalizedArray);
+        return Array.from(new Set(normalizedArray));
+    }
+
+    private resolveBatchIdentifier(entry: any): string {
+        if (entry === undefined || entry === null) {
+            return '';
+        }
+
+        if (typeof entry === 'object') {
+            if (entry.value !== undefined) {
+                return this.extractBatchIdFromValue(entry.value);
+            }
+            if (entry.item && entry.item.value !== undefined) {
+                return this.extractBatchIdFromValue(entry.item.value);
+            }
+            if (entry.batch_id !== undefined) {
+                return String(entry.batch_id).trim();
+            }
+            if (entry.id !== undefined) {
+                return String(entry.id).trim();
+            }
+        }
+
+        const normalizedValue = String(entry).trim();
+        if (normalizedValue === '' || normalizedValue === '0' || normalizedValue === '[object Object]') {
+            return '';
+        }
+
+        if (normalizedValue.includes(',')) {
+            return normalizedValue.split(',')
+                .map((val) => val.trim())
+                .filter((val) => val !== '' && val !== '0')[0] || '';
+        }
+
+        return normalizedValue;
+    }
+
+    private extractBatchIdFromValue(value: any): string {
+        if (value === undefined || value === null) {
+            return '';
+        }
+        const parts = String(value).split('/');
+        return parts.length ? parts[0].trim() : '';
+    }
+
+    private formatIdList(value: any): string {
+        if (value === undefined || value === null) {
+            return '';
+        }
+
+        if (Array.isArray(value)) {
+            const normalized = value
+                .map((item) => {
+                    if (item === null || item === undefined) {
+                        return '';
+                    }
+                    if (typeof item === 'object') {
+                        if ('value' in item) {
+                            return String(item.value).trim();
+                        }
+                        if ('id' in item) {
+                            return String(item.id).trim();
+                        }
+                    }
+                    return String(item).trim();
+                })
+                .filter((item) => item !== '' && item !== '0');
+            return normalized.length ? Array.from(new Set(normalized)).join(',') : '';
+        }
+
+        if (typeof value === 'object') {
+            if ('value' in value) {
+                const val = String(value.value).trim();
+                return val === '0' ? '' : val;
+            }
+            if ('id' in value) {
+                const val = String(value.id).trim();
+                return val === '0' ? '' : val;
+            }
+        }
+
+        const normalizedValue = String(value).trim();
+        return normalizedValue === '' || normalizedValue === '0' ? '' : normalizedValue;
+    }
+
+    private areArraysEqual(source: any, target: any): boolean {
+        const sourceArray = this.normalizeBatchIds(source);
+        const targetArray = this.normalizeBatchIds(target);
+        if (sourceArray.length !== targetArray.length) {
+            return false;
+        }
+        const sortedSource = [...sourceArray].sort();
+        const sortedTarget = [...targetArray].sort();
+        return sortedSource.every((value, index) => value === sortedTarget[index]);
+    }
+
     init(id) {
         this.schoolIdNum = id;
         this.manageClass = this.auth.manageClass;
@@ -630,7 +763,7 @@ export class AddClassComponent implements OnInit, OnChanges, AfterViewInit {
         this.subjectList();
         this.batchDataList();
         this.individualList();
-        this.auth.getRoleId() == '2' ? this.getCourseList() : '';
+        this.getCourseList();
     }
 
     dayClicked({date, events}: { date: Date; events: CalendarEvent[] }): void {
@@ -880,11 +1013,9 @@ export class AddClassComponent implements OnInit, OnChanges, AfterViewInit {
                 this.gradeSplit = null;
             }
         } else if (type == 'batch') {
-            if (this.editData[0].batch_id != 0) {
-                this.classform.controls.batch.patchValue(this.editData[0].batch_id);
-            } else {
-                this.classform.controls.batch.patchValue([]);
-            }
+            const originalBatchIds = this.normalizeBatchIds(this.editData[0].batch_id);
+            this.batchId = originalBatchIds;
+            this.classform.controls.batch.patchValue(originalBatchIds);
         }
         this.modalRef.close();
     }
@@ -1246,6 +1377,7 @@ export class AddClassComponent implements OnInit, OnChanges, AfterViewInit {
     batchListSuccess(successData) {
         if (successData.IsSuccess) {
             this.batchData = successData.ResponseObject;
+            console.log('[Batch List] Available batches:', this.batchData);
         }
     }
 
@@ -1437,7 +1569,8 @@ export class AddClassComponent implements OnInit, OnChanges, AfterViewInit {
         } else {
             this.dateValidation = true;
         }
-        if (this.classform.controls.startDate.valid && this.classform.controls.endDate.valid) {
+        const skipFutureDateValidation = this.isEditingExistingClass;
+        if ((this.classform.controls.startDate.valid && this.classform.controls.endDate.valid) || skipFutureDateValidation) {
             if (this.dateValidation == true) {
                 const validResourceLinks = this.videoArray.filter((item) => item.link && item.link.trim() !== '');
                 const checkForValidResourceLink = validResourceLinks.some((item) => item.name == '');
@@ -1477,21 +1610,26 @@ export class AddClassComponent implements OnInit, OnChanges, AfterViewInit {
                         } else {
                             this.fileContentid = [];
                         }
-                        const batchId = this.treeviewCompoent.batchid;
+                        const batchId = this.treeviewCompoent ? this.treeviewCompoent.batchid :
+                            (this.classform.controls.batch.value ?? []);
+                        const formattedBatchId = this.formatIdList(batchId);
+                        const formattedGrade = this.formatIdList(this.classform.controls.grade.value);
+                        const formattedSubject = this.formatIdList(this.classform.controls.subject.value);
                         this.removeZoom();
                         const data = {
                             platform: 'web',
                             role_id: this.auth.getRoleId(),
                             user_id: this.auth.getUserId(),
                             school_id: this.schoolIdNum,
+                            class_name: this.classform.controls.classname.value,
                             name: this.classform.controls.classname.value,
                             start_date: this.classform.controls.startDate.value == null ? '' : this.datePipe.transform(this.classform.controls.startDate.value.singleDate.jsDate, 'yyyy-MM-dd'),
                             end_date: this.classform.controls.endDate.value == null ? '' : this.datePipe.transform(this.classform.controls.endDate.value.singleDate.jsDate, 'yyyy-MM-dd'),
                             start_time: this.classform.controls.startTime.value,
                             end_time: this.classform.controls.endTime.value == null ? '' : this.classform.controls.endTime.value == '' ? 1 : this.classform.controls.endTime.value,
-                            grade: this.classform.controls.grade.value == null ? [] : this.classform.controls.grade.value,
-                            batch_id: batchId ? batchId : [],
-                            subject: this.classform.controls.subject.value == null ? [] : this.classform.controls.subject.value,
+                            grade: formattedGrade,
+                            batch_id: formattedBatchId,
+                            subject: formattedSubject,
                             status: this.classform.controls.status.value,
                             tags: this.tagArray,
                             video_link: validResourceLinks,
@@ -1576,8 +1714,10 @@ export class AddClassComponent implements OnInit, OnChanges, AfterViewInit {
             }
 
         } else {
-            this.toastr.error('Please Select Future Date');
-            this.validationService.validateAllFormFields(this.classform);
+            if (!skipFutureDateValidation) {
+                this.toastr.error('Please Select Future Date');
+                this.validationService.validateAllFormFields(this.classform);
+            }
         }
     }
 
@@ -1597,14 +1737,18 @@ export class AddClassComponent implements OnInit, OnChanges, AfterViewInit {
             const redirectSchedulePage = !!this.auth.getSessionData('enterThroughSchedule');
             console.log(redirectSchedulePage, 'redirectSchedulePage');
             if (id == 2) {
-                // this.router.navigate(['/class/submit-class/2']);
-                this.router.navigate(['/class/list-class']);
+                if (redirectSchedulePage) {
+                    this.auth.removeSessionData('enterThroughSchedule');
+                    this.router.navigate(this.scheduleRoute);
+                } else {
+                    this.router.navigate(this.listClassRoute);
+                }
             } else {
                 if (redirectSchedulePage == true) {
                     this.auth.removeSessionData('enterThroughSchedule');
-                    this.router.navigate(['/schedule/schedule-page']);
+                    this.router.navigate(this.scheduleRoute);
                 } else {
-                    this.router.navigate(['/class/list-class']);
+                    this.router.navigate(this.listClassRoute);
                 }
             }
             // if (successData.Message != '') {
@@ -1620,6 +1764,7 @@ export class AddClassComponent implements OnInit, OnChanges, AfterViewInit {
             this.addClassDetails = successData.ResponseObject;
             this.auth.setSessionData('editclass', JSON.stringify(successData.ResponseObject));
             this.auth.setSessionData('card-data', JSON.stringify(successData.ResponseObject));
+            const redirectSchedulePage = !!this.auth.getSessionData('enterThroughSchedule');
             if (id == 0) {
                 this.submitClass();
             } else {
@@ -1628,25 +1773,25 @@ export class AddClassComponent implements OnInit, OnChanges, AfterViewInit {
                 this.auth.removeSessionData('updatedStudent');
                 this.auth.removeSessionData('readonly_startdate');
                 this.auth.removeSessionData('class-curriculum');
-                const redirectSchedulePage = !!this.auth.getSessionData('enterThroughSchedule');
                 console.log(redirectSchedulePage, 'redirectSchedulePage');
 
                 if (id == 2) {
-                    if (this.addClassDetails[0].class_status != '1' && this.roleid != '2') {
-                        // this.router.navigate(['/class/submit-class/2']);
-                        this.router.navigate(['/class/list-class']);
+                    if (redirectSchedulePage) {
+                        this.auth.removeSessionData('enterThroughSchedule');
+                        this.router.navigate(this.scheduleRoute);
+                    } else if (this.addClassDetails[0].class_status != '1' && this.roleid != '2') {
+                        this.router.navigate(this.listClassRoute);
                     } else {
                         this.auth.setSessionData('classView', false);
                         this.auth.setSessionData('editView', true);
-                        // this.router.navigate(['/class/list-class']);
-                        this.router.navigate(['/class/list-class']);
+                        this.router.navigate(this.listClassRoute);
                     }
                 } else {
                     if (redirectSchedulePage == true) {
                         this.auth.removeSessionData('enterThroughSchedule');
-                        this.router.navigate(['/schedule/schedule-page']);
+                        this.router.navigate(this.scheduleRoute);
                     } else {
-                        this.router.navigate(['/class/list-class']);
+                        this.router.navigate(this.listClassRoute);
                     }
                 }
             }
@@ -1721,6 +1866,16 @@ export class AddClassComponent implements OnInit, OnChanges, AfterViewInit {
         this.toastr.error(error.ResponseObject, 'Class');
     }
 
+    navigateBackToOrigin(): void {
+        const redirectSchedulePage = !!this.auth.getSessionData('enterThroughSchedule');
+        if (redirectSchedulePage) {
+            this.auth.removeSessionData('enterThroughSchedule');
+            this.router.navigate(this.scheduleRoute);
+        } else {
+            this.router.navigate(this.listClassRoute);
+        }
+    }
+
     public numberPattern(event: any) {
         this.validationService.numberValidate1(event);
     }
@@ -1739,16 +1894,42 @@ export class AddClassComponent implements OnInit, OnChanges, AfterViewInit {
         };
     }
 
+    private allowPastDateSelectionForEdit(): void {
+        const minimalDisableDate = {year: 1, month: 1, day: 1};
+        this.myDpOptions = {
+            ...this.myDpOptions,
+            disableUntil: minimalDisableDate
+        };
+        this.myDpOptions2 = {
+            ...this.myDpOptions2,
+            disableUntil: minimalDisableDate
+        };
+    }
+
     onDateChanged1(event: any): void {
+        const currentDate = new Date(this.setDate);
+        const defaultDisableUntil = this.myDpOptions.disableUntil ? {
+            year: this.myDpOptions.disableUntil.year,
+            month: this.myDpOptions.disableUntil.month,
+            day: this.myDpOptions.disableUntil.day
+        } : {
+            year: currentDate.getFullYear(),
+            month: currentDate.getMonth() + 1,
+            day: currentDate.getDate() != 1 ? currentDate.getDate() - 1 : 1,
+        };
+        let disableDay = defaultDisableUntil.day != 1 ? defaultDisableUntil.day : defaultDisableUntil.day - 2;
+        if (disableDay < 1) {
+            disableDay = 1;
+        }
         this.myDpOptions1 = {};
         this.myDpOptions1 = {
             dateRange: false,
             dateFormat: dateOptions.pickerFormat,
             firstDayOfWeek: 'su',
             disableUntil: {
-                year: this.myDpOptions.disableUntil.year,
-                month: this.myDpOptions.disableUntil.month,
-                day: this.myDpOptions.disableUntil.day != 1 ? this.myDpOptions.disableUntil.day : this.myDpOptions.disableUntil.day - 2,
+                year: defaultDisableUntil.year,
+                month: defaultDisableUntil.month,
+                day: disableDay,
             },
         };
     }
@@ -2783,19 +2964,20 @@ export class AddClassComponent implements OnInit, OnChanges, AfterViewInit {
 
     updateCourseField() {
         console.log('serviceCalled');
-        const formControlNameArray = ['course_id', 'registration_start_date', 'registration_end_date', 'slot_available', 'amount',
+        const optionalFields = ['registration_start_date', 'registration_end_date', 'slot_available', 'amount',
             'discount', 'actual_amount', 'payment_type', 'payment_recurring'];
-        formControlNameArray.forEach((fieldName) => {
-            if (this.classform.controls.add_course.value) {
-                this.setFormValidation(fieldName);
-            } else {
-                this.removeFormValidation(fieldName);
-            }
-        });
+
+        if (this.classform.controls.add_course.value) {
+            this.setFormValidation('course_id');
+        } else {
+            this.removeFormValidation('course_id');
+        }
+
+        optionalFields.forEach((fieldName) => this.removeFormValidation(fieldName));
     }
 
-    setFormValidation(formControlName) {
-        this.classform.controls[formControlName].setValidators([Validators.required]);
+    setFormValidation(formControlName, validators = [Validators.required]) {
+        this.classform.controls[formControlName].setValidators(validators);
         this.classform.controls[formControlName].updateValueAndValidity();
     }
 

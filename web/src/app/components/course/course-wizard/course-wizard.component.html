@@ -1,0 +1,404 @@
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <!-- Header -->
+                <div class="card-header bg-primary text-white py-3">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h5 class="mb-0">
+                                <i class="fa fa-magic mr-2"></i>
+                                Course Creation Wizard
+                            </h5>
+                            <small>Follow the steps to create a complete course workflow</small>
+                        </div>
+                        <div class="col-auto">
+                            <button class="btn btn-outline-light btn-sm" (click)="cancel()">
+                                <i class="fa fa-times mr-1"></i> Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Progress Steps -->
+                <div class="card-body bg-light border-bottom">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between align-items-center position-relative">
+                                <!-- Progress line -->
+                                <div class="position-absolute w-100" style="height: 2px; background: #e0e0e0; top: 24px; z-index: 0;"></div>
+                                <div class="position-absolute" 
+                                     [style.width.%]="((currentStep - 1) / (totalSteps - 1)) * 100" 
+                                     style="height: 2px; background: #007bff; top: 24px; z-index: 0; transition: width 0.3s;"></div>
+
+                                <!-- Steps -->
+                                <div *ngFor="let step of steps" class="text-center position-relative" style="flex: 1; z-index: 1;">
+                                    <div class="step-circle mb-2"
+                                         [class.active]="step.active"
+                                         [class.completed]="step.completed"
+                                         (click)="goToStep(step.number)"
+                                         style="cursor: pointer;">
+                                        <i class="fa {{step.icon}}"></i>
+                                    </div>
+                                    <div class="small font-weight-bold" [class.text-primary]="step.active">
+                                        Step {{step.number}}
+                                    </div>
+                                    <div class="small text-muted">{{step.title}}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step Content -->
+                <div class="card-body" style="min-height: 400px;">
+                    
+                    <!-- Step 1: Select Category -->
+                    <div *ngIf="currentStep === 1">
+                        <div class="text-center mb-4">
+                            <i class="fa fa-folder fa-3x text-primary mb-3"></i>
+                            <h4>Step 1: Select or Create Category</h4>
+                            <p class="text-muted">Choose an existing category or create a new one for your course</p>
+                        </div>
+
+                        <!-- Search & Action Bar -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text bg-white">
+                                            <i class="fa fa-search text-muted"></i>
+                                        </span>
+                                    </div>
+                                    <input 
+                                        type="text" 
+                                        class="form-control" 
+                                        placeholder="Search categories by name or description..."
+                                        [(ngModel)]="categorySearchText"
+                                        (input)="searchCategories()">
+                                    <div class="input-group-append" *ngIf="categorySearchText">
+                                        <button class="btn btn-outline-secondary" (click)="categorySearchText = ''; searchCategories()">
+                                            <i class="fa fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 text-right">
+                                <button class="btn btn-success" (click)="createNewCategory()">
+                                    <i class="fa fa-plus mr-2"></i>Create New Category
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Category Cards -->
+                        <div class="row">
+                            <div class="col-md-6 col-lg-4 mb-3" *ngFor="let category of filteredCategoryList">
+                                <div class="card h-100 border category-card" 
+                                     [class.border-primary]="selectedCategory?.category_id === category.category_id"
+                                     [class.shadow]="selectedCategory?.category_id === category.category_id"
+                                     style="transition: all 0.2s; position: relative;">
+                                    <!-- Selection Checkmark - Top Right -->
+                                    <div *ngIf="selectedCategory?.category_id === category.category_id" 
+                                         style="position: absolute; top: 10px; right: 10px; z-index: 10;">
+                                        <i class="fa fa-check-circle fa-2x text-success"></i>
+                                    </div>
+                                    
+                                    <div class="card-body">
+                                        <div (click)="selectCategory(category)" style="cursor: pointer;">
+                                            <!-- Title with Edit Button -->
+                                            <div class="d-flex align-items-center mb-2">
+                                                <button 
+                                                    class="btn btn-sm btn-outline-primary mr-2 p-1" 
+                                                    style="width: 28px; height: 28px;"
+                                                    (click)="editCategory(category, $event)"
+                                                    title="Edit this category">
+                                                    <i class="fa fa-pencil"></i>
+                                                </button>
+                                                <h6 class="mb-0 flex-grow-1">
+                                                    <i class="fa fa-folder mr-2 text-primary"></i>
+                                                    {{category.category_name}}
+                                                </h6>
+                                            </div>
+                                            
+                                            <!-- Description -->
+                                            <small class="text-muted d-block mb-2" *ngIf="category.description" [innerHTML]="category.description | slice:0:100">
+                                            </small>
+                                            
+                                            <!-- Badges -->
+                                            <div class="mt-2">
+                                                <span class="badge badge-secondary mr-1">
+                                                    <i class="fa fa-sort-numeric-up mr-1"></i>Order: {{category.display_order}}
+                                                </span>
+                                                <span class="badge" 
+                                                      [class.badge-success]="category.course_count > 0"
+                                                      [class.badge-light]="category.course_count === 0">
+                                                    <i class="fa fa-book mr-1"></i>
+                                                    {{category.course_count || 0}} Course{{category.course_count !== 1 ? 's' : ''}}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- No Results Messages -->
+                        <div *ngIf="filteredCategoryList.length === 0 && categorySearchText" class="text-center text-muted py-5">
+                            <i class="fa fa-search fa-3x mb-3"></i>
+                            <p>No categories found matching "{{categorySearchText}}"</p>
+                            <button class="btn btn-success" (click)="categorySearchText = ''; searchCategories()">
+                                <i class="fa fa-times mr-1"></i> Clear Search
+                            </button>
+                        </div>
+
+                        <div *ngIf="categoryList.length === 0" class="text-center text-muted py-5">
+                            <i class="fa fa-folder-open fa-3x mb-3"></i>
+                            <p>No categories available. Create your first category to get started!</p>
+                        </div>
+
+                        <!-- Selected Category Alert -->
+                        <div *ngIf="selectedCategory" class="alert alert-success mt-3">
+                            <div class="d-flex align-items-center">
+                                <i class="fa fa-check-circle fa-2x mr-3"></i>
+                                <div>
+                                    <strong>Selected Category:</strong> {{selectedCategory.category_name}}
+                                    <div class="small mt-1" *ngIf="selectedCategory.course_count > 0">
+                                        This category has {{selectedCategory.course_count}} existing course{{selectedCategory.course_count !== 1 ? 's' : ''}}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Select or Create Course -->
+                    <div *ngIf="currentStep === 2">
+                        <div class="text-center mb-4">
+                            <i class="fa fa-book fa-3x text-primary mb-3"></i>
+                            <h4>Step 2: Select or Create Course</h4>
+                            <p class="text-muted">Choose an existing course or create a new one</p>
+                        </div>
+
+                        <!-- Selected Category Info -->
+                        <div class="alert alert-info">
+                            <i class="fa fa-folder mr-2"></i>
+                            <strong>Category:</strong> {{selectedCategory?.category_name}}
+                            <span class="ml-3" *ngIf="hasExistingCourses">
+                                <i class="fa fa-book mr-1"></i>
+                                {{filteredCourseList.length}} existing course{{filteredCourseList.length !== 1 ? 's' : ''}}
+                            </span>
+                        </div>
+
+                        <!-- Show existing courses if available -->
+                        <div *ngIf="hasExistingCourses">
+                            <h6 class="mb-3">
+                                <i class="fa fa-list mr-2"></i>Existing Courses in this Category
+                            </h6>
+
+                            <!-- Course Search -->
+                            <div class="row mb-3">
+                                <div class="col-md-8">
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text bg-white">
+                                                <i class="fa fa-search text-muted"></i>
+                                            </span>
+                                        </div>
+                                        <input 
+                                            type="text" 
+                                            class="form-control" 
+                                            placeholder="Search courses by name or description..."
+                                            [(ngModel)]="courseSearchText"
+                                            (input)="searchCourses()">
+                                        <div class="input-group-append" *ngIf="courseSearchText">
+                                            <button class="btn btn-outline-secondary" (click)="courseSearchText = ''; searchCourses()">
+                                                <i class="fa fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Course Cards -->
+                            <div class="row mb-4" style="max-height: 400px; overflow-y: auto;">
+                                <div class="col-md-6 col-lg-4 mb-3" *ngFor="let course of filteredCourseList">
+                                    <div class="card h-100 border category-card" 
+                                         [class.border-success]="selectedCourse?.course_id === course.course_id"
+                                         [class.shadow]="selectedCourse?.course_id === course.course_id"
+                                         style="transition: all 0.2s; position: relative;">
+                                        <!-- Selection Checkmark - Top Right -->
+                                        <div *ngIf="selectedCourse?.course_id === course.course_id" 
+                                             style="position: absolute; top: 10px; right: 10px; z-index: 10;">
+                                            <i class="fa fa-check-circle fa-2x text-success"></i>
+                                        </div>
+                                        
+                                        <div class="card-body">
+                                            <div (click)="selectCourse(course)" style="cursor: pointer;">
+                                                <!-- Title with Edit Button -->
+                                                <div class="d-flex align-items-center mb-2">
+                                                    <button 
+                                                        class="btn btn-sm btn-outline-primary mr-2 p-1" 
+                                                        style="width: 28px; height: 28px;"
+                                                        (click)="editCourse(course, $event)"
+                                                        title="Edit this course">
+                                                        <i class="fa fa-pencil"></i>
+                                                    </button>
+                                                    <h6 class="mb-0 flex-grow-1">
+                                                        <i class="fa fa-book mr-2 text-primary"></i>
+                                                        {{course.course_name}}
+                                                    </h6>
+                                                </div>
+                                                
+                                                <!-- Description -->
+                                                <small class="text-muted d-block mb-2" *ngIf="course.short_description" [innerHTML]="course.short_description | slice:0:120">
+                                                </small>
+                                                
+                                                <!-- Status & Fee Badges -->
+                                                <div class="mt-2">
+                                                    <span class="badge badge-success" *ngIf="course.status == 'A'">Approved</span>
+                                                    <span class="badge badge-warning" *ngIf="course.status == 'P'">Review</span>
+                                                    <span class="badge badge-secondary" *ngIf="course.status == 'D'">Draft</span>
+                                                    <span class="badge badge-info ml-1" *ngIf="course.fees">
+                                                        <i class="fa fa-dollar mr-1"></i>{{course.fees}}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- No Results -->
+                            <div *ngIf="filteredCourseList.length === 0 && courseSearchText" class="text-center text-muted py-3">
+                                <i class="fa fa-search fa-2x mb-2"></i>
+                                <p>No courses found matching "{{courseSearchText}}"</p>
+                                <button class="btn btn-outline-secondary btn-sm" (click)="courseSearchText = ''; searchCourses()">
+                                    <i class="fa fa-times mr-1"></i> Clear Search
+                                </button>
+                            </div>
+
+                            <!-- Selected Course Alert -->
+                            <div *ngIf="selectedCourse" class="alert alert-success mb-3">
+                                <div class="d-flex align-items-center">
+                                    <i class="fa fa-check-circle fa-2x mr-3"></i>
+                                    <div class="flex-grow-1">
+                                        <strong>Selected Course:</strong> {{selectedCourse.course_name}}
+                                    </div>
+                                    <button class="btn btn-sm btn-outline-secondary" (click)="selectedCourse = null">
+                                        <i class="fa fa-times mr-1"></i> Change Selection
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Divider -->
+                            <div class="text-center my-4">
+                                <hr class="w-50 d-inline-block">
+                                <span class="px-3 text-muted font-weight-bold">OR</span>
+                                <hr class="w-50 d-inline-block">
+                            </div>
+                        </div>
+
+                        <!-- Create New Course Option -->
+                        <div class="text-center py-4" 
+                             [class.py-5]="!hasExistingCourses"
+                             [class.border]="hasExistingCourses"
+                             [class.rounded]="hasExistingCourses"
+                             [class.bg-light]="hasExistingCourses">
+                            <h6 *ngIf="hasExistingCourses" class="mb-3">Create a New Course</h6>
+                            <button class="btn btn-primary btn-lg" (click)="createCourse()">
+                                <i class="fa fa-plus mr-2"></i>Create New Course
+                            </button>
+                            <p class="text-muted mt-3 mb-0">
+                                <i class="fa fa-lightbulb mr-1"></i>
+                                Opens the course creation form with the selected category
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Create Class -->
+                    <div *ngIf="currentStep === 3">
+                        <div class="text-center mb-4">
+                            <i class="fa fa-users fa-3x text-primary mb-3"></i>
+                            <h4>Step 3: Create Class</h4>
+                            <p class="text-muted">Create a class for your selected course</p>
+                        </div>
+
+                        <!-- Summary Cards -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="card border-primary">
+                                    <div class="card-body">
+                                        <h6 class="card-subtitle mb-2 text-muted">
+                                            <i class="fa fa-folder mr-1"></i> Selected Category
+                                        </h6>
+                                        <h5 class="card-title text-primary">{{selectedCategory?.category_name}}</h5>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card border-success">
+                                    <div class="card-body">
+                                        <h6 class="card-subtitle mb-2 text-muted">
+                                            <i class="fa fa-book mr-1"></i> Selected Course
+                                        </h6>
+                                        <h5 class="card-title text-success">
+                                            {{selectedCourse?.course_name || createdCourse?.course_name || 'Course Selected'}}
+                                        </h5>
+                                        <span class="badge badge-info" *ngIf="selectedCourse || createdCourse">
+                                            {{(selectedCourse || createdCourse)?.fees || 'No fee set'}}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <i class="fa fa-info-circle mr-2"></i>
+                            <strong>Ready to create a class!</strong> You'll be able to set the schedule, pricing, and other class details in the next step.
+                        </div>
+
+                        <div class="text-center py-5">
+                            <button class="btn btn-primary btn-lg px-5" (click)="createClass()">
+                                <i class="fa fa-plus mr-2"></i>Create New Class
+                            </button>
+                            <p class="text-muted mt-3">
+                                <i class="fa fa-lightbulb mr-1"></i>
+                                Opens the class creation form with pre-filled course information
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Navigation -->
+                <div class="card-footer bg-light">
+                    <div class="row align-items-center">
+                        <div class="col-md-4">
+                            <button class="btn btn-outline-secondary" (click)="previousStep()" [disabled]="currentStep === 1">
+                                <i class="fa fa-arrow-left mr-1"></i> Previous
+                            </button>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <small class="text-muted">
+                                Step {{currentStep}} of {{totalSteps}}
+                            </small>
+                        </div>
+                        <div class="col-md-4 text-right">
+                            <button *ngIf="currentStep < totalSteps" 
+                                    class="btn btn-primary px-4" 
+                                    (click)="nextStep()"
+                                    [disabled]="(currentStep === 1 && !selectedCategory) || 
+                                               (currentStep === 2 && hasExistingCourses && !selectedCourse && !skipCourseCreation)">
+                                Next <i class="fa fa-arrow-right ml-1"></i>
+                            </button>
+                            <button *ngIf="currentStep === totalSteps" 
+                                    class="btn btn-success px-4" 
+                                    (click)="finish()">
+                                <i class="fa fa-check mr-1"></i> Finish & View Courses
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

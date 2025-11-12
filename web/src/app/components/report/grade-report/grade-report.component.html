@@ -47,7 +47,7 @@
     <div *ngIf="reportList.length != 0">
         <div ngbAccordion *ngFor="let classData of reportList; let classIndex = index; let first = first" class="grade mb-2">
             <div ngbAccordionItem="{{classIndex}}" #accordion="ngbAccordionItem" [collapsed]="!first">
-                <h2 ngbAccordionHeader>
+                <h3 ngbAccordionHeader>
                     <button class="btn btn-link d-flex align-items-center justify-content-between p-2 w-100"
                             ngbAccordionToggle>
                         <h4 class="m-0">{{classData.class_name}} </h4>
@@ -57,13 +57,13 @@
                         </div>
                         <ng-template #uparrow><i aria-hidden="true" class="fa fa-caret-up"></i></ng-template>
                     </button>
-                </h2>
+                </h3>
                 <div ngbAccordionCollapse>
                     <div ngbAccordionBody>
                         <ng-template>
                             <div ngbAccordion *ngFor="let student of classData.student_list; let studentIndex = index; let first = first" class="subject mb-2">
                                 <div ngbAccordionItem="{{studentIndex}}" #studentAccordion="ngbAccordionItem" [collapsed]="!first">
-                                    <h2 ngbAccordionHeader>
+                                    <h3 ngbAccordionHeader>
                                         <button class="btn btn-link d-flex align-items-center justify-content-between p-2 w-100"
                                                 ngbAccordionToggle>
                                             <h4 class="m-0">{{student?.student_name}} </h4>
@@ -72,13 +72,13 @@
                                             </div>
                                             <ng-template #uparrow><i aria-hidden="true" class="fa fa-caret-up"></i></ng-template>
                                         </button>
-                                    </h2>
+                                    </h3>
                                     <div ngbAccordionCollapse>
                                         <div ngbAccordionBody>
                                             <ng-template>
                                                 <div ngbAccordion class="content mb-2">
                                                     <div ngbAccordionItem="{{studentIndex}} + 'assessment'" #assessmentAccordion="ngbAccordionItem" [collapsed]="true">
-                                                        <h2 ngbAccordionHeader>
+                                                        <h3 ngbAccordionHeader>
                                                             <button class="btn btn-link d-flex align-items-center justify-content-between p-2 w-100"
                                                                     ngbAccordionToggle>
                                                                 <h4 class="m-0">ASSESSMENT</h4>
@@ -88,7 +88,7 @@
                                                                 </div>
                                                                 <ng-template #uparrow><i aria-hidden="true" class="fa fa-caret-up"></i></ng-template>
                                                             </button>
-                                                        </h2>
+                                                        </h3>
                                                         <div ngbAccordionCollapse>
                                                             <div ngbAccordionBody>
                                                                 <ng-template>
@@ -101,7 +101,7 @@
 
                                                 <div ngbAccordion class="content">
                                                     <div ngbAccordionItem="{{studentIndex}} + 'assignment'" #assignmentAccordion="ngbAccordionItem" [collapsed]="true">
-                                                        <h2 ngbAccordionHeader>
+                                                        <h3 ngbAccordionHeader>
                                                             <button class="btn btn-link d-flex align-items-center justify-content-between p-2 w-100"
                                                                     ngbAccordionToggle>
                                                                 <h4 class="m-0">ASSIGNMENT</h4>
@@ -111,7 +111,7 @@
                                                                 </div>
                                                                 <ng-template #uparrow><i aria-hidden="true" class="fa fa-caret-up"></i></ng-template>
                                                             </button>
-                                                        </h2>
+                                                        </h3>
                                                         <div ngbAccordionCollapse>
                                                             <div ngbAccordionBody>
                                                                 <ng-template>

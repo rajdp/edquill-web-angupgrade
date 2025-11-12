@@ -1405,7 +1405,7 @@ export class AnsweringComponent implements OnInit, AfterContentInit, AfterViewIn
             if (this.getData?.is_test == '1') {
                 this.contentName = this.getData?.content_name + ' - ' + this.getData?.subject + ' - ' + this.getData?.module_name;
                 const contentType = this.auth.getSessionData('ContentType');
-                this.contentType = contentType == 'Assessments' ? 'Assessment' : 'Assignment';
+                this.contentType = contentType == 'Quiz' ? 'Quiz' : 'Assignment';
             } else {
                 this.contentName = this.questionData.name;
                 this.contentType = this.questionData.content_type == '2' ? 'Assignment' : 'Assessment';

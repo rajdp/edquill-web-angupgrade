@@ -495,7 +495,7 @@ export class Dashboard3Component implements OnInit, OnDestroy{
             }
         } else if (value.content_type == '3') {
             if (value.student_content_status == 3) {
-                this.auth.setSessionData('ContentType', 'Assessments');
+                this.auth.setSessionData('ContentType', 'Quiz');
                 this.auth.setSessionData('student-card', JSON.stringify(value));
                 this.router.navigate(['/studentlogin/score-card']);
             } else {
@@ -649,11 +649,11 @@ export class Dashboard3Component implements OnInit, OnDestroy{
                 this.ErrorTitle = selectedData.class_name;
                 this.modalRef = this.modalService.open(this.throwError, {size: 'md'});
             } else if (selectedData.student_content_status == 3) {
-                this.auth.setSessionData('ContentType', 'Assessments');
+                this.auth.setSessionData('ContentType', 'Quiz');
                 this.auth.setSessionData('student-card', JSON.stringify(selectedData));
                 this.router.navigate(['/studentlogin/score-card']);
             } else {
-                this.auth.setSessionData('ContentType', 'Assessments');
+                this.auth.setSessionData('ContentType', 'Quiz');
                 if (selectedData.content_format == '3' && selectedData.content_started_at == null &&
                     (selectedData.student_content_status == '1' || selectedData.student_content_status == '2')) {
                         this.contentDetails = selectedData;
@@ -673,7 +673,7 @@ export class Dashboard3Component implements OnInit, OnDestroy{
                         }
                     });
                 } else {
-                    this.auth.setSessionData('ContentType', 'Assessments');
+                    this.auth.setSessionData('ContentType', 'Quiz');
                     if (selectedData?.is_test == '1') {
                         this.testDetails(selectedData);
                     } else {

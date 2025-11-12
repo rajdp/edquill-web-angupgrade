@@ -1,6 +1,6 @@
 import {HostListener, Injectable} from '@angular/core';
 import {HttpClient} from '@angular/common/http';
-import {BehaviorSubject} from 'rxjs';
+import {BehaviorSubject, Observable} from 'rxjs';
 import {DeviceDetectorService} from 'ngx-device-detector';
 import {environment} from '../environments/environment';
 
@@ -29,6 +29,10 @@ export class EnvironmentService {
     public basePath: string;
     public mobileView = false;
     public envRecieved = new BehaviorSubject<boolean>(false);
+    private readonly tenantKeyIgnoredHosts = new Set(['localhost', '127.0.0.1', '0.0.0.0']);
+    private readonly tenantKeyIgnoredSegments = new Set(['www']);
+    private tenantKeySubject = new BehaviorSubject<string | null>(null);
+    public tenantKey$: Observable<string | null> = this.tenantKeySubject.asObservable();
 
     get env(): Environment {
         return this.envProperties.env;
@@ -55,6 +59,63 @@ export class EnvironmentService {
         return this.envProperties.version;
     }
 
+    get tenantKey(): string | null {
+        return this.tenantKeySubject.value;
+    }
+
+    public resolveTenantKey(hostname?: string): string | null {
+        const currentHost = (hostname ?? this.getCurrentHostname()).trim().toLowerCase();
+        if (!currentHost) {
+            return null;
+        }
+
+        if (this.isLocalHostname(currentHost)) {
+            return null;
+        }
+
+        const segments = currentHost.split('.').filter(segment => !!segment);
+        if (segments.length < 2) {
+            return null;
+        }
+
+        const [tenantCandidate] = segments;
+        if (!tenantCandidate || this.tenantKeyIgnoredSegments.has(tenantCandidate)) {
+            return null;
+        }
+
+        return tenantCandidate;
+    }
+
+    public setTenantKey(tenantKey: string | null): void {
+        const normalized = tenantKey ? tenantKey.trim().toLowerCase() : null;
+        this.tenantKeySubject.next(normalized || null);
+    }
+
+    public refreshTenantKeyFromHost(hostname?: string): string | null {
+        const resolved = this.resolveTenantKey(hostname);
+        this.setTenantKey(resolved);
+        return resolved;
+    }
+
+    private getCurrentHostname(): string {
+        if (typeof window === 'undefined' || !window?.location?.hostname) {
+            return '';
+        }
+        return window.location.hostname.toLowerCase();
+    }
+
+    private isLocalHostname(hostname: string): boolean {
+        if (!hostname) {
+            return true;
+        }
+
+        if (this.tenantKeyIgnoredHosts.has(hostname)) {
+            return true;
+        }
+
+        return false;
+    }
+
     constructor(private http: HttpClient, private deviceService: DeviceDetectorService) {
         console.log('[ENV] Initializing EnvironmentService');
         
@@ -71,6 +132,10 @@ export class EnvironmentService {
             apiHost: this.envProperties.apiHost,
             webHost: this.envProperties.webHost
         });
+
+        const initialTenantKey = this.resolveTenantKey();
+        this.tenantKeySubject.next(initialTenantKey);
+        console.log('[ENV] Tenant key detected:', initialTenantKey || 'none');
         
         this.mobileView = this.deviceType();
         this.envRecieved.asObservable();

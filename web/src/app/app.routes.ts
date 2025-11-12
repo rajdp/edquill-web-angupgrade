@@ -11,8 +11,17 @@ import { TutorconnectComponent } from './components/auth/tutorconnect/tutorconne
 import { content } from './shared/routes/content-routes';
 import { AuthGuardService } from './shared/service/authgaurd';
 import { RoleGaurd } from './shared/service/roleGaurd';
+import { SelfRegistrationComponent } from './components/self-registration/self-registration.component';
 
 export const appRoutes: Routes = [
+  {
+    path: 'register',
+    component: SelfRegistrationComponent
+  },
+  {
+    path: 'register/:schoolKey',
+    component: SelfRegistrationComponent
+  },
   {
     path: '',
     redirectTo: 'auth/login',

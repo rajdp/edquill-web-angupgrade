@@ -7,8 +7,12 @@ import {SeoComponent} from './seo/seo.component';
 import {CourseDetailsAddComponent} from './details/course-details-add/course-details-add.component';
 import {CourseCategoryAddComponent} from './category/course-category-add/course-category-add.component';
 import {CourseFaqAddComponent} from "./faq/course-faq-add/course-faq-add.component";
+import {CourseWizardComponent} from "./course-wizard/course-wizard.component";
 
 const routes: Routes = [{
+    path: 'wizard',
+    component: CourseWizardComponent
+}, {
     path: 'category/list',
     component: CategoryComponent
 }, {

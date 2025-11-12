@@ -1,7 +1,7 @@
 import {Component, OnDestroy, OnInit, TemplateRef, ViewChild} from '@angular/core';
 import {AuthService} from '../../../shared/service/auth.service';
 import {CommonDataService} from '../../../shared/service/common-data.service';
-import {Router} from '@angular/router';
+import {ActivatedRoute, Params, Router} from '@angular/router';
 import {NgbModalConfig, NgbModal, NgbModalRef} from '@ng-bootstrap/ng-bootstrap';
 import {ConfigurationService} from '../../../shared/service/configuration.service';
 import {DatePipe, TitleCasePipe} from '@angular/common';
@@ -171,6 +171,21 @@ export class ListClassComponent implements OnInit, OnDestroy {
     public showBulkEmailLoader = false;
     public courseListData = [];
     public filtersExpanded = false;
+    public selectDay: any = null;
+    public daysOfWeek = [
+        { value: '1', label: 'Monday' },
+        { value: '2', label: 'Tuesday' },
+        { value: '3', label: 'Wednesday' },
+        { value: '4', label: 'Thursday' },
+        { value: '5', label: 'Friday' },
+        { value: '6', label: 'Saturday' },
+        { value: '7', label: 'Sunday' }
+    ];
+    public courseFilterContext: { id: string; name?: string } | null = null;
+    public isCourseFilterActive = false;
+    private courseFilterManuallyCleared = false;
+    private hasBootstrapCompleted = false;
+    private suppressSessionCourseLoad = false;
 
     @ViewChild('class') AddClass: TemplateRef<any>;
     @ViewChild('reports') reports: TemplateRef<any>;
@@ -200,7 +215,7 @@ export class ListClassComponent implements OnInit, OnDestroy {
 
     constructor(private formBuilder: FormBuilder, public config: NgbModalConfig, public confi: ConfigurationService, public teacher: TeacherService,
                 public auth: AuthService, public commondata: CommonDataService, private modalService: NgbModal, public sanitizer: DomSanitizer,
-                public route: Router, public firstcaps: TitleCasePipe, public toastr: ToastrService, public env: EnvironmentService,
+                public route: Router, private activatedRoute: ActivatedRoute, public firstcaps: TitleCasePipe, public toastr: ToastrService, public env: EnvironmentService,
                 public newService: NewsubjectService, private sseClient: SseClient, public datePipe: DatePipe, public zoomService: ZoomServiceService,
                 public common: CommonService, public classes: ClassService, public student: StudentService, public validationService: ValidationService) {
         this.roleId = this.auth.getRoleId();
@@ -335,6 +350,11 @@ export class ListClassComponent implements OnInit, OnDestroy {
             chips.push(`Courses: ${courses.length ? courses.join(', ') : this.selectCourse.length}`);
         }
 
+        if (this.selectDay) {
+            const day = this.daysOfWeek.find(d => d.value === this.selectDay);
+            chips.push(`Day: ${day?.label || 'Selected'}`);
+        }
+
         return chips;
     }
 
@@ -343,8 +363,54 @@ export class ListClassComponent implements OnInit, OnDestroy {
         return this.activeFilterChips.filter(chip => !basicPrefixes.some(prefix => chip.startsWith(prefix))).length;
     }
 
+    public get shouldShowCourseEmptyState(): boolean {
+        return this.isCourseFilterActive && !this.showLoader && this.choosedData.length === 0;
+    }
+
     public toggleFiltersPanel(): void {
         this.filtersExpanded = !this.filtersExpanded;
+    }
+
+    public getWeekdayLabels(slotDays: any[]): string {
+        if (!slotDays || !Array.isArray(slotDays) || slotDays.length === 0) {
+            return '';
+        }
+        
+        const dayLabels = slotDays
+            .map(day => {
+                const dayObj = this.daysOfWeek.find(d => d.value === String(day));
+                return dayObj ? dayObj.label : null;
+            })
+            .filter(label => label !== null)
+            .sort((a, b) => {
+                const aIndex = this.daysOfWeek.findIndex(d => d.label === a);
+                const bIndex = this.daysOfWeek.findIndex(d => d.label === b);
+                return aIndex - bIndex;
+            });
+        
+        return dayLabels.join(', ');
+    }
+
+    public getWeekdayLabel(slotDay: string): string {
+        const dayObj = this.daysOfWeek.find(d => d.value === String(slotDay));
+        return dayObj ? dayObj.label : '';
+    }
+
+    public formatTime(time: string): string {
+        if (!time) return '';
+        
+        // Parse time in HH:mm:ss format
+        const parts = time.split(':');
+        if (parts.length < 2) return time;
+        
+        let hours = parseInt(parts[0]);
+        const minutes = parts[1];
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        
+        hours = hours % 12;
+        hours = hours ? hours : 12; // 0 should be 12
+        
+        return `${hours}:${minutes} ${ampm}`;
     }
 
     setMakeUpClassForm() {
@@ -512,6 +578,17 @@ export class ListClassComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.auth.removeSessionData('backOption');
+        this.activatedRoute.queryParams.subscribe((params) => {
+            const filterChanged = this.captureCourseFilterContext(params);
+            if (!this.hasBootstrapCompleted) {
+                this.init();
+                this.hasBootstrapCompleted = true;
+            } else if (filterChanged) {
+                this.pageNo = 1;
+                this.choosedData = [];
+                this.classList(this.classlisthighlight);
+            }
+        });
     }
 
     ngOnDestroy(): void {
@@ -539,7 +616,9 @@ export class ListClassComponent implements OnInit, OnDestroy {
 
     init() {
         this.getSearch_Filter();
-        this.showLoader = false;
+        if (!this.classlisthighlight) {
+            this.classlisthighlight = '3';
+        }
         if (this.auth.getRoleId() == '2') {
             this.teacherList();
         }
@@ -813,7 +892,8 @@ export class ListClassComponent implements OnInit, OnDestroy {
             records_per_page: '10',
             search: this.searchClass && this.searchClass != '' ? this.searchClass.trimStart() : '',
             student_search: this.searchStudent && this.searchStudent != '' ? this.searchStudent.trimStart() : '',
-            course_id: this.auth.getRoleId() == '2' ? this.selectCourse : []
+            course_id: Array.isArray(this.selectCourse) ? this.selectCourse : [],
+            day_filter: this.selectDay ? this.selectDay : '0'
         };
         
         this.classes.classesList(data).subscribe((successData) => {
@@ -825,18 +905,21 @@ export class ListClassComponent implements OnInit, OnDestroy {
     }
 
     classListSuccess(successData) {
-        if (successData.IsSuccess) {
+        this.showLoader = false;
+        this.commondata.showLoader(false);
+        
+        if (successData && successData.IsSuccess) {
             const temp = successData.ResponseObject;
             
             // For first page (or when filters/search change), replace the data
             if (this.pageNo == 1) {
-                this.choosedData = successData.ResponseObject;
+                this.choosedData = successData.ResponseObject || [];
                 this.choosedData.forEach(element => {
                     element.checked = false;
                 });
             }
             // For pagination (infinite scroll), append to existing data
-            else if (this.pageNo > 1 && temp.length > 0) {
+            else if (this.pageNo > 1 && temp && temp.length > 0) {
                 for (let entry of temp) {
                     this.choosedData.push(entry);
                 }
@@ -852,13 +935,17 @@ export class ListClassComponent implements OnInit, OnDestroy {
             this.subs.forEach(val => val.unsubscribe());
             this.messageSubs.forEach(value => value.unsubscribe());
             
-            this.showLoader = false;
-            
             // Load comment and message counts if there's data
             if (this.choosedData.length != 0) {
                 this.getCommentListCount();
                 this.auth.getRoleId() == '4' ? this.getMessageListCount() : '';
             }
+        } else {
+            this.choosedData = [];
+            const errorMsg = successData && successData.ErrorObject 
+                ? successData.ErrorObject 
+                : 'Unable to load classes right now.';
+            this.toastr.error(errorMsg, 'Class');
         }
     }
 
@@ -872,13 +959,51 @@ export class ListClassComponent implements OnInit, OnDestroy {
         this.searchText = '';
         this.selectCurriculumFolder = null;
         this.classlisthighlight = 3;
-        this.selectCourse = [];
+        this.selectDay = null;
+        this.clearCourseFilter(false);
         this.setSearch_Filter(this.classlisthighlight);
         this.pageNo = 1;
         this.classList(this.classlisthighlight);
     }
 
+    clearCourseFilter(shouldRefresh: boolean = true) {
+        if (!this.isCourseFilterActive && (!this.selectCourse || this.selectCourse.length === 0)) {
+            return;
+        }
+        this.courseFilterManuallyCleared = true;
+        this.courseFilterContext = null;
+        this.isCourseFilterActive = false;
+        this.selectCourse = [];
+        this.route.navigate([], {
+            relativeTo: this.activatedRoute,
+            queryParams: {},
+            replaceUrl: true
+        });
+        if (shouldRefresh) {
+            this.pageNo = 1;
+            this.choosedData = [];
+            this.classList(this.classlisthighlight);
+        }
+    }
+
+    navigateToAddClassForCourse() {
+        if (this.courseFilterContext?.id) {
+            this.auth.setSessionData('filter_course_id', this.courseFilterContext.id);
+            this.auth.setSessionData('filter_course_name', this.courseFilterContext?.name ?? '');
+            this.route.navigate(['/class/create-class/add'], {
+                queryParams: {
+                    course_id: this.courseFilterContext.id,
+                    course_name: this.courseFilterContext?.name
+                }
+            });
+        } else {
+            this.route.navigate(['/class/create-class/add']);
+        }
+    }
+
     classListFailure(error) {
+        this.showLoader = false;
+        this.commondata.showLoader(false);
         console.log(error, 'error');
     }
 
@@ -953,15 +1078,18 @@ export class ListClassComponent implements OnInit, OnDestroy {
     }
 
     idListSuccess(successData) {
-        if (successData.IsSuccess) {
+        if (successData && successData.IsSuccess) {
             this.idData = successData.ResponseObject;
             this.auth.setSessionData('teacher_id', this.idData[0]?.school_idno);
-            this.classList(this.classlisthighlight);
         }
+        // Always call classList to load classes, even if idList fails
+        this.classList(this.classlisthighlight);
     }
 
     idListFailure(error) {
         console.log(error, 'error');
+        // Still try to load classes even if getting school ID fails
+        this.classList(this.classlisthighlight);
     }
 
     showInformation(data) {
@@ -1278,8 +1406,10 @@ export class ListClassComponent implements OnInit, OnDestroy {
     // }
 
     setSearch_Filter(id) {
-        let data = JSON.parse(this.auth.getSessionData(SessionConstants.classSearch));
-        if (data != null) {
+        const sessionData = this.auth.getSessionData(SessionConstants.classSearch);
+        let data = sessionData ? JSON.parse(sessionData) : null;
+        
+        if (data != null && Array.isArray(data)) {
             data.forEach((items) => {
                 if (items.school_id == this.auth.getSessionData('school_id')) {
                     items.studentName = this.searchStudent;
@@ -1290,6 +1420,7 @@ export class ListClassComponent implements OnInit, OnDestroy {
                     items.curriculum_Folder = this.selectCurriculumFolder;
                     items.classDateStatus = id;
                     items.course_id = this.selectCourse;
+                    items.day_filter = this.selectDay;
                 } else {
                     const searchData = {
                         grade: this.selectGrade,
@@ -1300,7 +1431,8 @@ export class ListClassComponent implements OnInit, OnDestroy {
                         curriculum_Folder: this.selectCurriculumFolder,
                         school_id: this.auth.getSessionData('school_id'),
                         classDateStatus: this.classlisthighlight,
-                        course_id: this.selectCourse
+                        course_id: this.selectCourse,
+                        day_filter: this.selectDay
                     };
                     data.push(searchData);
                 }
@@ -1315,7 +1447,16 @@ export class ListClassComponent implements OnInit, OnDestroy {
     }
 
     getSearch_Filter() {
-        const data = JSON.parse(this.auth.getSessionData(SessionConstants.classSearch));
+        const sessionData = this.auth.getSessionData(SessionConstants.classSearch);
+        if (!sessionData) {
+            return;
+        }
+        
+        const data = JSON.parse(sessionData);
+        if (!data || !Array.isArray(data)) {
+            return;
+        }
+        
         const teacher_id = this.auth.getRoleId() == '4' ? this.auth.getUserId() : '0';
         data.every((items) => {
             if (items.school_id == this.auth.getSessionData('school_id')) {
@@ -1327,7 +1468,10 @@ export class ListClassComponent implements OnInit, OnDestroy {
                 this.selectTeacher = items.teacher;
                 this.selectCurriculumFolder = items.curriculum_Folder;
                 this.classlisthighlight = items.classDateStatus || '3';
-                this.selectCourse = items.course_id || [];
+                if (!this.suppressSessionCourseLoad) {
+                    this.selectCourse = items.course_id || [];
+                }
+                this.selectDay = items.day_filter || null;
                 return false;
             } else {
                 this.searchClass = '';
@@ -1338,10 +1482,72 @@ export class ListClassComponent implements OnInit, OnDestroy {
                 this.selectTeacher = null;
                 this.selectCurriculumFolder = null;
                 this.classlisthighlight = '3';
-                this.selectCourse = [];
+                if (!this.suppressSessionCourseLoad) {
+                    this.selectCourse = [];
+                }
+                this.selectDay = null;
             }
             return true;
         });
+        this.suppressSessionCourseLoad = false;
+    }
+
+    private captureCourseFilterContext(params: Params): boolean {
+        const hasCourseParam = params && Object.prototype.hasOwnProperty.call(params, 'course_id');
+        const paramCourseId = params?.['course_id'];
+        const paramCourseName = params?.['course_name'];
+        let resolvedCourseId: string | null = null;
+        let resolvedCourseName: string | null = null;
+
+        if (paramCourseId !== undefined) {
+            resolvedCourseId = paramCourseId ? String(paramCourseId) : null;
+            resolvedCourseName = paramCourseName ?? null;
+        } else {
+            const storedId = this.auth.getSessionData('filter_course_id');
+            const storedName = this.auth.getSessionData('filter_course_name');
+            if (storedId) {
+                resolvedCourseId = String(storedId);
+                resolvedCourseName = storedName ?? null;
+            }
+        }
+
+        this.auth.removeSessionData('filter_course_id');
+        this.auth.removeSessionData('filter_course_name');
+
+        if (resolvedCourseId) {
+            return this.applyCourseFilterContext(resolvedCourseId, resolvedCourseName);
+        }
+        if (hasCourseParam) {
+            return this.applyCourseFilterContext(null, null);
+        }
+        return false;
+    }
+
+    private applyCourseFilterContext(courseId: string | null, courseName: string | null): boolean {
+        if (courseId) {
+            const changed = this.courseFilterContext?.id !== courseId;
+            this.courseFilterContext = {
+                id: courseId,
+                name: courseName ?? this.courseFilterContext?.name
+            };
+            this.isCourseFilterActive = true;
+            this.courseFilterManuallyCleared = false;
+            this.suppressSessionCourseLoad = true;
+            this.selectCourse = [courseId];
+            if (!this.filtersExpanded) {
+                this.filtersExpanded = true;
+            }
+            return changed;
+        }
+
+        if (!this.isCourseFilterActive || this.courseFilterManuallyCleared) {
+            return false;
+        }
+
+        this.courseFilterContext = null;
+        this.isCourseFilterActive = false;
+        this.selectCourse = [];
+        return true;
     }
 
     getClassDetails(classData, type) {

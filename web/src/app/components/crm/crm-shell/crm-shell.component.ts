@@ -13,6 +13,7 @@ interface CrmTab {
 })
 export class CrmShellComponent {
   tabs: CrmTab[] = [
+    { label: 'Registrations', link: 'registrations', icon: 'bi-person-plus' },
     { label: 'Guardians', link: 'guardians', icon: 'bi-people-fill' },
     { label: 'Fees', link: 'fees', icon: 'bi-currency-dollar' },
     { label: 'Notifications', link: 'notifications', icon: 'bi-chat-square-text' },

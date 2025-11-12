@@ -96,7 +96,7 @@ export class NavService {
                                 title: 'Grading', icon: 'shield', type: 'sub', active: false, children: [
                                     {
                                         path: '/student-content/list-content/new',
-                                        title: 'Student-Work',
+                                        title: 'By Student',
                                         icon: 'graduation-cap',
                                         imgePath: 'assets/images/mob-side-icon/assignment-correction.png',
                                         type: 'link',
@@ -104,7 +104,7 @@ export class NavService {
                                     },
                                     {
                                         path: '/assessment-correction/list-correction',
-                                        title: 'Assessment-Correction',
+                                        title: 'Quizzes',
                                         icon: 'object-group',
                                         imgePath: 'assets/images/mob-side-icon/assessment-correction.png',
                                         type: 'link',
@@ -112,7 +112,7 @@ export class NavService {
                                     },
                                     {
                                         path: '/assignment-correction/list-correction',
-                                        title: 'Assignment-Correction',
+                                        title: 'Assignments',
                                         icon: 'object-ungroup',
                                         imgePath: 'assets/images/mob-side-icon/assignment-correction.png',
                                         type: 'link',
@@ -441,13 +441,13 @@ export class NavService {
                         // 	{
                         // 		title: 'Grading', icon: 'shield', type: 'sub', active: false, children: [
                         // 			{
-                        // 				path: '/assessment-correction/list-correction', title: 'Assessment-Correction', icon: 'clipboard', imgePath: 'assets/images/mob-side-icon/assessment-correction.png', type: 'link',  active: false
+                        // 				path: '/assessment-correction/list-correction', title: 'Quizzes', icon: 'clipboard', imgePath: 'assets/images/mob-side-icon/assessment-correction.png', type: 'link',  active: false
                         // 			},
                         // 			{
                         // 				path: '/assignment-correction/list-correction', title: 'Assignment-Correction', icon: 'clipboard', imgePath: 'assets/images/mob-side-icon/assignment-correction.png', type: 'link',  active: false
                         // 			},
                         // 			{
-                        // 				path: '/student-content/list-content/new', title: 'Student-Work', icon: 'clipboard', imgePath: 'assets/images/mob-side-icon/assignment-correction.png', type: 'link',  active: false
+                        // 				path: '/student-content/list-content/new', title: 'Assignments', icon: 'clipboard', imgePath: 'assets/images/mob-side-icon/assignment-correction.png', type: 'link',  active: false
                         // 			}
                         // 		]
                         // 	},
@@ -546,14 +546,14 @@ export class NavService {
                                 title: 'Grading', icon: 'shield', type: 'sub', active: false, children: [
                                     {
                                         path: '/student-content/list-content/new',
-                                        title: 'Student-Work',
+                                        title: 'Assignments',
                                         icon: 'graduation-cap',
                                         imgePath: 'assets/images/mob-side-icon/assignment-correction.png',
                                         type: 'link',
                                         active: false
                                     }, {
                                         path: '/assessment-correction/list-correction',
-                                        title: 'Assessment-Correction',
+                                        title: 'Quizzes',
                                         icon: 'object-group',
                                         imgePath: 'assets/images/mob-side-icon/assessment-correction.png',
                                         type: 'link',
@@ -803,7 +803,7 @@ export class NavService {
                         },
                         {
                             path: '/studentlogin/assessment',
-                            title: 'Assessment',
+                            title: 'Quizzes',
                             icon: 'layers',
                             imgePath: 'assets/images/mob-side-icon/assessment-correction.png',
                             type: 'link',
@@ -811,7 +811,7 @@ export class NavService {
                         },
                         {
                             path: '/studentlogin/assignment',
-                            title: 'Assignment',
+                            title: 'Assignments',
                             icon: 'at-sign',
                             imgePath: 'assets/images/mob-side-icon/assignment-correction.png',
                             type: 'link',
@@ -943,7 +943,7 @@ export class NavService {
                         // {
                         // 	title: 'Grading', icon: 'shield', type: 'sub', active: false, children: [
                         // 		{
-                        // 			path: '/assessment-correction/list-correction', title: 'Assessment-Correction', icon: 'clipboard', imgePath: 'assets/images/mob-side-icon/assessment-correction.png', type: 'link',  active: false
+                        // 			path: '/assessment-correction/list-correction', title: 'Quizzes', icon: 'clipboard', imgePath: 'assets/images/mob-side-icon/assessment-correction.png', type: 'link',  active: false
                         // 		},
                         // 		{
                         // 			path: '/assignment-correction/list-correction', title: 'Assignment-Correction', icon: 'clipboard', imgePath: 'assets/images/mob-side-icon/assignment-correction.png', type: 'link',  active: false

@@ -157,7 +157,7 @@ export class ClassService {
 
     editClasses(data) {
         const json = JSON.stringify(data);
-        const url = 'classes/edit';
+        const url = 'classes/updateClass';
         return this.http.post(url, json).pipe(
             map(this.extractData),
             catchError(this.handleError));

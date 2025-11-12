@@ -1,0 +1,332 @@
+<div class="portal-wrapper" [class.loading]="loadingConfig">
+  <div class="portal-header" *ngIf="!loadingConfig">
+    <img
+      *ngIf="branding?.logo"
+      [src]="branding.logo"
+      class="portal-logo"
+      alt="School logo"
+      (error)="onLogoError()">
+    <div>
+      <h1>{{ branding?.hero_title || schoolName || 'Student Registration' }}</h1>
+      <p *ngIf="branding?.hero_subtitle">{{ branding.hero_subtitle }}</p>
+    </div>
+  </div>
+
+  <div class="loader" *ngIf="loadingConfig">
+    <div class="spinner"></div>
+    <p>Loading portal…</p>
+  </div>
+
+  <div class="confirmation" *ngIf="submissionCode && !loadingConfig">
+    <h3>Thank you! 🎉</h3>
+    <p>Your registration has been received.</p>
+    <p class="code">Confirmation ID: <strong>{{ submissionCode }}</strong></p>
+    <p *ngIf="submissionStatus">Status: <strong>{{ submissionStatus }}</strong></p>
+    <p>We’ll be in touch shortly with the next steps.</p>
+  </div>
+
+  <form *ngIf="!submissionCode && !loadingConfig" [formGroup]="form" (ngSubmit)="submit()" autocomplete="off">
+    <section class="card" formGroupName="student">
+      <h3>Student Information</h3>
+
+      <div class="grid">
+        <label>
+          <span>First Name *</span>
+          <input type="text" formControlName="first_name">
+        </label>
+        <label>
+          <span>Last Name *</span>
+          <input type="text" formControlName="last_name">
+        </label>
+        <label>
+          <span>Email *</span>
+          <input type="email" formControlName="email">
+        </label>
+        <div class="existing-student-banner"
+             [ngClass]="{'match': existingStudentState === 'match', 'error': existingStudentState === 'error'}"
+             *ngIf="existingStudentState !== 'idle'">
+          <ng-container [ngSwitch]="existingStudentState">
+            <div *ngSwitchCase="'searching'">
+              <i class="fa fa-spinner fa-spin mr-2"></i>
+              Checking for an existing student profile…
+            </div>
+
+            <div *ngSwitchCase="'match'">
+              <div class="existing-student-banner__header">
+                <strong>Existing profile found</strong>
+                <button type="button" (click)="dismissExistingStudentMatch()">This isn't me</button>
+              </div>
+              <p class="mb-1">{{ existingStudentMessage }}</p>
+              <ul class="existing-student-banner__details">
+                <li *ngIf="existingStudentMatch?.first_name || existingStudentMatch?.last_name">
+                  <strong>Student:</strong>
+                  {{ existingStudentMatch?.first_name }} {{ existingStudentMatch?.last_name }}
+                </li>
+                <li *ngIf="existingStudentMatch?.email">
+                  <strong>Email:</strong> {{ existingStudentMatch?.email }}
+                </li>
+                <li *ngIf="existingStudentMatch?.mobile">
+                  <strong>Mobile:</strong> {{ existingStudentMatch?.mobile }}
+                </li>
+              </ul>
+              <div class="existing-student-banner__courses" *ngIf="existingStudentActiveCourses.length">
+                <strong>Recent enrollments</strong>
+                <ul>
+                  <li *ngFor="let course of existingStudentActiveCourses">{{ course }}</li>
+                </ul>
+              </div>
+            </div>
+
+            <div *ngSwitchCase="'none'">
+              <i class="fa fa-check-circle text-success mr-1"></i>
+              {{ existingStudentMessage || 'No existing profile found. Please continue with the student details.' }}
+            </div>
+
+            <div *ngSwitchCase="'error'">
+              <i class="fa fa-exclamation-triangle text-warning mr-1"></i>
+              {{ existingStudentError || 'Unable to verify the student right now. You can still proceed.' }}
+            </div>
+          </ng-container>
+        </div>
+        <label>
+          <span>Mobile *</span>
+          <input type="tel" formControlName="mobile">
+        </label>
+        <label>
+          <span>Date of Birth</span>
+          <input type="date" formControlName="date_of_birth">
+        </label>
+        <label class="checkbox">
+          <input type="checkbox" formControlName="is_minor">
+          <span>Student is under 18</span>
+        </label>
+      </div>
+
+      <fieldset formGroupName="address">
+        <legend>Address</legend>
+        <div class="grid">
+          <label>
+            <span>Address Line 1</span>
+            <input type="text" formControlName="line1">
+          </label>
+          <label>
+            <span>Address Line 2</span>
+            <input type="text" formControlName="line2">
+          </label>
+          <label>
+            <span>City</span>
+            <input type="text" formControlName="city">
+          </label>
+          <label>
+            <span>State</span>
+            <input type="text" formControlName="state">
+          </label>
+          <label>
+            <span>Postal Code</span>
+            <input type="text" formControlName="postal_code">
+          </label>
+          <label>
+            <span>Country</span>
+            <input type="text" formControlName="country">
+          </label>
+        </div>
+      </fieldset>
+    </section>
+
+    <section class="card" formGroupName="guardian">
+      <h3>Parent / Guardian</h3>
+      <p class="help">
+        Required if student is a minor.
+      </p>
+
+      <div class="grid" formGroupName="primary">
+        <label>
+          <span>Primary Contact Name</span>
+          <input type="text" formControlName="name">
+        </label>
+        <label>
+          <span>Email</span>
+          <input type="email" formControlName="email">
+        </label>
+        <label>
+          <span>Phone</span>
+          <input type="tel" formControlName="phone">
+        </label>
+      </div>
+
+      <div class="grid" formGroupName="secondary">
+        <label>
+          <span>Secondary Contact Name</span>
+          <input type="text" formControlName="name">
+        </label>
+        <label>
+          <span>Email</span>
+          <input type="email" formControlName="email">
+        </label>
+        <label>
+          <span>Phone</span>
+          <input type="tel" formControlName="phone">
+        </label>
+      </div>
+    </section>
+
+    <section class="card">
+      <h3>Program Selection *</h3>
+      <ng-select
+        [items]="courses"
+        bindLabel="course_name"
+        bindValue="course_id"
+        [multiple]="true"
+        placeholder="Select course(s)"
+        formControlName="courses">
+        <ng-template ng-label-tmp let-item="item">
+          {{ item.course_name }}<span *ngIf="item.fees"> — {{ item.fees | currency:'USD':'symbol':'1.0-2' }}</span>
+        </ng-template>
+        <ng-template ng-option-tmp let-item="item">
+          <div class="course-option-title">{{ item.course_name }}</div>
+          <div class="course-option-desc" *ngIf="item.short_description">{{ item.short_description }}</div>
+          <div class="course-option-fee" *ngIf="item.fees">Fee: {{ item.fees | currency:'USD':'symbol':'1.0-2' }}</div>
+        </ng-template>
+      </ng-select>
+      <small class="help">Choose one or more available programs.</small>
+
+      <div class="selected-courses" *ngIf="selectedCourses.length">
+        <div class="selected-course" *ngFor="let course of selectedCourses">
+          <div class="selected-course__header">
+            <h4 class="mb-1">{{ course.course_name }}</h4>
+            <span class="badge bg-primary-subtle text-primary" *ngIf="course.fees !== null">
+              Base Fee: {{ course.fees | currency:'USD':'symbol':'1.0-2' }}
+            </span>
+          </div>
+          <p class="text-muted" *ngIf="course.short_description">{{ course.short_description }}</p>
+          <p *ngIf="course.description">{{ course.description }}</p>
+
+          <div class="schedule-selector" *ngIf="course.schedules?.length">
+            <label class="form-label">Preferred Schedule</label>
+            <select class="form-select"
+                    [value]="selectedSchedules[course.course_id] ?? ''"
+                    (change)="onScheduleChange(course.course_id, $event.target.value)">
+              <option value="">No preference</option>
+              <option *ngFor="let schedule of course.schedules" [value]="schedule.schedule_id">
+                {{ schedule.schedule_title || ('Schedule #' + schedule.schedule_id) }}
+                <span *ngIf="schedule.actual_cost"> — {{ schedule.actual_cost | currency:'USD':'symbol':'1.0-2' }}</span>
+                <span *ngIf="!schedule.actual_cost && schedule.cost"> — {{ schedule.cost | currency:'USD':'symbol':'1.0-2' }}</span>
+              </option>
+            </select>
+            <div class="text-muted small mt-2" *ngIf="selectedSchedules[course.course_id]">
+              <ng-container *ngFor="let schedule of course.schedules">
+                <div *ngIf="schedule.schedule_id === selectedSchedules[course.course_id]">
+                  <div *ngIf="schedule.course_start_date || schedule.course_end_date">
+                    Runs {{ schedule.course_start_date | date }} - {{ schedule.course_end_date | date }}
+                  </div>
+                  <div *ngIf="schedule.registration_start_date || schedule.registration_end_date">
+                    Registration {{ schedule.registration_start_date | date }} - {{ schedule.registration_end_date | date }}
+                  </div>
+                </div>
+              </ng-container>
+            </div>
+          </div>
+
+          <div class="course-documents mt-3" *ngIf="course.documentation_requirements">
+            <div class="alert alert-info">
+              <h6 class="mb-2"><i class="fa fa-file-text-o mr-2"></i>Required Documentation</h6>
+              <p class="mb-2" style="white-space: pre-line;">{{ course.documentation_requirements }}</p>
+              <button type="button" class="btn btn-sm btn-primary mt-2" (click)="docInput.click()">
+                <i class="fa fa-upload mr-1"></i> Upload Documents for {{ course.course_name }}
+              </button>
+              <input #docInput type="file" multiple style="display: none" 
+                     (change)="onDocumentsSelected($event, course.course_id, course.course_name)">
+            </div>
+            
+            <div class="uploaded-docs mt-2" *ngIf="getDocumentsForCourse(course.course_id).length">
+              <h6 class="mb-2">Uploaded for {{ course.course_name }}:</h6>
+              <ul class="list-group">
+                <li class="list-group-item d-flex justify-content-between align-items-center" 
+                    *ngFor="let doc of getDocumentsForCourse(course.course_id); index as i">
+                  <span>
+                    <i class="fa fa-file-o mr-2"></i>{{ doc.name }}
+                    <small class="text-muted ml-2">({{ (doc.size / 1024).toFixed(2) }} KB)</small>
+                  </span>
+                  <button type="button" class="btn btn-sm btn-danger" 
+                          (click)="removeDocument(documents.indexOf(doc))">
+                    <i class="fa fa-trash"></i>
+                  </button>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h3>Schedule &amp; Additional Documents</h3>
+      <label>
+        <span>Schedule preference</span>
+        <textarea formControlName="schedule_preference" rows="3" 
+                  placeholder="Enter any schedule preferences or special requests..."></textarea>
+      </label>
+
+      <div class="documents mt-3">
+        <h6>General Documents (Optional)</h6>
+        <p class="help text-muted">Upload any additional documents not specific to a course.</p>
+        <button type="button" class="btn btn-secondary btn-sm" (click)="documentInput.click()">
+          <i class="fa fa-upload mr-1"></i> Upload General Documents
+        </button>
+        <input #documentInput type="file" multiple (change)="onDocumentsSelected($event)">
+        <p class="help text-muted small mt-2">Accepted formats: PDF, JPG, PNG. Max 10MB each.</p>
+
+        <ul class="list-group mt-2" *ngIf="getGeneralDocuments().length">
+          <li class="list-group-item d-flex justify-content-between align-items-center" 
+              *ngFor="let doc of getGeneralDocuments(); index as i">
+            <span>
+              <i class="fa fa-file-o mr-2"></i>{{ doc.name }}
+              <small class="text-muted ml-2">({{ (doc.size / 1024).toFixed(2) }} KB)</small>
+            </span>
+            <button type="button" class="btn btn-sm btn-danger" (click)="removeDocument(documents.indexOf(doc))">
+              <i class="fa fa-trash"></i>
+            </button>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="card" formGroupName="payment">
+      <h3>Payment Preference</h3>
+      <label>
+        <span>Method</span>
+        <select formControlName="method">
+          <option value="pending">Decide later</option>
+          <option value="card">Credit / Debit Card</option>
+          <option value="ach">Bank Transfer / ACH</option>
+          <option value="cash">Cash</option>
+          <option value="check">Check</option>
+          <option value="waived">Scholarship / Waived</option>
+        </select>
+      </label>
+      <label class="checkbox">
+        <input type="checkbox" formControlName="autopay">
+        <span>Authorize autopay if available</span>
+      </label>
+    </section>
+
+    <section class="card" formGroupName="agreements">
+      <h3>Agreements</h3>
+      <label class="checkbox">
+        <input type="checkbox" formControlName="terms">
+        <span>I agree to the <a *ngIf="policies?.terms_url" [href]="policies.terms_url" target="_blank">Terms &amp; Conditions</a><span *ngIf="!policies?.terms_url">Terms &amp; Conditions</span>.</span>
+      </label>
+      <label class="checkbox">
+        <input type="checkbox" formControlName="privacy">
+        <span>I have read the <a *ngIf="policies?.privacy_url" [href]="policies.privacy_url" target="_blank">Privacy Policy</a><span *ngIf="!policies?.privacy_url">Privacy Policy</span>.</span>
+      </label>
+    </section>
+
+    <div class="actions">
+      <button type="submit" [disabled]="submitting">
+        <span *ngIf="!submitting">Submit Registration</span>
+        <span *ngIf="submitting">Submitting…</span>
+      </button>
+    </div>
+  </form>
+</div>

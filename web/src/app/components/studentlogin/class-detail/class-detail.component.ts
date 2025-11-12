@@ -175,7 +175,7 @@ export class ClassDetailComponent implements OnInit {
             this.auth.setSessionData('classDetails', JSON.stringify(selectedData));
             this.route.navigate(['studentlogin/preview']);
         } else if (selectedData.content_type == '2') {
-            this.auth.setSessionData('ContentType', selectedData.content_type == '2' ? 'Assignments' : 'Assessments');
+            this.auth.setSessionData('ContentType', selectedData.content_type == '2' ? 'Assignments' : 'Quiz');
             if (selectedData.student_content_status != 3) {
                 if (selectedData.content_format == '3' && selectedData.content_started_at == null && (selectedData.student_content_status == '1' || selectedData.student_content_status == '2')) {
                         this.contentDetails = selectedData;
@@ -249,7 +249,7 @@ export class ClassDetailComponent implements OnInit {
             this.ErrorTitle = this.choosedData[0]?.class_name;
             this.modalRef = this.modalService.open(this.throwError, {size: 'md'});
         } else if (detail.student_content_status != 3) {
-            this.auth.setSessionData('ContentType', detail.content_type == '2' ? 'Assignments' : 'Assessments');
+            this.auth.setSessionData('ContentType', detail.content_type == '2' ? 'Assignments' : 'Quiz');
             if (detail.content_format == '3' && detail.content_started_at == null &&
                     (detail.student_content_status == '1' || detail.student_content_status == '2')) {
                         this.contentDetails = detail;
@@ -268,7 +268,7 @@ export class ClassDetailComponent implements OnInit {
                     }
                 });
             } else {
-                this.auth.setSessionData('ContentType', detail.content_type == '2' ? 'Assignments' : 'Assessments');
+                this.auth.setSessionData('ContentType', detail.content_type == '2' ? 'Assignments' : 'Quiz');
                 detail.available_content_duration = detail.content_duration != '0' ? parseInt(detail.content_duration) * 60 :
                     detail.content_time_taken != '0' ? parseInt(detail.content_time_taken) : 0;
                 if (detail?.is_test == '1') {

@@ -33,6 +33,7 @@ import { DatePipe } from '@angular/common';
 import { ServerHttpInterceptor } from './shared/service/http.interceptor';
 import { appRoutes } from './app.routes';
 import { WINDOW_PROVIDERS } from './shared/service/windows.service';
+import { SelfRegistrationModule } from './components/self-registration/self-registration.module';
 
 const calendarModule = CalendarModule.forRoot({
   provide: DateAdapter,
@@ -70,6 +71,7 @@ export const appConfig: ApplicationConfig = {
       AuthModule,
       MailboxModule,
       UsersModule,
+      SelfRegistrationModule,
       ToastrModule.forRoot()
     ),
     NgbTooltipConfig,

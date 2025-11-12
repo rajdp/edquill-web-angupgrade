@@ -235,7 +235,7 @@ export class CorrectionPageComponent implements OnInit, OnDestroy {
         }
         this.invalidData = false;
         this.showpdf = false;
-        this.buttonName = 'Assessments and uploads';
+        this.buttonName = 'Quiz and uploads';
         this.questionType = 4;
         this.showingType = 1;
         this.showPDFAnswer = false;
@@ -317,7 +317,7 @@ export class CorrectionPageComponent implements OnInit, OnDestroy {
     showType(id) {
         this.showingType = id;
         if (id == '1') {
-            this.buttonName = 'Assessments and uploads';
+            this.buttonName = 'Quiz and uploads';
         } else if (id == '2') {
             this.buttonName = 'Answer sheet';
         } else if (id == '3') {
@@ -1019,7 +1019,7 @@ export class CorrectionPageComponent implements OnInit, OnDestroy {
                     }
                 } else {
                     this.showingType = '1';
-                    this.buttonName = 'Assessments and uploads';
+                    this.buttonName = 'Quiz and uploads';
                     this.studentPoints = this.studentAnswer.earned_points;
                     this.totalPoints = this.studentAnswer.points;
                     this.totalFeedBack = this.studentAnswer.feedback;

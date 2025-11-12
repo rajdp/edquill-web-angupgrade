@@ -418,7 +418,7 @@ export class AssessmentComponent {
     answerPage(list) {
         console.log(list, 'assess_data');
         if (list.student_content_status == 3) {
-            this.auth.setSessionData('ContentType', 'Assessments');
+            this.auth.setSessionData('ContentType', 'Quiz');
             this.auth.setSessionData('student-card', JSON.stringify(list));
             this.route.navigate(['/studentlogin/score-card']);
         }
@@ -493,12 +493,12 @@ export class AssessmentComponent {
                 this.modalRef = this.modalService.open(this.throwError, { size: 'md' });
             }
             else if (selectedData.student_content_status == 3) {
-                this.auth.setSessionData('ContentType', 'Assessments');
+                this.auth.setSessionData('ContentType', 'Quiz');
                 this.auth.setSessionData('student-card', JSON.stringify(selectedData));
                 this.route.navigate(['/studentlogin/score-card']);
             }
             else {
-                this.auth.setSessionData('ContentType', 'Assessments');
+                this.auth.setSessionData('ContentType', 'Quiz');
                 if (selectedData.content_format == '3' && selectedData.content_started_at == null &&
                     (selectedData.student_content_status == '1' || selectedData.student_content_status == '2')) {
                     this.contentDetails = selectedData;

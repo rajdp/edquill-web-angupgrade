@@ -11,6 +11,7 @@ import { CrmGuardiansComponent } from './guardians/guardians.component';
 import { CrmFeesComponent } from './fees/fees.component';
 import { CrmNotificationsComponent } from './notifications/notifications.component';
 import { CrmReportCardsComponent } from './report-cards/report-cards.component';
+import { CrmRegistrationsComponent } from './registrations/registrations.component';
 
 @NgModule({
   declarations: [
@@ -18,7 +19,8 @@ import { CrmReportCardsComponent } from './report-cards/report-cards.component';
     CrmGuardiansComponent,
     CrmFeesComponent,
     CrmNotificationsComponent,
-    CrmReportCardsComponent
+    CrmReportCardsComponent,
+    CrmRegistrationsComponent
   ],
   imports: [
     CommonModule,

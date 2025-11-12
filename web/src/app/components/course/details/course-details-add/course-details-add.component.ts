@@ -29,6 +29,9 @@ export class CourseDetailsAddComponent implements OnInit {
     public imagePath = '';
     public webhost: any;
     public recordBase64Url: any;
+    public isWizardMode = false;
+    private categoriesLoaded = false;
+    private subjectsLoaded = false;
     public courseStatus = [{id: 'D', value: 'Draft'}, {id: 'P', value: 'Ready for review'}, {
         id: 'A',
         value: 'Approved'
@@ -95,6 +98,9 @@ export class CourseDetailsAddComponent implements OnInit {
         this.route.params.forEach((params) => {
             this.type = params.type;
         });
+        
+        // Check if coming from wizard
+        this.isWizardMode = this.auth.getSessionData('wizard_return') === 'true';
         this.webhost = this.env.imgUrl;
         this.init();
         this.declareFormGroup();
@@ -133,6 +139,7 @@ export class CourseDetailsAddComponent implements OnInit {
             course_content: '',
             prerequisites: '',
             other_details: '',
+            documentation_requirements: '',
             path: '',
             fees: '',
             author: '',
@@ -309,6 +316,8 @@ export class CourseDetailsAddComponent implements OnInit {
     categoryListSuccess(successData) {
         this.categoryListData = successData.IsSuccess? successData.ResponseObject : [];
         console.log(this.maximumCount, 'maximumCount');
+        this.categoriesLoaded = true;
+        this.checkAndFilterSubjects();
     }
 
     getSubjectList() {
@@ -331,9 +340,17 @@ export class CourseDetailsAddComponent implements OnInit {
     subjectListSuccess(successData) {
         this.subjectListData = successData.IsSuccess ? successData.ResponseObject : [];
         this.fullSubjectList = successData.IsSuccess ? JSON.stringify(successData.ResponseObject) : JSON.stringify([]);
-        if (this.type == 'edit') {
+        this.subjectsLoaded = true;
+        this.checkAndFilterSubjects();
+    }
+
+    checkAndFilterSubjects() {
+        // Only filter subjects when both categories and subjects are loaded
+        if (this.type == 'edit' && this.categoriesLoaded && this.subjectsLoaded) {
             this.courseEditDetails = JSON.parse(sessionStorage.getItem('getCourseDetails'));
-            this.updateSubjectList(this.courseEditDetails.category_id, 'edit');
+            if (this.courseEditDetails && this.courseEditDetails.category_id) {
+                this.updateSubjectList(this.courseEditDetails.category_id, 'edit');
+            }
         }
     }
 
@@ -377,6 +394,7 @@ export class CourseDetailsAddComponent implements OnInit {
         this.CourseDetails.controls.short_description.patchValue(this.courseEditDetails.short_description);
         this.CourseDetails.controls.subject_id.patchValue(this.courseEditDetails.subject_id.length != 0 ? this.courseEditDetails.subject_id[0] : []);
         this.CourseDetails.controls.contact_info.patchValue(this.courseEditDetails.contact_info ?? '');
+        this.CourseDetails.controls.documentation_requirements.patchValue(this.courseEditDetails.documentation_requirements ?? '');
         this.CourseDetails.controls.category_id.patchValue(this.courseEditDetails.category_id);
         this.CourseDetails.controls.grade_id.patchValue(this.courseEditDetails.grade_id.length != 0 ? this.courseEditDetails.grade_id : []);
         this.CourseDetails.controls.path.patchValue(this.courseEditDetails.path);
@@ -572,6 +590,7 @@ export class CourseDetailsAddComponent implements OnInit {
                     prerequisites: this.CourseDetails.controls.prerequisites.value ? this.CourseDetails.controls.prerequisites.value : '',
                     course_content: this.CourseDetails.controls.course_content.value ? this.CourseDetails.controls.course_content.value : '',
                     other_details: this.CourseDetails.controls.other_details.value ? this.CourseDetails.controls.other_details.value : '',
+                    documentation_requirements: this.CourseDetails.controls.documentation_requirements.value ? this.CourseDetails.controls.documentation_requirements.value : '',
                     author: this.CourseDetails.controls.author.value ? this.CourseDetails.controls.author.value : '',
                     lessons: this.CourseDetails.controls.lessons.value ? this.CourseDetails.controls.lessons.value : '',
                     path: this.imagePath,
@@ -627,9 +646,19 @@ export class CourseDetailsAddComponent implements OnInit {
     addCourseSuccess(successData) {
         if (successData.IsSuccess) {
             this.toastr.success(successData.ResponseObject);
-            this.router.navigate(['/course/details/list']);
+            
+            // Return to wizard if in wizard mode
+            if (this.isWizardMode) {
+                this.router.navigate(['/course/wizard']);
+            } else {
+                this.router.navigate(['/course/details/list']);
+            }
         } else {
             this.toastr.error(successData.ErrorObject);
         }
+    }
+
+    returnToWizard() {
+        this.router.navigate(['/course/wizard']);
     }
 }
