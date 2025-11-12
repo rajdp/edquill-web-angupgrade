@@ -1353,12 +1353,14 @@ export class ClassOverviewComponent implements OnInit, OnDestroy {
             grade: [gradeId],
             teacher_id: this.auth.getRoleId() === '4' ? this.auth.getUserId() : '0'
         };
+        console.log('[ClassOverview] loadClassOverview payload', payload);
         this.isLoading = true;
         this.commonData.showLoader(true);
         const sub = this.classService.classDetails(payload).subscribe({
             next: (response: ApiResponse<any[]>) => {
                 this.isLoading = false;
                 this.commonData.showLoader(false);
+                console.log('[ClassOverview] loadClassOverview response', response);
                 if (response?.IsSuccess && Array.isArray(response?.ResponseObject) && response.ResponseObject.length) {
                     [this.overview] = response.ResponseObject;
                     this.prepareViewModel();
@@ -1367,9 +1369,10 @@ export class ClassOverviewComponent implements OnInit, OnDestroy {
                     this.toastr.error('Unable to load class details');
                 }
             },
-            error: () => {
+            error: (error) => {
                 this.isLoading = false;
                 this.commonData.showLoader(false);
+                console.error('[ClassOverview] loadClassOverview error', error);
                 this.toastr.error('Unable to load class details');
             }
         });
@@ -2159,10 +2162,12 @@ export class ClassOverviewComponent implements OnInit, OnDestroy {
             students: selectedStudents,
             is_makeup: this.studentAddedType ?? '0'
         };
+        console.log('[ClassOverview] submitClass payload', payload);
         this.isSubmittingStudents = true;
         const sub = this.classService.submit(payload).subscribe({
             next: (response: ApiResponse<any>) => {
                 this.isSubmittingStudents = false;
+                console.log('[ClassOverview] submitClass response', response);
                 if (response?.IsSuccess) {
                     const successMessage = Array.isArray(response?.ResponseObject) && response.ResponseObject.length
                         ? response.ResponseObject[0]
@@ -2177,8 +2182,9 @@ export class ClassOverviewComponent implements OnInit, OnDestroy {
                     }
                 }
             },
-            error: () => {
+            error: (error) => {
                 this.isSubmittingStudents = false;
+                console.error('[ClassOverview] submitClass error', error);
                 this.addStudentError = 'Unable to add students right now.';
                 this.toastr.error(this.addStudentError);
             }
