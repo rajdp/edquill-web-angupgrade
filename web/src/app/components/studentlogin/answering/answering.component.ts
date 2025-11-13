@@ -1304,7 +1304,7 @@ export class AnsweringComponent implements OnInit, AfterContentInit, AfterViewIn
             });
             this.areaInfo = [...this.areaInfo, ...successData.ResponseObject.student_annotation, ...successData.ResponseObject.teacher_annotation];
             if(pdfPath[0]?.original_image_url != undefined) {
-                this.common.downloadfilewithbytes(this.webhost + '/' + pdfPath[0]?.original_image_url)
+                this.common.downloadfilewithbytes(this.webhost + '/' + pdfPath[0]?.original_image_url, { includeAuthHeader: false })
                     .subscribe((filebytes: ArrayBuffer) => {
                         this.pdfTemplate = filebytes;
                         this.functionCalled = true;

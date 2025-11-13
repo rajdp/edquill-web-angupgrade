@@ -194,7 +194,44 @@ export class QuestionPageComponent implements OnInit , OnDestroy , AfterContentI
         this.multihight = false;
         this.showTextEditor = 'text';
         this.editorType = true;
-        this.editData = JSON.parse(this.auth.getSessionData('textAssignValue')) ?? '';
+        // Try to get editData from multiple possible session keys
+        let textAssignValueStr = this.auth.getSessionData('textAssignValue');
+        let editResourcesStr = this.auth.getSessionData('editresources');
+        
+        if (textAssignValueStr) {
+            try {
+                this.editData = JSON.parse(textAssignValueStr);
+            } catch (e) {
+                console.error('Error parsing textAssignValue:', e);
+                this.editData = {};
+            }
+        } else if (editResourcesStr) {
+            try {
+                this.editData = JSON.parse(editResourcesStr);
+            } catch (e) {
+                console.error('Error parsing editresources:', e);
+                this.editData = {};
+            }
+        } else {
+            this.editData = {};
+        }
+        console.log('editData on init:', this.editData);
+        console.log('textAssignValue session:', textAssignValueStr);
+        console.log('editresources session:', editResourcesStr);
+        
+        // If editData is still empty or missing content_id, try to get it from other sources
+        if (!this.editData || !this.editData.content_id) {
+            // Check if content_id is stored separately
+            const contentIdFromSession = this.auth.getSessionData('content_id');
+            if (contentIdFromSession) {
+                if (!this.editData) {
+                    this.editData = {};
+                }
+                this.editData.content_id = contentIdFromSession;
+                console.log('Found content_id in session:', contentIdFromSession);
+            }
+        }
+        
         this.questionId = this.auth.getSessionData('questionID');
         console.log(this.questionId, 'questionID');
         this.matchType = 'single';
@@ -214,6 +251,39 @@ export class QuestionPageComponent implements OnInit , OnDestroy , AfterContentI
         if (this.type == 'edit') {
             this.questionEditData = JSON.parse(this.auth.getSessionData('questionData'));
             console.log(this.questionEditData, 'this.questionEditData');
+            console.log('options:', this.questionEditData.options, 'type:', typeof this.questionEditData.options);
+            console.log('answer:', this.questionEditData.answer, 'type:', typeof this.questionEditData.answer);
+            console.log('heading_option:', this.questionEditData.heading_option, 'type:', typeof this.questionEditData.heading_option);
+            // Ensure options and answer are arrays
+            if (this.questionEditData.options && typeof this.questionEditData.options === 'string') {
+                try {
+                    this.questionEditData.options = JSON.parse(this.questionEditData.options);
+                } catch (e) {
+                    console.error('Error parsing options:', e);
+                    this.questionEditData.options = [];
+                }
+            }
+            if (this.questionEditData.answer && typeof this.questionEditData.answer === 'string') {
+                try {
+                    this.questionEditData.answer = JSON.parse(this.questionEditData.answer);
+                } catch (e) {
+                    console.error('Error parsing answer:', e);
+                    this.questionEditData.answer = [];
+                }
+            }
+            // Ensure heading_option is an array (for matchTable questions)
+            if (this.questionEditData.heading_option && typeof this.questionEditData.heading_option === 'string') {
+                try {
+                    this.questionEditData.heading_option = JSON.parse(this.questionEditData.heading_option);
+                } catch (e) {
+                    console.error('Error parsing heading_option:', e);
+                    this.questionEditData.heading_option = [];
+                }
+            }
+            // Ensure heading_option is initialized if missing
+            if (!this.questionEditData.heading_option) {
+                this.questionEditData.heading_option = [];
+            }
             this.patchInit();
             this.inputType = this.questionEditData.editor_type == 1 ? 'text' : 'math';
         }
@@ -261,7 +331,7 @@ export class QuestionPageComponent implements OnInit , OnDestroy , AfterContentI
         }
         let formControl: any;
         if (this.questionId != '24') {
-            formControl = ['1', '2'].indexOf(this.questionId) > -1 ? this.multipleChoice : ['5', '7'].indexOf(this.questionId) > -1 ?
+            formControl = ['1', '2'].indexOf(this.questionId) > -1 ? this.multipleChoice : ['3', '5', '7'].indexOf(this.questionId) > -1 ?
                 this.matchTable : this.questionId == '9' ? this.fillDropDown : this.questionId == '10' ? this.textEntry :
                     this.questionId == '16' ? this.matchSort : ['20', '55'].indexOf(this.questionId) > - 1  ? this.richText : this.graphForm;
         } else {
@@ -296,6 +366,9 @@ export class QuestionPageComponent implements OnInit , OnDestroy , AfterContentI
     setQuestionTypeVariable() {
         if (this.questionId == '1' || this.questionId == '2') {
             this.commonNameForQuestionId = 'multipleChoiceQuestions';
+            this.commonPreview = 'preview';
+        } else if (this.questionId == '3') {
+            this.commonNameForQuestionId = 'matchTableQuestionsSingle';
             this.commonPreview = 'preview';
         } else if (this.questionId == '5') {
             this.commonNameForQuestionId = 'matchTableQuestionsSingle';
@@ -367,7 +440,7 @@ export class QuestionPageComponent implements OnInit , OnDestroy , AfterContentI
                 this.multipleChoice['controls'].addMultipleChoice['controls'][i]['controls']['active'].patchValue(this.questionEditData.answer[i].correctActive);
                 this.multipleChoice['controls'].addMultipleChoice['controls'][i]['controls']['selectOption'].patchValue(this.questionEditData.answer[i].correctAnswer);
             }
-        } else if (this.questionId == '5' || this.questionId == '7') {
+        } else if (this.questionId == '3' || this.questionId == '5' || this.questionId == '7') {
             this.addMultipleChoice = this.matchTable.get('addMultipleChoice') as FormArray;
             this.addMatchTableChoose = this.matchTable.get('addMatchTableChoose') as FormArray;
             for (let i = this.addMultipleChoice.length; this.addMultipleChoice.length > 0; i--) {
@@ -399,7 +472,7 @@ export class QuestionPageComponent implements OnInit , OnDestroy , AfterContentI
                 this.matchTable['controls'].addMatchTableChoose['controls'][i]['controls']['option'].patchValue(this.questionEditData.answer[i]);
             }
             setTimeout(()=> {
-                if (this.questionId == '5') {
+                if (this.questionId == '3' || this.questionId == '5') {
                     for (let i = 0; i < this.questionEditData.heading_option.length; i++) {
                         this.matchTable['controls'].addMultipleChoice['controls'][i]['controls']['selectOption'].patchValue(this.questionEditData.heading_option[i].correctOption);
                         this.matchTable['controls'].addMultipleChoice['controls'][i]['controls']['active'].patchValue(this.questionEditData.heading_option[i].correctActive);
@@ -1948,6 +2021,7 @@ export class QuestionPageComponent implements OnInit , OnDestroy , AfterContentI
     }
 
     saveQuestions(type, redirectType) {
+        this.questionAnswer = []; // Reset questionAnswer at start
         this.subQuestionAnswer = [];
         this.valid = false;
         let graph: any;
@@ -1957,6 +2031,7 @@ export class QuestionPageComponent implements OnInit , OnDestroy , AfterContentI
                 hintFinalArrayValue.push(item);
             }
         });
+        console.log('saveQuestions called with type:', type, 'questionId:', this.questionId, 'commonNameForQuestionId:', this.commonNameForQuestionId);
         if (type == 'multipleChoiceQuestions') {
             if (this.multiQuestionEditor.content != '' || this.type == 'edit') {
                 const dropdownAnswer1 = this.multipleChoice['controls'].addMultipleChoice.value;
@@ -3227,14 +3302,31 @@ export class QuestionPageComponent implements OnInit , OnDestroy , AfterContentI
             }else {
                 this.toastr.error('Please select the editor Content');
             }
+        } else {
+            // Type not recognized
+            console.error('Question type not recognized:', type);
+            this.toastr.error('Question type not recognized. Please try again.');
+            this.valid = false;
         }
         console.log(this.questionAnswer, 'this.questionAnswer');
+        console.log('this.valid:', this.valid, 'type:', type);
+        console.log('editData:', this.editData);
         if (this.valid){
+            // Get content_id from editData, handling different possible field names
+            const contentId = this.editData?.content_id || this.editData?.contentId || this.editData?.id || '';
+            
+            if (!contentId) {
+                console.error('Content ID is missing. editData:', this.editData);
+                this.toastr.error('Content ID is missing. Please go back and try again.');
+                this.valid = false;
+                return;
+            }
+            
             const data = {
                 platform: 'web',
                 role_id: this.auth.getRoleId(),
                 user_id: this.auth.getUserId(),
-                content_id: this.editData.content_id,
+                content_id: contentId,
                 questions: this.questionAnswer,
                 content_format: '3'
                 // board: graph.objects
@@ -3278,6 +3370,11 @@ export class QuestionPageComponent implements OnInit , OnDestroy , AfterContentI
                 this.auth.setSessionData('cfs_question_no', this.qnsNo);
                 this.router.navigate(['/content-text-resource/add-questions/add']);
             } else {
+                // Ensure session data is preserved before navigating
+                if (this.editData && this.editData.content_id) {
+                    this.auth.setSessionData('textAssignValue', JSON.stringify(this.editData));
+                    this.auth.setSessionData('editresources', JSON.stringify(this.editData));
+                }
                 this.router.navigate(['content-text-resource/text-assignment/qEdit']);
             }
         }

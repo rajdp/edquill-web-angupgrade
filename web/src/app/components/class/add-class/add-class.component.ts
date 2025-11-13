@@ -55,6 +55,20 @@ const colors: any = {
     },
 };
 
+interface ScheduleSlotView {
+    uniqueKey: number;
+    teacherLabel: string;
+    timeLabel: string;
+    meetingSummary: string;
+    raw: any;
+}
+
+interface WeeklyScheduleView {
+    dayId: number;
+    dayLabel: string;
+    slots: ScheduleSlotView[];
+}
+
 @Component({
     selector: 'app-add-class',
     templateUrl: './add-class.component.html',
@@ -215,6 +229,9 @@ export class AddClassComponent implements OnInit, OnChanges, AfterViewInit {
         {id: 6, day: 'saturday', status: 0, show: true},
         {id: 7, day: 'sunday', status: 0, show: true},
     ];
+    public weekDayOptions: Array<{id: number; label: string}> = [];
+    public weeklyScheduleView: WeeklyScheduleView[] = [];
+    public scheduleRequiresSave = false;
     public fromTime: any;
     public toTime: any;
     public eventArr: any = [];
@@ -311,6 +328,10 @@ export class AddClassComponent implements OnInit, OnChanges, AfterViewInit {
         this.editTime = false;
         this.dateValidation = true;
         this.showZoomDetails = false;
+        this.weekDayOptions = this.days.map((day) => ({
+            id: day.id,
+            label: this.formatDayLabel(day.day)
+        }));
         this.schoolId = JSON.parse(this.auth.getSessionData('rista_data1'));
         if (this.auth.getRoleId() == '2' || this.auth.getRoleId() == '6') {
             this.adminLogin = true;
@@ -381,6 +402,7 @@ export class AddClassComponent implements OnInit, OnChanges, AfterViewInit {
         });
         this.slotform = this.formBuilder.group({
             teacherid: [''],
+            days: [[], Validators.required],
             meetingLink: ['', Validators.required],
             meetingId: [''],
             meetingPasscode: [''],
@@ -556,26 +578,15 @@ export class AddClassComponent implements OnInit, OnChanges, AfterViewInit {
             }
             this.classform.controls.payment_recurring.patchValue(this.editData[0].payment_sub_type ?? '');
 
-            this.availabilityTimeData1 = this.editData[0].availabilityDate;
-            this.availabilityTimeData1.forEach((item, index) => {
-                item.uniqueKey = index;
-                if (item.slotday == 1) {
-                    this.mondayTimings.push(item);
-                } else if (item.slotday == 2) {
-                    this.tuesdayTimings.push(item);
-                } else if (item.slotday == 3) {
-                    this.wednesDayTimingsday.push(item);
-                } else if (item.slotday == 4) {
-                    this.thursdayTimingsday.push(item);
-                } else if (item.slotday == 5) {
-                    this.fridayTimingsday.push(item);
-                } else if (item.slotday == 6) {
-                    this.saturdayTimingsday.push(item);
-                } else if (item.slotday == 7) {
-                    this.sundayTimingsday.push(item);
-                }
-            });
-            this.oldavailability = this.availabilityTimeData1;
+            this.availabilityTimeData1 = Array.isArray(this.editData[0].availabilityDate) ? [...this.editData[0].availabilityDate] : [];
+            this.availabilityTimeData1 = this.availabilityTimeData1.map((item, index) => ({
+                ...item,
+                slotselected: this.isSlotActive(item) ? 'true' : 'false',
+                uniqueKey: item?.uniqueKey != null ? item.uniqueKey : index
+            }));
+            this.refreshScheduleCollections();
+            this.oldavailability = [...this.availabilityTimeData1];
+            this.oldTimeData = [...this.availabilityTimeData1];
             if (this.editData.profile_url != '') {
                 this.imagepath.push(this.editData[0].profile_url);
             }
@@ -624,6 +635,9 @@ export class AddClassComponent implements OnInit, OnChanges, AfterViewInit {
             this.imagepaththumb = [];
             this.gradeSplit = [];
         }
+        this.refreshScheduleCollections();
+        this.oldavailability = [...this.availabilityTimeData1];
+        this.oldTimeData = [...this.availabilityTimeData1];
         this.fromTime = {hour: 0, minute: 0, seconds: 0};
         this.toTime = {hour: 23, minute: 59, seconds: 0};
     }
@@ -753,6 +767,272 @@ export class AddClassComponent implements OnInit, OnChanges, AfterViewInit {
         const sortedSource = [...sourceArray].sort();
         const sortedTarget = [...targetArray].sort();
         return sortedSource.every((value, index) => value === sortedTarget[index]);
+    }
+
+    private formatDayLabel(day: string): string {
+        if (!day) {
+            return '';
+        }
+        const normalized = day.toString().toLowerCase();
+        return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+    }
+
+    private ensureArray<T>(value: T | T[] | null | undefined): T[] {
+        if (Array.isArray(value)) {
+            return value;
+        }
+        if (value === null || value === undefined || value === '' as any) {
+            return [];
+        }
+        return [value];
+    }
+
+    private normalizeDayId(value: any): number | null {
+        if (typeof value === 'number') {
+            return value;
+        }
+        if (typeof value === 'string') {
+            const parsed = parseInt(value, 10);
+            return isNaN(parsed) ? null : parsed;
+        }
+        if (value && typeof value === 'object') {
+            if ('id' in value) {
+                const parsed = parseInt(value.id, 10);
+                return isNaN(parsed) ? null : parsed;
+            }
+            if ('value' in value) {
+                const parsed = parseInt(value.value, 10);
+                return isNaN(parsed) ? null : parsed;
+            }
+        }
+        return null;
+    }
+
+    private getSelectedDayIds(): number[] {
+        if (!this.slotform || !this.slotform.controls.days) {
+            return [];
+        }
+        const raw = this.ensureArray(this.slotform.controls.days.value);
+        return raw
+            .map((value) => this.normalizeDayId(value))
+            .filter((dayId): dayId is number => dayId !== null);
+    }
+
+    public isDaySelected(dayId: number): boolean {
+        return this.getSelectedDayIds().includes(dayId);
+    }
+
+    public toggleDaySelection(dayId: number): void {
+        if (!this.slotform || !this.slotform.controls.days || this.slotform.controls.days.disabled) {
+            return;
+        }
+        const current = this.getSelectedDayIds();
+        const exists = current.includes(dayId);
+        const updated = exists ? current.filter((id) => id !== dayId) : [...current, dayId];
+        this.slotform.controls.days.setValue(updated);
+        this.slotform.controls.days.markAsDirty();
+        this.slotform.controls.days.markAsTouched();
+        this.slotform.controls.days.updateValueAndValidity({emitEvent: false});
+    }
+
+    public applyDayPreset(preset: 'weekdays' | 'weekends' | 'all'): void {
+        if (!this.slotform || !this.slotform.controls.days || this.slotform.controls.days.disabled) {
+            return;
+        }
+        let presetDays: number[] = [];
+        if (preset === 'weekdays') {
+            presetDays = [1, 2, 3, 4, 5];
+        } else if (preset === 'weekends') {
+            presetDays = [6, 7];
+        } else if (preset === 'all') {
+            presetDays = [1, 2, 3, 4, 5, 6, 7];
+        }
+        this.slotform.controls.days.setValue(presetDays);
+        this.slotform.controls.days.markAsDirty();
+        this.slotform.controls.days.markAsTouched();
+        this.slotform.controls.days.updateValueAndValidity({emitEvent: false});
+    }
+
+    public clearDaySelection(): void {
+        if (!this.slotform || !this.slotform.controls.days || this.slotform.controls.days.disabled) {
+            return;
+        }
+        this.slotform.controls.days.setValue([]);
+        this.slotform.controls.days.markAsDirty();
+        this.slotform.controls.days.markAsTouched();
+        this.slotform.controls.days.updateValueAndValidity({emitEvent: false});
+    }
+
+    private isSlotActive(slot: any): boolean {
+        if (!slot) {
+            return false;
+        }
+        const flag = slot.slotselected;
+        if (flag === undefined || flag === null || flag === '') {
+            return true;
+        }
+        if (typeof flag === 'boolean') {
+            return flag;
+        }
+        if (typeof flag === 'number') {
+            return flag !== 0;
+        }
+        if (typeof flag === 'string') {
+            const normalized = flag.trim().toLowerCase();
+            return normalized !== 'false' && normalized !== '0';
+        }
+        return true;
+    }
+
+    private buildTeacherLabel(teacherName: any): string {
+        if (Array.isArray(teacherName)) {
+            return teacherName.filter((name) => !!name).join(', ') || '—';
+        }
+        return teacherName && teacherName !== '' ? teacherName : '—';
+    }
+
+    private buildTimeLabel(start: string, end: string): string {
+        const startLabel = start && start !== '' ? start : null;
+        const endLabel = end && end !== '' ? end : null;
+        if (startLabel && endLabel) {
+            return `${startLabel} - ${endLabel}`;
+        }
+        if (startLabel) {
+            return startLabel;
+        }
+        if (endLabel) {
+            return endLabel;
+        }
+        return '—';
+    }
+
+    private buildMeetingSummary(item: any): string {
+        if (!item) {
+            return '';
+        }
+        const segments: string[] = [];
+        if (item.meeting_id) {
+            segments.push(`ID ${item.meeting_id}`);
+        }
+        if (item.passcode) {
+            segments.push(`Passcode ${item.passcode}`);
+        }
+        if (item.telephone_number) {
+            segments.push(`Dial-in ${item.telephone_number}`);
+        }
+        if (!segments.length && item.meeting_link) {
+            segments.push('Meeting link available');
+        }
+        return segments.join(' · ');
+    }
+
+    private refreshScheduleCollections(): void {
+        this.mondayTimings = [];
+        this.tuesdayTimings = [];
+        this.wednesDayTimingsday = [];
+        this.thursdayTimingsday = [];
+        this.fridayTimingsday = [];
+        this.saturdayTimingsday = [];
+        this.sundayTimingsday = [];
+
+        const normalized = (this.availabilityTimeData1 || [])
+            .map((item, index) => {
+                if (!item) {
+                    return null;
+                }
+                const active = this.isSlotActive(item);
+                return {
+                    ...item,
+                    slotselected: active ? 'true' : 'false',
+                    uniqueKey: item.uniqueKey != null ? item.uniqueKey : index
+                };
+            })
+            .filter((item) => item && this.isSlotActive(item));
+
+        normalized.forEach((item, index) => {
+            if (item.uniqueKey == null) {
+                item.uniqueKey = index;
+            }
+            const dayId = this.normalizeDayId(item.slotday) ?? 0;
+            if (dayId === 1) {
+                this.mondayTimings.push(item);
+            } else if (dayId === 2) {
+                this.tuesdayTimings.push(item);
+            } else if (dayId === 3) {
+                this.wednesDayTimingsday.push(item);
+            } else if (dayId === 4) {
+                this.thursdayTimingsday.push(item);
+            } else if (dayId === 5) {
+                this.fridayTimingsday.push(item);
+            } else if (dayId === 6) {
+                this.saturdayTimingsday.push(item);
+            } else if (dayId === 7) {
+                this.sundayTimingsday.push(item);
+            }
+        });
+
+        this.availabilityTimeData1 = normalized;
+
+        const dayMap = new Map<number, any[]>();
+        this.availabilityTimeData1.forEach((item) => {
+            const dayId = this.normalizeDayId(item.slotday);
+            if (dayId == null) {
+                return;
+            }
+            const bucket = dayMap.get(dayId) || [];
+            bucket.push(item);
+            dayMap.set(dayId, bucket);
+        });
+
+        this.weeklyScheduleView = this.days.map((day) => {
+            const slots = (dayMap.get(day.id) || []).map((slot): ScheduleSlotView => ({
+                uniqueKey: slot.uniqueKey,
+                teacherLabel: this.buildTeacherLabel(slot.teacher_name),
+                timeLabel: this.buildTimeLabel(slot.slotstarttime, slot.slotendtime),
+                meetingSummary: this.buildMeetingSummary(slot),
+                raw: slot
+            }));
+            return {
+                dayId: day.id,
+                dayLabel: this.formatDayLabel(day.day),
+                slots
+            };
+        });
+    }
+
+    private resolveTeacherNames(teacherIds: any): string[] {
+        const ids = this.ensureArray(teacherIds).map((id) => id != null ? id.toString() : id);
+        if (!this.teacherData || !ids.length) {
+            return [];
+        }
+        return this.teacherData
+            .filter((teacher) => {
+                const teacherId = teacher.teacher_id != null ? teacher.teacher_id.toString() : teacher.id?.toString();
+                return teacherId ? ids.includes(teacherId) : false;
+            })
+            .map((teacher) => teacher.teacher_name);
+    }
+
+    private toTimeStructFromDisplay(time: string | null | undefined) {
+        if (!time || typeof time !== 'string') {
+            return {hour: 9, minute: 0, seconds: 0};
+        }
+        const parts = time.trim().split(' ');
+        if (parts.length < 2) {
+            return {hour: 9, minute: 0, seconds: 0};
+        }
+        const [timePart, meridianPart] = parts;
+        const [hourString, minuteString] = timePart.split(':');
+        let hour = parseInt(hourString, 10);
+        const minute = parseInt(minuteString, 10);
+        const meridian = meridianPart ? meridianPart.toUpperCase() : '';
+        if (meridian === 'PM' && hour < 12) {
+            hour += 12;
+        }
+        if (meridian === 'AM' && hour === 12) {
+            hour = 0;
+        }
+        return {hour, minute, seconds: 0};
     }
 
     init(id) {
@@ -993,7 +1273,12 @@ export class AddClassComponent implements OnInit, OnChanges, AfterViewInit {
     }
 
     close() {
-        this.modalRef.close();
+        if (this.modalRef) {
+            this.modalRef.close();
+        }
+        if (this.slotform && this.slotform.controls.days.disabled) {
+            this.slotform.controls.days.enable({emitEvent: false});
+        }
     }
 
     noClose(type) {
@@ -1021,16 +1306,11 @@ export class AddClassComponent implements OnInit, OnChanges, AfterViewInit {
     }
 
     teacherSelection(data) {
-        this.multipleteacher = [];
-        data.filter((data1) => {
-            this.slotform.controls.teacherid.value.filter((data2) => {
-                if (data1.teacher_id == data2) {
-                    this.multipleteacher.push(data1.teacher_name);
-                }
-            });
-        });
+        const selectedIds = this.ensureArray(this.slotform.controls.teacherid.value);
+        this.teacher = selectedIds;
+        this.multipleteacher = this.resolveTeacherNames(selectedIds.length ? selectedIds : []);
         this.availabilityTimeData.forEach(item => {
-            item.teacher_id = item.teacher_id == null || (item.teacher_id != this.slotform.controls.teacherid.value) ? this.slotform.controls.teacherid.value : item.teacher_id;
+            item.teacher_id = selectedIds;
             item.teacher_name = this.multipleteacher;
             item.slotstarttime = this.startTime;
             item.slotendtime = this.endTime;
@@ -1040,8 +1320,9 @@ export class AddClassComponent implements OnInit, OnChanges, AfterViewInit {
     }
 
     newselection() {
+        const selectedIds = this.ensureArray(this.slotform.controls.teacherid.value);
         this.availabilityTimeData.forEach(item => {
-            item.teacher_id = item.teacher_id == null || (item.teacher_id != this.slotform.controls.teacherid.value) ? this.slotform.controls.teacherid.value : item.teacher_id;
+            item.teacher_id = selectedIds;
             item.teacher_name = this.multipleteacher;
             item.slotstarttime = this.startTime;
             item.slotendtime = this.endTime;
@@ -1052,150 +1333,130 @@ export class AddClassComponent implements OnInit, OnChanges, AfterViewInit {
 
     submitSlot() {
         this.validatingTime(this.fromTime, this.toTime);
-
-        /// checking time difference between two times
         const difference = this.getTimeDiference(this.fromTime, this.toTime);
-        if (difference) {
-            if (this.auth.getRoleId() == '2' || this.auth.getRoleId() == '6') {
-                const teacher = this.slotform.controls.teacherid.value;
-                this.teacher = teacher != null ? this.slotform.controls.teacherid.value : '0';
-                // if (teacher != null) {
-                //     this.teacher = this.slotform.controls.teacherid.value;
-                // } else {
-                //     this.teacher = '0';
-                // }
-            } else if (this.auth.getRoleId() == '4') {
-                this.teacher = [this.auth.getUserId()];
-                this.multipleteacher = [this.teacherName];
-            }
-            if (this.teacher != '0' && this.teacher.length != '0') {
-                if (this.showZoomDetails == true) {
-                    if (this.slotform.valid) {
-                        this.slotCheck = true;
-                    } else {
-                        this.slotCheck = false;
-                        this.toastr.error('Please fill all the mandatory field');
-                        this.validationService.validateAllFormFields(this.slotform);
-                    }
-                } else if (this.showZoomDetails == false) {
-                    this.slotCheck = true;
-                }
-                if (this.slotCheck == true) {
-                    this.days.forEach((item) => {
-                        if (item.show == false) {
-                            this.availabilityTimeData.push(
-                                {
-                                    uniqueKey: this.uniqueKey,
-                                    teacher_id: this.teacher,
-                                    teacher_name: this.multipleteacher,
-                                    slotstarttime: this.startTime,
-                                    slotendtime: this.endTime,
-                                    slotday: item.id,
-                                    slotselected: 'true',
-                                    meeting_link: this.slotform.controls.meetingLink.value == '' ? '' : this.slotform.controls.meetingLink.value,
-                                    meeting_id: this.slotform.controls.meetingId.value == '' ? '' : this.slotform.controls.meetingId.value,
-                                    passcode: this.slotform.controls.meetingPasscode.value == '' ? '' : this.slotform.controls.meetingPasscode.value,
-                                    telephone_number: this.slotform.controls.telephone.value == '' ? '' : this.slotform.controls.telephone.value,
-                                });
-                            this.selectedday = item.id;
-                        }
-                    });
-                    if (this.editTime == true) {
-                        const checkData = this.availabilityTimeData[0];
-                        this.oldTimeData = this.oldavailability.filter((item) => {
-                            return parseInt(item.uniqueKey) !== parseInt(checkData.uniqueKey);
-                        });
-                    } else {
-                        this.oldTimeData = this.oldavailability;
-                    }
-                    const data21 = {
-                        platform: 'web',
-                        role_id: this.auth.getRoleId(),
-                        user_id: this.auth.getUserId(),
-                        previous_availabilityDate: this.oldTimeData == undefined ? [] : this.oldTimeData,
-                        selected_availabilityDate: this.availabilityTimeData
-                    };
-                    this.classService.timeValidation(data21).subscribe((successData) => {
-                            this.timeListSuccess(successData);
-                        },
-                        (error) => {
-                            console.error(error, 'time_slot');
-                     });
-                    console.log(this.availabilityTimeData, 'newdatsadasdsadsadd');
-                } else {
-                    console.log(this.availabilityTimeData, 'newdatsad');
-                }
-            } else {
-                this.toastr.error('Please select the teacher for this slot');
-            }
-        } else {
+        const selectedDays = this.getSelectedDayIds();
+
+        if (!difference) {
             this.toastr.error('End-Time Should be greater than Start-Time', 'Failed');
+            return;
         }
+
+        if (!selectedDays.length) {
+            this.slotform.controls.days.markAsTouched();
+            this.toastr.error('Please select at least one day for this schedule');
+            return;
+        }
+
+        if (this.auth.getRoleId() == '2' || this.auth.getRoleId() == '6') {
+            const teacherIds = this.ensureArray(this.slotform.controls.teacherid.value);
+            if (!teacherIds.length) {
+                this.toastr.error('Please select the teacher for this slot');
+                return;
+            }
+            this.teacher = teacherIds;
+            this.multipleteacher = this.resolveTeacherNames(teacherIds);
+        } else if (this.auth.getRoleId() == '4') {
+            this.teacher = [this.auth.getUserId()];
+            this.multipleteacher = [this.teacherName];
+        }
+
+        if (this.showZoomDetails) {
+            if (this.slotform.invalid) {
+                this.slotCheck = false;
+                this.toastr.error('Please fill all the mandatory field');
+                this.validationService.validateAllFormFields(this.slotform);
+                return;
+            }
+        }
+
+        this.slotCheck = true;
+        this.availabilityTimeData = [];
+        selectedDays.forEach((dayId) => {
+            const slotPayload: any = {
+                teacher_id: this.teacher,
+                teacher_name: this.multipleteacher,
+                slotstarttime: this.startTime,
+                slotendtime: this.endTime,
+                slotday: dayId,
+                slotselected: 'true',
+                meeting_link: this.slotform.controls.meetingLink.value || '',
+                meeting_id: this.slotform.controls.meetingId.value || '',
+                passcode: this.slotform.controls.meetingPasscode.value || '',
+                telephone_number: this.slotform.controls.telephone.value || ''
+            };
+            if (this.editTime && this.uniqueKey != null) {
+                slotPayload.uniqueKey = this.uniqueKey;
+            }
+            this.availabilityTimeData.push(slotPayload);
+        });
+
+        this.selectedday = selectedDays[0];
+        if (this.editTime) {
+            const currentKey = this.uniqueKey;
+            this.oldTimeData = this.oldavailability.filter((item) => {
+                return parseInt(item.uniqueKey, 10) !== parseInt(currentKey, 10);
+            });
+        } else {
+            this.oldTimeData = [...this.oldavailability];
+        }
+
+        const data21 = {
+            platform: 'web',
+            role_id: this.auth.getRoleId(),
+            user_id: this.auth.getUserId(),
+            previous_availabilityDate: this.oldTimeData == undefined ? [] : this.oldTimeData,
+            selected_availabilityDate: this.availabilityTimeData
+        };
+
+        this.classService.timeValidation(data21).subscribe((successData) => {
+                this.timeListSuccess(successData);
+            },
+            (error) => {
+                console.error(error, 'time_slot');
+            });
     }
 
     timeListSuccess(successData) {
         if (successData.IsSuccess) {
             this.timeSlotData = successData.ResponseObject;
-            this.toastr.success(successData.ResponseObject, 'Time Slot');
+            const responseMessage = successData.ResponseObject ? successData.ResponseObject : 'Schedule updated';
+            this.toastr.warning(`${responseMessage}. Click Save Class to persist changes.`, 'Schedule staged');
+            this.scheduleRequiresSave = true;
+            
+            // If editing, remove the old slot(s) with matching uniqueKey before adding updated ones
+            if (this.editTime && this.uniqueKey != null) {
+                const keyToRemove = String(this.uniqueKey).trim();
+                this.availabilityTimeData1 = this.availabilityTimeData1.filter((item) => {
+                    if (!item || item.uniqueKey == null) {
+                        return true; // Keep items without uniqueKey
+                    }
+                    const itemKey = String(item.uniqueKey).trim();
+                    return itemKey !== keyToRemove;
+                });
+            }
+            
+            // Add the new/updated slots
             const data = this.availabilityTimeData;
             data.forEach((item) => {
                 this.availabilityTimeData1.push(item);
             });
             this.availabilityTimeData = [];
-            this.mondayTimings = [];
-            this.tuesdayTimings = [];
-            this.wednesDayTimingsday = [];
-            this.thursdayTimingsday = [];
-            this.fridayTimingsday = [];
-            this.saturdayTimingsday = [];
-            this.sundayTimingsday = [];
-            this.availabilityTimeData1 = this.availabilityTimeData1.filter((item) => {
-                return item.slotselected == 'true';
-            });
-            this.availabilityTimeData1.forEach((item, index) => {
-                item.uniqueKey = index;
-                if (item.slotday == 1) {
-                    this.mondayTimings.push(item);
-                } else if (item.slotday == 2) {
-                    this.tuesdayTimings.push(item);
-                } else if (item.slotday == 3) {
-                    this.wednesDayTimingsday.push(item);
-                } else if (item.slotday == 4) {
-                    this.thursdayTimingsday.push(item);
-                } else if (item.slotday == 5) {
-                    this.fridayTimingsday.push(item);
-                } else if (item.slotday == 6) {
-                    this.saturdayTimingsday.push(item);
-                } else if (item.slotday == 7) {
-                    this.sundayTimingsday.push(item);
-                }
-            });
-            this.oldavailability = this.availabilityTimeData1;
-            this.days.forEach((item) => {
-                item.show = true;
-                item.status = 0;
-            });
+            this.refreshScheduleCollections();
+            this.oldavailability = [...this.availabilityTimeData1];
+            this.oldTimeData = [...this.availabilityTimeData1];
             this.close();
-            this.toTime = '';
-            this.fromTime = '';
+            this.toTime = {hour: 10, minute: 0, seconds: 0};
+            this.fromTime = {hour: 9, minute: 0, seconds: 0};
+            
+            // Reset edit state
+            this.editTime = false;
+            this.uniqueKey = null;
         } else {
             this.toastr.error(successData.ResponseObject, 'Time Slot');
-            this.oldavailability = this.availabilityTimeData1;
+            this.oldavailability = [...this.availabilityTimeData1];
             this.availabilityTimeData = [];
-            this.days.forEach((item) => {
-                item.show = true;
-                item.status = 0;
-            });
-            for (let i = 0; i < this.days.length; i++) {
-                if (this.selectedday == this.days[i].id) {
-                    this.days[i].show = false;
-                    this.days[i].status = 0;
-                } else {
-                    this.days[i].show = true;
-                    this.days[i].status = 0;
-                }
-            }
         }
+        this.slotform.controls.days.enable({emitEvent: false});
     }
 
     submitTimeSlot(id) {
@@ -1289,7 +1550,9 @@ export class AddClassComponent implements OnInit, OnChanges, AfterViewInit {
     timeSlotListSuccess(successData, id) {
         if (successData.IsSuccess) {
             this.timeSlotData = successData.ResponseObject;
-            this.toastr.success(successData.ResponseObject, 'Time Slot');
+            const responseMessage = successData.ResponseObject ? successData.ResponseObject : 'Schedule updated';
+            this.toastr.warning(`${responseMessage}. Click Save Class to persist changes.`, 'Schedule staged');
+            this.scheduleRequiresSave = true;
             this.availabilityTimeData = [];
             this.getslotList(id, 'updatedCalendar');
             this.modalRef.close();
@@ -1299,27 +1562,15 @@ export class AddClassComponent implements OnInit, OnChanges, AfterViewInit {
         }
     }
 
-    deleteTime(type, id, event) {
-        if (type == 'monday') {
-            this.mondayTimings.splice(id, 1);
-        } else if (type == 'tuesday') {
-            this.tuesdayTimings.splice(id, 1);
-        } else if (type == 'wednesday') {
-            this.wednesDayTimingsday.splice(id, 1);
-        } else if (type == 'thursday') {
-            this.thursdayTimingsday.splice(id, 1);
-        } else if (type == 'friday') {
-            this.fridayTimingsday.splice(id, 1);
-        } else if (type == 'saturday') {
-            this.saturdayTimingsday.splice(id, 1);
-        } else if (type == 'sunday') {
-            this.sundayTimingsday.splice(id, 1);
-        }
+    deleteTime(_dayId, _index, event) {
         this.availabilityTimeData1 = this.availabilityTimeData1.filter((item) => {
-            return parseInt(event.uniqueKey) != parseInt(item.uniqueKey);
+            return parseInt(event.uniqueKey, 10) !== parseInt(item.uniqueKey, 10);
         });
-        this.oldTimeData = this.availabilityTimeData1;
-        this.oldavailability = this.availabilityTimeData1;
+        this.refreshScheduleCollections();
+        this.oldTimeData = [...this.availabilityTimeData1];
+        this.oldavailability = [...this.availabilityTimeData1];
+        this.scheduleRequiresSave = true;
+        this.toastr.warning('Schedule removed. Click Save Class to persist changes.', 'Schedule staged');
     }
 
     getTimeDiference(fromtime, totime) {
@@ -1572,12 +1823,13 @@ export class AddClassComponent implements OnInit, OnChanges, AfterViewInit {
         const skipFutureDateValidation = this.isEditingExistingClass;
         if ((this.classform.controls.startDate.valid && this.classform.controls.endDate.valid) || skipFutureDateValidation) {
             if (this.dateValidation == true) {
-                const validResourceLinks = this.videoArray.filter((item) => item.link && item.link.trim() !== '');
-                const checkForValidResourceLink = validResourceLinks.some((item) => item.name == '');
-                console.log(this.videoArray, 'videoArray');
-                console.log(checkForValidResourceLink, 'checkForValidResourceLink');
-                if (!checkForValidResourceLink) {
-                    if (this.classform.valid) {
+                const validResourceLinks = this.videoArray
+                    .filter((item) => item && item.link && item.link.trim() !== '')
+                    .map((item) => ({
+                        ...item,
+                        name: item.name && item.name.trim() !== '' ? item.name.trim() : item.link.trim()
+                    }));
+                if (this.classform.valid) {
                         this.tagArray = [];
                         const tags = this.classform.controls.tag.value;
                         if (tags == '') {
@@ -1698,16 +1950,6 @@ export class AddClassComponent implements OnInit, OnChanges, AfterViewInit {
                     } else {
                         this.validationService.validateAllFormFields(this.classform);
                         this.toastr.error('Please Fill All The Mandatory Fields');
-                    }
-                } else {
-                    this.videoArray.forEach(item => item.error = item.name == '' && item.link != '');
-                    setTimeout(() => {
-                        const element = document.getElementById('otherLink');
-                        if (element) {
-                            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        }
-                    }, 100);
-                    this.toastr.error('Name is mandatory for each additional resource links');
                 }
             } else {
                 this.toastr.error('End Date Should be greater than Start Date');
@@ -1726,6 +1968,7 @@ export class AddClassComponent implements OnInit, OnChanges, AfterViewInit {
             this.addClassDetails = successData.ResponseObject;
             this.auth.setSessionData('editclass', JSON.stringify(successData.ResponseObject));
             this.auth.setSessionData('card-data', JSON.stringify(successData.ResponseObject));
+            this.scheduleRequiresSave = false;
             this.auth.setSessionData('classView', false);
             this.auth.setSessionData('editView', true);
             this.auth.setSessionData('studentlist', '');
@@ -1764,6 +2007,7 @@ export class AddClassComponent implements OnInit, OnChanges, AfterViewInit {
             this.addClassDetails = successData.ResponseObject;
             this.auth.setSessionData('editclass', JSON.stringify(successData.ResponseObject));
             this.auth.setSessionData('card-data', JSON.stringify(successData.ResponseObject));
+            this.scheduleRequiresSave = false;
             const redirectSchedulePage = !!this.auth.getSessionData('enterThroughSchedule');
             if (id == 0) {
                 this.submitClass();
@@ -1857,6 +2101,7 @@ export class AddClassComponent implements OnInit, OnChanges, AfterViewInit {
         if (successData.IsSuccess) {
             this.auth.setSessionData('submit-data', JSON.stringify(successData.ResponseObject[0]));
             this.auth.setSessionData('class-curriculum', true);
+            this.scheduleRequiresSave = false;
             this.router.navigate(['/class/topicsAndCurriculum/1']);
         }
     }
@@ -2062,32 +2307,71 @@ export class AddClassComponent implements OnInit, OnChanges, AfterViewInit {
 
     }
 
-    showSlot(type) {
-        this.days.forEach((item) => {
-            item.show = true;
-            item.status = 0;
-        });
-        this.days[type - 1].show = false;
+    openScheduleModal(dayId?: number, existingSlot?: any) {
+        this.timeErr = false;
+        this.slotCheck = false;
         this.availabilityTimeData = [];
-        this.slotform.controls.meetingLink.patchValue(this.classform.controls.meetingLink.value);
-        this.slotform.controls.meetingId.patchValue(this.classform.controls.meetingId.value);
-        this.slotform.controls.meetingPasscode.patchValue(this.classform.controls.passcode.value);
-        this.slotform.controls.telephone.patchValue(this.classform.controls.telephone.value);
-        if (this.adminLogin) {
-            this.slotform.controls.teacherid.patchValue(null);
-        } else {
-            this.slotform.controls.teacherid.patchValue(this.auth.getUserId());
-        }
-        this.fromTime = {hour: 0, minute: 0, seconds: 0};
-        this.toTime = {hour: 23, minute: 59, seconds: 0};
+        const defaultMeeting = {
+            meetingLink: this.classform.controls.meetingLink.value || '',
+            meetingId: this.classform.controls.meetingId.value || '',
+            meetingPasscode: this.classform.controls.passcode.value || '',
+            telephone: this.classform.controls.telephone.value || ''
+        };
+        this.slotform.reset({
+            teacherid: this.adminLogin ? null : this.auth.getUserId(),
+            days: [],
+            meetingLink: defaultMeeting.meetingLink,
+            meetingId: defaultMeeting.meetingId,
+            meetingPasscode: defaultMeeting.meetingPasscode,
+            telephone: defaultMeeting.telephone
+        });
+        this.slotform.controls.days.enable({emitEvent: false});
+        this.uniqueKey = null;
         this.editTime = false;
-        this.modalRef = this.modalService.open(this.addSlot);
+        this.fromTime = {hour: 9, minute: 0, seconds: 0};
+        this.toTime = {hour: 10, minute: 0, seconds: 0};
+        if (this.adminLogin) {
+            this.slotform.controls.teacherid.patchValue(null, {emitEvent: false});
+            this.multipleteacher = [];
+            this.teacher = [];
+        } else {
+            const teacherId = this.auth.getUserId();
+            this.slotform.controls.teacherid.patchValue(teacherId, {emitEvent: false});
+            this.teacher = [teacherId];
+            this.multipleteacher = [this.teacherName];
+        }
+        if (existingSlot) {
+            const teacherIds = this.ensureArray(existingSlot.teacherid || existingSlot.teacher_id);
+            if (this.adminLogin) {
+                this.slotform.controls.teacherid.patchValue(teacherIds, {emitEvent: false});
+                this.teacher = teacherIds;
+                this.multipleteacher = this.resolveTeacherNames(teacherIds);
+            }
+            this.slotform.patchValue({
+                meetingLink: existingSlot.meeting_link || defaultMeeting.meetingLink,
+                meetingId: existingSlot.meeting_id || defaultMeeting.meetingId,
+                meetingPasscode: existingSlot.passcode || defaultMeeting.meetingPasscode,
+                telephone: existingSlot.telephone_number || defaultMeeting.telephone
+            }, {emitEvent: false});
+            const normalizedDay = this.normalizeDayId(existingSlot.slotday);
+            this.slotform.controls.days.patchValue(normalizedDay != null ? [normalizedDay] : [], {emitEvent: false});
+            this.slotform.controls.days.disable({emitEvent: false});
+            this.fromTime = this.toTimeStructFromDisplay(existingSlot.slotstarttime);
+            this.toTime = this.toTimeStructFromDisplay(existingSlot.slotendtime);
+            this.uniqueKey = existingSlot.uniqueKey;
+            this.editTime = true;
+        } else if (dayId) {
+            this.slotform.controls.days.patchValue([dayId], {emitEvent: false});
+        }
+        this.slotform.updateValueAndValidity({emitEvent: false});
+        this.modalRef = this.modalService.open(this.addSlot, {size: 'lg', backdrop: 'static'});
         this.modalRef.result.then((result) => {
             this.closeResult = `Closed with: ${result}`;
         }, (reason) => {
             this.closeResult = `Dismissed ${this.getDismissReason(reason)}`;
+            this.slotform.controls.days.enable({emitEvent: false});
         });
-        this.daytype = type;
+        this.daytype = dayId;
     }
 
 
@@ -2095,7 +2379,6 @@ export class AddClassComponent implements OnInit, OnChanges, AfterViewInit {
         if (this.auth.manageClass) {
             this.multipleteacher = event.teacher_name;
             this.uniqueKey = event.uniqueKey;
-            this.days[event.slotday - 1].show = false;
             event.slotselected = 'false';
             this.slotform.controls.teacherid.patchValue(event.teacher_id);
             this.slotform.controls.meetingLink.patchValue(event.meeting_link);
@@ -2173,9 +2456,12 @@ export class AddClassComponent implements OnInit, OnChanges, AfterViewInit {
     }
 
     onSave1() {
-        this.modalRef.close();
-        console.log(this.daytype, this.days, this.daytype - 1, 'dayType');
-        this.days[this.daytype - 1].show = true;
+        if (this.modalRef) {
+            this.modalRef.close();
+        }
+        if (this.slotform.controls.days.disabled) {
+            this.slotform.controls.days.enable({emitEvent: false});
+        }
         this.availabilityTimeData1.forEach((item) => {
             item.slotselected = 'true';
         });
@@ -2227,47 +2513,6 @@ export class AddClassComponent implements OnInit, OnChanges, AfterViewInit {
             }
         }
         return this.timeErr;
-    }
-
-    selectDate(id) {
-        if (this.auth.getRoleId() == '2' || this.auth.getRoleId() == '6') {
-            this.teacher = this.slotform.controls.teacherid.value;
-        } else if (this.auth.getRoleId() == '4') {
-            this.teacher = [this.auth.getUserId()];
-            this.multipleteacher = [this.teacherName];
-        }
-        const timeValid = this.checkTime();
-        if (!timeValid) {
-            this.validatingTime(this.fromTime, this.toTime);
-            for (let i = 0; i < this.days.length; i++) {
-                if (this.days[i].id == id) {
-                    if (this.days[i].status == 0 || !this.days[i].show) {
-                        this.availabilityTimeData.push(
-                            {
-                                teacher_id: this.teacher,
-                                teacher_name: this.multipleteacher,
-                                slotstarttime: this.startTime,
-                                slotendtime: this.endTime,
-                                slotday: this.days[i].id,
-                                slotselected: 'true',
-                                meeting_link: this.slotform.controls.meetingLink.value == '' ? '' : this.slotform.controls.meetingLink.value,
-                                meeting_id: this.slotform.controls.meetingId.value == '' ? '' : this.slotform.controls.meetingId.value,
-                                passcode: this.slotform.controls.meetingPasscode.value == '' ? '' : this.slotform.controls.meetingPasscode.value,
-                                telephone_number: this.slotform.controls.telephone.value == '' ? '' : this.slotform.controls.telephone.value,
-                            });
-                        this.days[i].status = 1;
-                    } else {
-                        this.availabilityTimeData.forEach((item) => {
-                            if (item.slotday == this.days[i].id) {
-                                const index = this.availabilityTimeData.indexOf(item);
-                                this.availabilityTimeData.splice(index, 1);
-                            }
-                        });
-                        this.days[i].status = 0;
-                    }
-                }
-            }
-        }
     }
 
     // chane the user selected time format to that we want to send backend

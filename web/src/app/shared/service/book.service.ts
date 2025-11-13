@@ -65,7 +65,7 @@ export class BookService {
         const httpOptions = {
             headers: new HttpHeaders({
                 'Content-Type': 'application/json',
-                'accesstoken': token
+                'Accesstoken': token
             })
         };
         const url = this.configurationService.getHost() + 'settings/list';

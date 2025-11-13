@@ -337,8 +337,6 @@
                                                     <span class="sr-only">Loading...</span>
                                                 </span>
                                                     </a>
-                                                    <a (click)="showInformation(list)"><i class="fa fa-info px-1"
-                                                                                          aria-hidden="true"></i>Information</a>
                                                     <a (click)="allReports(list)"><i class="fa fa-bar-chart mr-1"></i>Report</a>
                                                 </div>
                                             </div>
@@ -355,7 +353,6 @@
                                                 </option>
                                                 <option value="curriculum" class="action-option-class">&#xf02d; Curriculum</option>
                                                 <option value="notes" class="action-option-class">&#xf1ea; Notes</option>
-                                                <option value="information" class="action-option-class">&#xf05a; Information</option>
                                                 <option value="reports" class="action-option-class">&#xf0f6; Reports</option> -->
                                             <!-- <option value="enter" *ngIf="!(auth.getRoleId() == '4' && classlisthighlight == '4')">Enter</option> -->
                                             <!-- </select> -->
@@ -941,7 +938,8 @@
 
     </div>
     <div class="modal-footer">
-        <button class="btn btn-outline-primary" type="button" (click)="addStudentEnabled ? addstudent() : submitClass(1)">Submit</button>
+        <button class="btn btn-outline-secondary mr-2" type="button" (click)="closeStudentModRef()">Cancel</button>
+        <button class="btn btn-primary" type="button" (click)="addStudentEnabled ? addstudent() : submitClass(1)">Save</button>
     </div>
 </ng-template>
 
@@ -1048,8 +1046,8 @@
         </div>
     </div>
     <div class="modal-footer">
-        <button class="btn btn-outline-danger" type="button" (click)="modalRef.close()">close</button>
-        <button class="btn btn-outline-primary" type="button" (click)="deleteStudentList(getDeleteStudentData)">Ok
+        <button class="btn btn-outline-danger" type="button" (click)="modalRef.close()">Cancel</button>
+        <button class="btn btn-outline-primary" type="button" (click)="deleteStudentList(getDeleteStudentData)">Yes
         </button>
     </div>
 </ng-template>
@@ -1066,8 +1064,8 @@
         </div>
     </div>
     <div class="modal-footer">
-        <button class="btn cancel" type="button" (click)="modalRef.close()">close</button>
-        <button class="btn btn-primary" type="button" (click)="deleteClassList()">Ok</button>
+        <button class="btn cancel" type="button" (click)="modalRef.close()">Cancel</button>
+        <button class="btn btn-primary" type="button" (click)="deleteClassList()">Yes</button>
     </div>
 </ng-template>
 

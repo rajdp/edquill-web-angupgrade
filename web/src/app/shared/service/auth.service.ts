@@ -531,6 +531,61 @@ export class AuthService {
         return observableThrowError(error);
     }
 
+    /**
+     * Refresh the access token when it expires
+     * Returns Observable<boolean> - true if refresh successful, false otherwise
+     */
+    refreshToken(): Observable<boolean> {
+        const currentToken = this.getAccessToken();
+        
+        if (!currentToken) {
+            return new Observable(observer => {
+                observer.next(false);
+                observer.complete();
+            });
+        }
+
+        return new Observable(observer => {
+            // Make refresh request without token in header (we'll add it manually)
+            const refreshData = {};
+            const json = JSON.stringify(refreshData);
+            
+            // Create request with current token in header
+            this.http.post('user/refreshToken', json, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accesstoken': currentToken
+                }
+            }).pipe(
+                map((res: any) => {
+                    if (res && res.IsSuccess && res.ResponseObject && res.ResponseObject.Accesstoken) {
+                        // Update token in localStorage
+                        localStorage.setItem(this.env.prefixName + 'Accesstoken', res.ResponseObject.Accesstoken);
+                        console.log('✅ Token refreshed successfully');
+                        return true;
+                    } else {
+                        console.error('❌ Token refresh failed:', res);
+                        return false;
+                    }
+                }),
+                catchError((error) => {
+                    console.error('❌ Token refresh error:', error);
+                    return [false];
+                })
+            ).subscribe({
+                next: (success) => {
+                    observer.next(success);
+                    observer.complete();
+                },
+                error: (error) => {
+                    console.error('Token refresh observable error:', error);
+                    observer.next(false);
+                    observer.complete();
+                }
+            });
+        });
+    }
+
     logout(showMessage: boolean = true, message?: string) {
         if (this.isLoggingOut) {
             return;

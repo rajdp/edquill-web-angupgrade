@@ -10,7 +10,7 @@
                 Add Questions
             </button>
             <button class="btn btn-primary ml-3 mb-2"
-                    (click)="assign(type != 'edit' ? 'add' : 'edit')" [disabled]="!openContent || detailData.length == 0">
+                    (click)="assign(type != 'edit' ? 'add' : 'edit')" [disabled]="!openContent || !detailData || detailData.length == 0">
                 Publish
             </button>
             <button class="btn btn-light border ml-3 mb-2" (click)="draft(type != 'edit' ? 'add' : 'edit')" [disabled]="!openContent">
@@ -149,7 +149,7 @@
         </div>
     </div>
     <div *ngIf="openContent">
-        <div class="row" *ngIf="detailData.length != 0">
+        <div class="row" *ngIf="detailData && detailData.length != 0">
             <div class="col-12 mt-5 mb-3 justify-content-between d-flex">
                 <h4 class="letter">Questions & Answer</h4>
                 <button class="btn btn-primary" [ngClass]="{'selectColor' : showPreview}" (click)="showPreview = !showPreview;showpre()">{{!showPreview ? 'Show' : 'Hide'}} Preview</button>
@@ -555,7 +555,7 @@
 
 <ng-template #matchTableDetail let-c="close" let-d="dismiss">
     <div class="modal-header">
-        <h4 class="modal-title letter">{{quesId == '5' ? 'Match Table Standard' : 'Match Table Labels'}}</h4>
+        <h4 class="modal-title letter">{{quesId == '3' ? 'True or False' : quesId == '5' ? 'Match Table Standard' : 'Match Table Labels'}}</h4>
     </div>
     <div class="modal-body">
         <div class="col-12 table-flexible px-0">
@@ -566,6 +566,14 @@
                     <th *ngFor="let list of fullData.answer; let i=index" class="innerhtml-margin-clear" id="answerId{{i}}"></th>
                 </tr>
                 </thead>
+                <tbody *ngIf="quesId == '3'">
+                <tr  *ngFor="let list of fullData.options; let j=index">
+                    <td class="innerhtml-margin-clear" id="{{'optionId'+j}}"></td>
+                    <td *ngFor="let item of fullData.answer; let i=index">
+                        <input id="check{{j}}{{i}}" type="radio" class="radio_animated" name="choose{{j}}">
+                    </td>
+                </tr>
+                </tbody>
                 <tbody *ngIf="quesId == '5'">
                 <tr  *ngFor="let list of fullData.heading_option; let j=index">
                     <td class="innerhtml-margin-clear" id="{{'optionId'+j}}"></td>

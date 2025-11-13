@@ -88,6 +88,7 @@ export class TextAssignmentComponent implements OnInit {
     showScroll: boolean;
     showScrollHeight = 300;
     hideScrollHeight = 10;
+    private missingContextHandled = false;
 
     @HostListener('window:scroll', [])
     onWindowScroll()
@@ -126,11 +127,28 @@ export class TextAssignmentComponent implements OnInit {
         this.allowChange = true;
         this.newSubject.allowSchoolChange(this.allowChange);
         if (this.type == 'edit') {
-            const data = JSON.parse(this.auth.getSessionData('editor'));
-            this.listDetails(data);
+            const data = this.ensureEditContext();
+            if (data) {
+                this.listDetails(data);
+            } else {
+                this.handleMissingEditSession();
+            }
         } else if (this.type == 'qEdit') {
             this.showPage = true;
-            this.editData = JSON.parse(this.auth.getSessionData('textAssignValue'));
+            // Try to get editData from textAssignValue first, then fallback to editresources
+            this.editData = this.getSessionJson('textAssignValue');
+            if (!this.editData) {
+                this.editData = this.getSessionJson('editresources');
+            }
+            if (!this.editData) {
+                this.handleMissingEditSession();
+                return;
+            }
+            // Ensure both session keys are set for consistency
+            if (this.editData) {
+                this.auth.setSessionData('textAssignValue', JSON.stringify(this.editData));
+                this.auth.setSessionData('editresources', JSON.stringify(this.editData));
+            }
             this.contentName = this.editData.name;
             this.type = 'edit';
             this.openContent = true;
@@ -342,7 +360,11 @@ export class TextAssignmentComponent implements OnInit {
                     content_duration: this.assignmentform.controls.content_duration.value != '' ? this.assignmentform.controls.content_duration.value : '0'
                 };
                 if (value == 'add') {
-                    const editData = JSON.parse(this.auth.getSessionData('editresources'));
+                    const editData = this.getSessionJson('editresources');
+                    if (!editData) {
+                        this.toastr.error('Unable to load the assignment context. Please try again.');
+                        return;
+                    }
                     data['content_id'] = editData.content_id;
                     this.creator.editAssignResourse(data).subscribe((successData) => {
                             this.assignSuccess(successData);
@@ -379,9 +401,15 @@ export class TextAssignmentComponent implements OnInit {
         if (successData.IsSuccess) {
             this.assignData = successData.Contentdetails;
             console.log(this.assignData, 'assign');
+            // Ensure assignData has content_id before removing session data
+            if (this.assignData && this.assignData.content_id) {
+                // Preserve content_id in session before removing editresources
+                this.auth.setSessionData('textAssignValue', JSON.stringify(this.assignData));
+            }
             this.modalRef = this.modalService.open(this.assignContentToClass, {size: 'md', backdrop: 'static'});
             this.toastr.success('Content added successfully');
-            this.auth.removeSessionData('editresources');
+            // Don't remove editresources until after assignment is complete, or preserve it
+            // this.auth.removeSessionData('editresources');
         } else {
             this.toastr.error(successData.ResponseObject);
         }
@@ -440,7 +468,11 @@ export class TextAssignmentComponent implements OnInit {
                     content_duration: this.assignmentform.controls.content_duration.value != '' ? this.assignmentform.controls.content_duration.value : '0'
                 };
                 if (value != 'edit') {
-                    const editData = JSON.parse(this.auth.getSessionData('editresources'));
+                    const editData = this.getSessionJson('editresources');
+                    if (!editData) {
+                        this.toastr.error('Unable to load the assignment context. Please try again.');
+                        return;
+                    }
                     data['content_id'] = editData.content_id;
                     this.creator.editDraftResourse(data).subscribe((successData) => {
                             this.draftSuccess(successData);
@@ -483,7 +515,11 @@ export class TextAssignmentComponent implements OnInit {
     }
 
     saveAndExit() {
-        const getDetails = JSON.parse(this.auth.getSessionData('editresources'));
+        const getDetails = this.getSessionJson('editresources');
+        if (!getDetails) {
+            this.toastr.error('Unable to load the assignment context. Please try again.');
+            return;
+        }
         this.viewEdit = this.treeviewCompoent.batchid;
         console.log(this.viewEdit, 'view');
         console.log(getDetails, 'dasda');
@@ -586,17 +622,24 @@ export class TextAssignmentComponent implements OnInit {
 
     assignNextSuccess(successData, buttonClickedFrom) {
         if (successData.IsSuccess) {
-            this.assignDataValue = successData.Contentdetails;
+            // Handle different possible response structures
+            this.assignDataValue = successData.Contentdetails || successData.ResponseObject || successData.contentdetails;
             console.log(this.assignDataValue, 'this.assignDataValue');
+            console.log('successData structure:', successData);
 
             if (!this.assignDataValue) {
-                console.error('assignDataValue is undefined from successData.Contentdetails');
+                console.error('assignDataValue is undefined from successData. Available keys:', Object.keys(successData || {}));
                 this.toastr.error('Something went wrong while loading the content. Please try again.');
+                // Ensure detailData is initialized even on error
+                if (!Array.isArray(this.detailData)) {
+                    this.detailData = [];
+                }
                 return;
             }
 
             this.type = 'edit';
             this.contentName = this.assignDataValue?.name || this.contentName;
+            // Ensure detailData is always an array
             if (!Array.isArray(this.detailData)) {
                 this.detailData = [];
             }
@@ -612,8 +655,10 @@ export class TextAssignmentComponent implements OnInit {
             } else if (buttonClickedFrom == 'addQuestion') {
                 const totalQuestions = Array.isArray(this.detailData) ? this.detailData.length : 0;
                 this.auth.setSessionData('cfs_question_no', totalQuestions === 0 ? '1' : totalQuestions + 1);
-                this.auth.setSessionData('content_subject', this.assignDataValue.subject);
-                this.auth.setSessionData('qnsList', JSON.stringify(this.detailData));
+                if (this.assignDataValue?.subject) {
+                    this.auth.setSessionData('content_subject', this.assignDataValue.subject);
+                }
+                this.auth.setSessionData('qnsList', JSON.stringify(this.detailData || []));
                 this.selectQuestion();
             }
             this.showpre();
@@ -628,7 +673,10 @@ export class TextAssignmentComponent implements OnInit {
 
     back() {
         this.router.navigate(['content-text-resource/text-assignment/edit']);
-        this.editData = JSON.parse(this.auth.getSessionData('editresources'));
+        const editResource = this.getSessionJson('editresources');
+        if (editResource) {
+            this.editData = editResource;
+        }
         this.editorVal = this.content?.content;
         this.openContent = false;
     }
@@ -669,14 +717,19 @@ export class TextAssignmentComponent implements OnInit {
                 this.detailsSuccess(successData);
             },
             (error) => {
-                console.log(error, 'error_contentDetails');
+                console.error(error, 'error_contentDetails');
+                this.toastr.error('Unable to load the assignment. Please try again.');
+                this.handleMissingEditSession();
             });
     }
 
     detailsSuccess(successData) {
-        if (successData.IsSuccess) {
+        if (successData.IsSuccess && successData.ResponseObject) {
             this.editData = successData.ResponseObject;
-            this.detailData = successData.ResponseObject.questions;
+            // Ensure detailData is always an array, even if questions is undefined
+            this.detailData = Array.isArray(successData.ResponseObject?.questions) 
+                ? successData.ResponseObject.questions 
+                : [];
             this.showPage = true;
             this.openContent = true;
             if (this.type == 'edit') {
@@ -728,7 +781,10 @@ export class TextAssignmentComponent implements OnInit {
                     this.imagepath = this.editData.profile_url;
                 }
                 this.imagepaththumb = this.editData.profile_thumb_url;
-                this.detailData = this.editData.questions;
+                // Ensure detailData is always an array
+                this.detailData = Array.isArray(this.editData.questions) 
+                    ? this.editData.questions 
+                    : [];
                 this.resourceArray = this.editData.links ? this.editData.links : [];
             }
             console.log(this.editData, 'editData');
@@ -745,6 +801,12 @@ export class TextAssignmentComponent implements OnInit {
             }, 1000);
             this.showpre();
             this.clickEvent();
+        } else {
+            // API returned error or no data
+            const errorMessage = successData?.ErrorObject || 'Unable to load the assignment. Please try again.';
+            console.error('contentDetail API error:', errorMessage, successData);
+            this.toastr.error(errorMessage);
+            this.handleMissingEditSession();
         }
     }
 
@@ -816,28 +878,61 @@ export class TextAssignmentComponent implements OnInit {
                 }
             }, 100);
             this.modalRef = this.modalService.open(this.multiChoiceDetail, data);
-        } else if (id == '5' || id == '7') {
+        } else if (id == '3' || id == '5' || id == '7') {
             this.fullData = data;
             this.quesId = id;
+            this.modalRef = this.modalService.open(this.matchTableDetail, data);
             setTimeout(() => {
-                for (let i = 0; i < this.fullData.answer.length; i++) {
-                    document.getElementById('answerId' + i).innerHTML = this.fullData.answer[i];
-                }
-                for (let i = 0; i < this.fullData.options.length; i++) {
-                    document.getElementById('optionId' + i).innerHTML = this.fullData.options[i].options;
-                }
-                if (id == '7') {
-                    for (let i = 0; i < this.fullData.heading_option.length; i++) {
-                        const row = this.fullData.heading_option[i].correctActive;
-                        const column = this.fullData.heading_option[i].correctAnswer;
-                        const id = row.toString() + column.toString();
-                        if (document.getElementById('check' + id)) {
-                            document.getElementById('check' + id).setAttribute('checked', 'true');
+                // Set answer headers (True/False or column headers)
+                if (this.fullData.answer && Array.isArray(this.fullData.answer)) {
+                    for (let i = 0; i < this.fullData.answer.length; i++) {
+                        const answerEl = document.getElementById('answerId' + i);
+                        if (answerEl) {
+                            answerEl.innerHTML = this.fullData.answer[i] || '';
                         }
                     }
                 }
-            }, 100);
-            this.modalRef = this.modalService.open(this.matchTableDetail, data);
+                
+                // Set question options (rows)
+                if (this.fullData.options && Array.isArray(this.fullData.options)) {
+                    for (let i = 0; i < this.fullData.options.length; i++) {
+                        const optionEl = document.getElementById('optionId' + i);
+                        if (optionEl && this.fullData.options[i]) {
+                            // Handle different data structures
+                            let optionText = '';
+                            const optionItem = this.fullData.options[i];
+                            
+                            if (typeof optionItem === 'string') {
+                                optionText = optionItem;
+                            } else if (optionItem && typeof optionItem === 'object') {
+                                optionText = optionItem.options || 
+                                            optionItem.option || 
+                                            optionItem.question ||
+                                            optionItem.text ||
+                                            (typeof optionItem === 'string' ? optionItem : '');
+                            }
+                            
+                            optionEl.innerHTML = optionText || '';
+                        }
+                    }
+                }
+                
+                // Handle heading_option for question types 3 (True/False) and 7 (Match Table Labels)
+                if ((id == '3' || id == '7') && this.fullData.heading_option && Array.isArray(this.fullData.heading_option)) {
+                    for (let i = 0; i < this.fullData.heading_option.length; i++) {
+                        const headingOption = this.fullData.heading_option[i];
+                        if (headingOption && headingOption.correctActive !== undefined && headingOption.correctAnswer !== undefined) {
+                            const row = headingOption.correctActive;
+                            const column = headingOption.correctAnswer;
+                            const checkId = row.toString() + column.toString();
+                            const checkEl = document.getElementById('check' + checkId);
+                            if (checkEl) {
+                                checkEl.setAttribute('checked', 'true');
+                            }
+                        }
+                    }
+                }
+            }, 200);
         } else if (id == '9' || id == '10') {
             this.fullData = data;
             this.quesId = id;
@@ -900,13 +995,20 @@ export class TextAssignmentComponent implements OnInit {
             //   }
             // } , 100);
             this.modalRef = this.modalService.open(this.matchOrderDetail, data);
+        } else {
+            // Unknown question type - log error and don't open modal
+            console.error('Unknown question type id:', id);
+            return;
         }
         this.clickEvent();
-        this.modalRef.result.then((result) => {
-            this.closeResult = `Closed with: ${result}`;
-        }, (reason) => {
-            this.closeResult = `Dismissed ${this.getDismissReason(reason)}`;
-        });
+        // Only access modalRef.result if modalRef was successfully created
+        if (this.modalRef) {
+            this.modalRef.result.then((result) => {
+                this.closeResult = `Closed with: ${result}`;
+            }, (reason) => {
+                this.closeResult = `Dismissed ${this.getDismissReason(reason)}`;
+            });
+        }
     }
 
     private getDismissReason(reason: any): string {
@@ -940,7 +1042,7 @@ export class TextAssignmentComponent implements OnInit {
 
     assignContent() {
         this.modalRef.close();
-        this.classDetails = JSON.parse(this.auth.getSessionData('card-data'));
+        this.classDetails = this.getSessionJson('card-data') ?? [];
         this.modalRef = this.modalService.open(this.assignTemplate, {size: 'xl', backdrop: 'static'});
     }
 
@@ -1058,5 +1160,35 @@ export class TextAssignmentComponent implements OnInit {
         let html = markdown.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
         html = html.replace(/\n/g, '<br>');
         return this.sanitizer.bypassSecurityTrustHtml(html);
+    }
+
+    private getSessionJson<T = any>(key: string): T | null {
+        const rawValue = this.auth.getSessionData(key);
+        if (!rawValue || rawValue === 'null' || rawValue === 'undefined') {
+            return null;
+        }
+        try {
+            return JSON.parse(rawValue) as T;
+        } catch (error) {
+            console.error(`Failed to parse session data for key: ${key}`, error);
+            return null;
+        }
+    }
+
+    private ensureEditContext(): any {
+        const editorData = this.getSessionJson('editor');
+        if (editorData) {
+            return editorData;
+        }
+        return this.getSessionJson('editresources');
+    }
+
+    private handleMissingEditSession(): void {
+        if (this.missingContextHandled) {
+            return;
+        }
+        this.missingContextHandled = true;
+        this.toastr.error('We were unable to load the selected assignment. Please open it again from the repository list.');
+        this.router.navigate(['/repository/content-home']);
     }
 }

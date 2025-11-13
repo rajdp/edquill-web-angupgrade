@@ -1,6 +1,7 @@
 import {Component, ElementRef, OnDestroy, OnInit, TemplateRef, ViewChild} from '@angular/core';
 import {ActivatedRoute, Navigation, Router} from '@angular/router';
-import {forkJoin, Subscription} from 'rxjs';
+import {forkJoin, Subject, Subscription} from 'rxjs';
+import {debounceTime, distinctUntilChanged} from 'rxjs/operators';
 import {FormArray, FormBuilder, FormControl, FormGroup, Validators} from '@angular/forms';
 import {ClassService} from '../../../shared/service/class.service';
 import {AuthService} from '../../../shared/service/auth.service';
@@ -9,7 +10,7 @@ import {CommonService} from '../../../shared/service/common.service';
 import {ToastrService} from 'ngx-toastr';
 import {NgbModal, NgbModalRef} from '@ng-bootstrap/ng-bootstrap';
 import {DatePipe} from '@angular/common';
-import {CdkDragDrop} from '@angular/cdk/drag-drop';
+import {CdkDragDrop, moveItemInArray} from '@angular/cdk/drag-drop';
 import {CreatorService} from '../../../shared/service/creator.service';
 import {ConfigurationService} from '../../../shared/service/configuration.service';
 import {IAngularMyDpOptions, IMyDateModel} from '@nodro7/angular-mydatepicker';
@@ -85,12 +86,15 @@ export class ClassOverviewComponent implements OnInit, OnDestroy {
     curriculumItems: any[] = [];
     students: any[] = [];
     announcements: any[] = [];
+    isAnnouncementsLoading = false;
+    private originalAnnouncementsData: any[] = [];
     homeworkSubmissions: any[] = [];
     topics: any[] = [];
     resourceLinks: any[] = [];
     topicGroups: Array<any> = [];
     ungroupedCurriculum: any[] = [];
     isCurriculumLoading = false;
+    isTopicOrderSaving = false;
     topicForm: FormGroup;
     topicModalRef?: NgbModalRef;
     isEditingTopic = false;
@@ -101,8 +105,10 @@ export class ClassOverviewComponent implements OnInit, OnDestroy {
     showAssignDrawer = false;
     isLibraryLoading = false;
     libraryItems: LibraryContentItem[] = [];
+    libraryAllItems: LibraryContentItem[] = [];
     libraryLoadError = '';
     librarySearchTerm = '';
+    private librarySearch$ = new Subject<string>();
     pendingAssignments: AssignmentDraft[] = [];
     uploadForm: FormGroup;
     resourceLinkForm: FormGroup;
@@ -187,6 +193,7 @@ export class ClassOverviewComponent implements OnInit, OnDestroy {
     private editingContentId = '';
     private readonly mediaBaseUrl: string;
     private subscriptions: Subscription[] = [];
+    private userNameMap: Map<string, string> = new Map();
 
     constructor(
         private route: ActivatedRoute,
@@ -264,7 +271,36 @@ export class ClassOverviewComponent implements OnInit, OnDestroy {
         return !!this.auth.manageClass;
     }
 
+    get classStatusLabel(): string {
+        const rawStatus = this.overview?.status || this.classSummary?.status || '';
+        if (!rawStatus) {
+            return '';
+        }
+        const normalized = String(rawStatus).toLowerCase();
+        const mapping: Record<string, string> = {
+            '1': 'all',
+            '2': 'upcoming',
+            '3': 'active',
+            '4': 'completed',
+            '5': 'archived',
+            '6': 'draft',
+            'active': 'active',
+            'upcoming': 'upcoming',
+            'completed': 'completed',
+            'draft': 'draft',
+            'archived': 'archived'
+        };
+        return (mapping[normalized] || normalized).replace(/\b\w/g, (char) => char.toUpperCase());
+    }
+
     ngOnInit(): void {
+        const librarySearchSub = this.librarySearch$.pipe(
+            debounceTime(300),
+            distinctUntilChanged()
+        ).subscribe((term) => {
+            this.loadLibraryContents(term);
+        });
+        this.subscriptions.push(librarySearchSub);
         this.showStudentEmailId = typeof this.auth.showStudentEmailId === 'boolean' ? this.auth.showStudentEmailId : true;
         this.classId = this.route.snapshot.paramMap.get('id') || '';
         this.captureNavigationState(this.router.getCurrentNavigation());
@@ -294,6 +330,10 @@ export class ClassOverviewComponent implements OnInit, OnDestroy {
         return topic?.topic_id || topic?.id || topic?.topic_name || topic?.name || topic?.topic || _;
     }
 
+    trackByAnnouncement(_: number, announcement: any): string | number {
+        return announcement?.id || announcement?.note || announcement?.message || _;
+    }
+
     getDropConnections(listId: string): string[] {
         const ids = [this.baseDropListId, ...this.topicGroups.map((group) => group.dropListId)];
         if (this.showAssignDrawer) {
@@ -305,7 +345,7 @@ export class ClassOverviewComponent implements OnInit, OnDestroy {
     openAssignDrawer(): void {
         this.showAssignDrawer = true;
         if (!this.libraryItems.length) {
-            this.loadLibraryContents();
+            this.loadLibraryContents(this.librarySearchTerm);
         }
     }
 
@@ -315,7 +355,8 @@ export class ClassOverviewComponent implements OnInit, OnDestroy {
 
     onLibrarySearch(term: string): void {
         this.librarySearchTerm = term;
-        this.loadLibraryContents(term);
+        this.libraryItems = this.filterLibraryItems(this.libraryAllItems, term);
+        this.librarySearch$.next(term ?? '');
     }
 
     setAssignMode(mode: AssignMode): void {
@@ -337,6 +378,7 @@ export class ClassOverviewComponent implements OnInit, OnDestroy {
 
     private loadLibraryContents(searchTerm: string = ''): void {
         const requestSeq = ++this.libraryRequestSeq;
+        console.log('[ClassOverview] loadLibraryContents payload', {search: searchTerm});
         this.isLibraryLoading = true;
         this.libraryLoadError = '';
         const payload: any = {
@@ -349,19 +391,22 @@ export class ClassOverviewComponent implements OnInit, OnDestroy {
         };
         const sub = this.creatorService.contentList(payload).subscribe({
             next: (response: ApiResponse<LibraryContentItem[]>) => {
+                console.log('[ClassOverview] loadLibraryContents response', response);
                 if (requestSeq !== this.libraryRequestSeq) {
                     return;
                 }
                 this.isLibraryLoading = false;
                 const items = this.normalizeLibraryItems(this.extractLibraryItems(response));
-                this.libraryItems = items;
+                this.libraryAllItems = items;
+                this.libraryItems = this.filterLibraryItems(items, searchTerm);
             },
-            error: () => {
+            error: (error) => {
                 if (requestSeq !== this.libraryRequestSeq) {
                     return;
                 }
                 this.isLibraryLoading = false;
                 this.libraryLoadError = 'Unable to load content library right now.';
+                console.error('[ClassOverview] loadLibraryContents error', error);
             }
         });
         this.subscriptions.push(sub);
@@ -386,6 +431,24 @@ export class ClassOverviewComponent implements OnInit, OnDestroy {
             content_name: item.content_name || item.name || 'Untitled content',
             subject_name: item.subject_name || item.subject || ''
         }));
+    }
+
+    private filterLibraryItems(items: LibraryContentItem[], term: string): LibraryContentItem[] {
+        const search = term?.trim().toLowerCase();
+        if (!search) {
+            return items;
+        }
+        return items.filter((item) => {
+            const fields = [
+                item.content_name,
+                item.name,
+                item.subject_name,
+                item.content_format
+            ]
+                .filter(Boolean)
+                .map((value) => value.toString().toLowerCase());
+            return fields.some((value) => value.includes(search));
+        });
     }
 
     triggerDirectUpload(): void {
@@ -901,9 +964,11 @@ export class ClassOverviewComponent implements OnInit, OnDestroy {
             user_id: this.auth.getUserId(),
             school_id: this.auth.getSessionData('school_id'),
             class_id: this.classId,
-            notes: message,
-            status: '1'
+            note: message,
+            status: '1',
+            add_date: this.datePipe.transform(new Date(), 'dd-MM-yyyy')
         };
+        console.log('[ClassOverview] submitAnnouncement payload', payload);
 
         // Using the class service to add class notes/announcement
         this.classService.getNotesList(payload).subscribe({
@@ -912,7 +977,7 @@ export class ClassOverviewComponent implements OnInit, OnDestroy {
                 if (response?.IsSuccess) {
                     this.toastr.success('Announcement posted successfully');
                     this.closeAnnouncementModal();
-                    // Reload class overview to get updated announcements
+                    this.loadAnnouncements();
                     this.loadClassOverview();
                 } else {
                     this.announcementFormErrors = response?.ErrorObject || 'Failed to post announcement';
@@ -1174,20 +1239,23 @@ export class ClassOverviewComponent implements OnInit, OnDestroy {
             this.toastr.error('Unable to determine content reference.');
             return;
         }
+        const startTimePayload = this.formatTimeStructForPayload(startTime);
+        const endTimePayload = this.formatTimeStructForPayload(endTime);
         const payload: any = {
             platform: 'web',
             role_id: this.auth.getRoleId(),
             user_id: this.auth.getUserId(),
             content_id: this.editingContent?.content_id ?? '',
             class_id: this.classId,
-            start_time: startTime ?? '',
-            end_time: endTime ?? '',
+            start_time: startTimePayload,
+            end_time: endTimePayload,
             class_content_id: classContentId,
             auto_review: formValue.autoReview ?? '0',
             allow_workspace: allowWorkspace ? '1' : '0',
             allow_feedback: allowFeedback ? '1' : '0',
-            start_date: startDate || '',
-            end_date: endDate || ''
+            start_date: startDate ? startDate : '',
+            end_date: endDate ? endDate : '',
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
         };
         this.isSavingContentEdit = true;
         const sub = this.classService.editContentDetail(payload).subscribe({
@@ -1362,7 +1430,9 @@ export class ClassOverviewComponent implements OnInit, OnDestroy {
                 this.commonData.showLoader(false);
                 console.log('[ClassOverview] loadClassOverview response', response);
                 if (response?.IsSuccess && Array.isArray(response?.ResponseObject) && response.ResponseObject.length) {
+                    console.log('[ClassOverview] classDetails ResponseObject', response.ResponseObject);
                     [this.overview] = response.ResponseObject;
+                    console.log('[ClassOverview] overview after assignment', this.overview);
                     this.prepareViewModel();
                     this.auth.setSessionData('card-data', JSON.stringify(response.ResponseObject));
                 } else {
@@ -1386,11 +1456,18 @@ export class ClassOverviewComponent implements OnInit, OnDestroy {
         this.students = this.normalizeStudents(this.overview?.students || []);
         this.curriculumItems = this.normalizeCurriculum(this.overview?.curriculum || this.overview?.curriculum_list || []);
         this.homeworkSubmissions = this.normalizeHomework(this.overview?.homework_submissions || this.overview?.assignment_list || []);
-        this.announcements = this.normalizeAnnouncements(this.overview?.announcement_list || this.overview?.announcements || []);
+        const fallbackAnnouncements = this.overview?.announcement_list || this.overview?.announcements || this.overview?.notes || [];
+        this.originalAnnouncementsData = this.ensureArray(fallbackAnnouncements);
+        // Load user data first to ensure usernames can be resolved
+        if (this.userNameMap.size === 0) {
+            this.loadUserData();
+        }
+        this.announcements = this.originalAnnouncementsData.length ? this.normalizeAnnouncements(this.originalAnnouncementsData) : [];
         this.topics = Array.isArray(this.overview?.topics) ? this.overview.topics : [];
         this.resourceLinks = Array.isArray(this.overview?.video_link) ? this.overview.video_link : (this.overview?.resource_links || []);
         this.buildTopicGroups();
         this.fetchCurriculumData();
+        this.loadAnnouncements();
     }
 
     resolveCurriculumStatus(item: any): CurriculumStatus {
@@ -1463,16 +1540,192 @@ export class ClassOverviewComponent implements OnInit, OnDestroy {
     }
 
     private normalizeAnnouncements(items: any[]): any[] {
-        return items
-            .map((item) => ({
+        const announcements = this.ensureArray(items).map((item, index) => {
+            const message = (item?.note ?? item?.message ?? item?.body ?? item?.description ?? '').toString();
+            const createdById = (item?.created_by ?? item?.user_id ?? '').toString();
+            // Try to resolve username from lookup map, fallback to available fields
+            let createdBy = this.userNameMap.get(createdById) || 
+                           item?.author || 
+                           item?.teacher_name || 
+                           item?.user_name ||
+                           item?.created_by_name ||
+                           '';
+            // If still empty and created_by looks like a number, keep it as fallback
+            if (!createdBy && createdById && !isNaN(Number(createdById))) {
+                createdBy = createdById;
+            }
+            const createdAtDate = this.coerceToDate(item?.created_at ?? item?.created_date ?? item?.add_date ?? item?.updated_at ?? '');
+            const plainText = this.stripHtml(message);
+            const title = item?.title ?? item?.subject ?? (plainText ? plainText.slice(0, 80).trim() : 'Announcement');
+            const commentCount = Number(item?.comment_count ?? item?.comments_count ?? 0);
+            return {
                 ...item,
-                created_at: item?.created_at || item?.posted_at || ''
-            }))
-            .sort((a, b) => {
-                const aDate = new Date(a.created_at).getTime();
-                const bDate = new Date(b.created_at).getTime();
-                return bDate - aDate;
-            });
+                id: item?.id ?? item?.note_id ?? item?.announcement_id ?? `note-${index}`,
+                title,
+                message,
+                note: message,
+                created_by: createdBy,
+                created_at: createdAtDate,
+                created_at_raw: item?.created_at ?? item?.created_date ?? item?.add_date ?? '',
+                created_at_ts: createdAtDate ? createdAtDate.getTime() : 0,
+                comment_count: isNaN(commentCount) ? 0 : commentCount
+            };
+        });
+
+        return announcements.sort((a, b) => (b.created_at_ts ?? 0) - (a.created_at_ts ?? 0));
+    }
+
+    private coerceToDate(value: any): Date | null {
+        if (!value && value !== 0) {
+            return null;
+        }
+
+        if (value instanceof Date) {
+            return value;
+        }
+
+        if (typeof value === 'number' && !Number.isNaN(value)) {
+            return new Date(value);
+        }
+
+        const str = `${value}`.trim();
+        if (!str) {
+            return null;
+        }
+
+        const dashMatch = str.match(/^(\d{2})-(\d{2})-(\d{4})(?:\s+(\d{2}):(\d{2})(?::(\d{2}))?)?$/);
+        if (dashMatch) {
+            const [, dd, mm, yyyy, hh = '00', min = '00', ss = '00'] = dashMatch;
+            return new Date(`${yyyy}-${mm}-${dd}T${hh}:${min}:${ss}`);
+        }
+
+        const slashMatch = str.match(/^(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2})(?::(\d{2}))?)?$/);
+        if (slashMatch) {
+            const [, mm, dd, yyyy, hh = '00', min = '00', ss = '00'] = slashMatch;
+            return new Date(`${yyyy}-${mm}-${dd}T${hh}:${min}:${ss}`);
+        }
+
+        const parsed = Date.parse(str);
+        if (!Number.isNaN(parsed)) {
+            return new Date(parsed);
+        }
+
+        return null;
+    }
+
+    private stripHtml(value: string): string {
+        if (!value) {
+            return '';
+        }
+        return value.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+    }
+
+    private loadAnnouncements(): void {
+        if (!this.classId) {
+            return;
+        }
+
+        const payload = {
+            platform: 'web',
+            role_id: this.auth.getRoleId(),
+            user_id: this.auth.getUserId(),
+            school_id: this.auth.getSessionData('school_id'),
+            class_id: [this.classId],
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+        };
+
+        console.log('[ClassOverview] loadAnnouncements payload', payload);
+        this.isAnnouncementsLoading = true;
+        
+        // Load user data first if not already loaded
+        if (this.userNameMap.size === 0) {
+            this.loadUserData();
+        }
+        
+        const sub = this.classService.fetchClassNotes(payload).subscribe({
+            next: (response: ApiResponse<any[]>) => {
+                this.isAnnouncementsLoading = false;
+                console.log('[ClassOverview] loadAnnouncements response', response);
+                if (response?.IsSuccess && Array.isArray(response?.ResponseObject)) {
+                    // Store original data for re-normalization if user data loads later
+                    this.originalAnnouncementsData = response.ResponseObject;
+                    this.announcements = this.normalizeAnnouncements(response.ResponseObject);
+                } else if (!this.announcements.length) {
+                    this.announcements = [];
+                    this.originalAnnouncementsData = [];
+                }
+            },
+            error: (error) => {
+                this.isAnnouncementsLoading = false;
+                console.error('[ClassOverview] loadAnnouncements error', error);
+                if (!this.announcements.length) {
+                    this.announcements = [];
+                }
+            }
+        });
+        this.subscriptions.push(sub);
+    }
+
+    private loadUserData(): void {
+        const schoolId = this.auth.getSessionData('school_id');
+        if (!schoolId) {
+            return;
+        }
+
+        const payload = {
+            platform: 'web',
+            role_id: this.auth.getRoleId(),
+            user_id: this.auth.getUserId(),
+            school_id: schoolId
+        };
+
+        const sub = this.classService.individualTeacherList(payload).subscribe({
+            next: (response: ApiResponse<any[]>) => {
+                if (response?.IsSuccess && Array.isArray(response?.ResponseObject)) {
+                    this.buildUserNameLookup(response.ResponseObject);
+                    // Re-normalize announcements if they're already loaded
+                    if (this.originalAnnouncementsData.length > 0) {
+                        this.announcements = this.normalizeAnnouncements(this.originalAnnouncementsData);
+                    }
+                }
+            },
+            error: (error) => {
+                console.error('[ClassOverview] loadUserData error', error);
+            }
+        });
+        this.subscriptions.push(sub);
+    }
+
+    private buildUserNameLookup(users: any[]): void {
+        this.userNameMap.clear();
+        if (!Array.isArray(users)) {
+            return;
+        }
+
+        users.forEach((user) => {
+            // Try multiple name fields
+            const userName = user?.teacher_name || 
+                           user?.name || 
+                           user?.user_name ||
+                           (user?.first_name && user?.last_name ? `${user.first_name} ${user.last_name}`.trim() : '') ||
+                           user?.display_name ||
+                           user?.full_name;
+            
+            if (!userName) {
+                return;
+            }
+
+            // Map multiple possible ID fields
+            const possibleIds = [
+                user?.teacher_id,
+                user?.user_id,
+                user?.id
+            ];
+            
+            possibleIds
+                .filter((id) => id !== undefined && id !== null && id !== '')
+                .forEach((id) => this.userNameMap.set(String(id), userName));
+        });
     }
 
     private fetchCurriculumData(): void {
@@ -1561,16 +1814,86 @@ export class ClassOverviewComponent implements OnInit, OnDestroy {
                 };
             });
 
-        this.topicGroups.sort((a, b) => {
-            const aDate = a.startRaw ? new Date(a.startRaw).getTime() : Number.MAX_SAFE_INTEGER;
-            const bDate = b.startRaw ? new Date(b.startRaw).getTime() : Number.MAX_SAFE_INTEGER;
-            return aDate - bDate;
-        });
-
         this.ungroupedCurriculum = curriculum.filter((item) => {
             const key = item?.content_id ?? item?.id ?? `${item?.content_name}-${item?.subject_name}`;
             return !groupedKeys.has(key);
         });
+    }
+
+    onTopicReorder(event: CdkDragDrop<any[]>): void {
+        if (!event || event.previousIndex === event.currentIndex || !Array.isArray(this.topicGroups) || this.topicGroups.length < 2) {
+            return;
+        }
+        const previousGroups = [...this.topicGroups];
+        const previousTopics = Array.isArray(this.topics) ? [...this.topics] : [];
+
+        moveItemInArray(this.topicGroups, event.previousIndex, event.currentIndex);
+        if (Array.isArray(this.topics) && this.topics.length === previousTopics.length) {
+            moveItemInArray(this.topics, event.previousIndex, event.currentIndex);
+        }
+
+        const orderedIds = this.topicGroups
+            .map((group) => this.normalizeTopicId(group))
+            .filter((id): id is string => !!id);
+
+        if (!orderedIds.length) {
+            return;
+        }
+
+        this.persistTopicOrder(orderedIds, previousGroups, previousTopics);
+    }
+
+    private normalizeTopicId(topic: any): string | null {
+        if (!topic) {
+            return null;
+        }
+        const id = topic?.topic_id ?? topic?.id ?? topic?.topicId ?? null;
+        if (id === null || id === undefined || id === '') {
+            return null;
+        }
+        return id.toString();
+    }
+
+    private persistTopicOrder(order: string[], previousGroups: any[], previousTopics: any[]): void {
+        if (!this.classId || !order.length) {
+            console.warn('[ClassOverview] persistTopicOrder: Missing classId or empty order', {classId: this.classId, order});
+            return;
+        }
+        this.isTopicOrderSaving = true;
+        const payload = {
+            platform: 'web',
+            role_id: this.auth.getRoleId(),
+            user_id: this.auth.getUserId(),
+            class_id: this.classId,
+            topic_order: order,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+        };
+        console.log('[ClassOverview] persistTopicOrder payload', payload);
+        const sub = this.classService.updateTopicOrder(payload).subscribe({
+            next: (response: ApiResponse<any>) => {
+                this.isTopicOrderSaving = false;
+                console.log('[ClassOverview] persistTopicOrder response', response);
+                if (response?.IsSuccess) {
+                    const message = response?.ResponseObject || 'Topic order updated';
+                    this.toastr.success(message);
+                    this.fetchCurriculumData();
+                } else {
+                    const errorMsg = response?.Message || response?.ErrorObject || response?.ResponseObject || 'Unable to update topic order.';
+                    console.error('[ClassOverview] persistTopicOrder failed', errorMsg, response);
+                    this.toastr.error(errorMsg);
+                    this.topicGroups = [...previousGroups];
+                    this.topics = [...previousTopics];
+                }
+            },
+            error: (error) => {
+                this.isTopicOrderSaving = false;
+                console.error('[ClassOverview] persistTopicOrder error', error);
+                this.toastr.error('Unable to update topic order.');
+                this.topicGroups = [...previousGroups];
+                this.topics = [...previousTopics];
+            }
+        });
+        this.subscriptions.push(sub);
     }
 
     private ensureArray<T>(value: T | T[] | null | undefined): T[] {
@@ -1676,6 +1999,16 @@ export class ClassOverviewComponent implements OnInit, OnDestroy {
 
     private parseInputTime(value: any): TimeStruct | null {
         return this.parseTimeString(value);
+    }
+
+    private formatTimeStructForPayload(time: TimeStruct | null): string {
+        if (!time) {
+            return '';
+        }
+        const hour = time.hour.toString().padStart(2, '0');
+        const minute = time.minute.toString().padStart(2, '0');
+        const second = (time.second ?? 0).toString().padStart(2, '0');
+        return `${hour}:${minute}:${second}`;
     }
 
     private parseTimeString(raw: any): TimeStruct | null {
@@ -2114,13 +2447,16 @@ export class ClassOverviewComponent implements OnInit, OnDestroy {
         }
         const selectedStudents = this.newlySelectedStuent
             .map((student) => {
-                const studentId = student?.student_id || student?.user_id || student?.id;
-                if (!studentId) {
+                const rawStudentId = student?.student_id;
+                const fallbackId = student?.user_id || student?.id || student?.userId || '';
+                const normalizedUserId = fallbackId ? String(fallbackId) : String(rawStudentId || '');
+                const normalizedStudentId = this.normalizeStudentIdentifier(rawStudentId, normalizedUserId);
+                if (!normalizedStudentId) {
                     return null;
                 }
                 return {
-                    student_id: studentId,
-                    user_id: student?.user_id || studentId,
+                    student_id: normalizedStudentId,
+                    user_id: normalizedUserId || normalizedStudentId,
                     student_class_type: student?.student_class_type || '1',
                     first_name: student?.first_name || '',
                     last_name: student?.last_name || '',
@@ -2398,8 +2734,9 @@ export class ClassOverviewComponent implements OnInit, OnDestroy {
         if (!student) {
             return student;
         }
-        const studentId = String(student?.student_id || student?.user_id || student?.id || '');
-        const userId = String(student?.user_id || student?.student_id || studentId);
+        const rawStudentId = student?.student_id || student?.id || '';
+        const userId = String(student?.user_id || student?.id || rawStudentId || '');
+        const studentId = this.normalizeStudentIdentifier(rawStudentId, userId);
         const firstName = student?.first_name || '';
         const lastName = student?.last_name || '';
         const displayName = student?.name || student?.student_name || [firstName, lastName].filter(Boolean).join(' ');
@@ -2420,6 +2757,22 @@ export class ClassOverviewComponent implements OnInit, OnDestroy {
                 student_id: studentId
             })
         };
+    }
+
+    private normalizeStudentIdentifier(candidate: any, fallback: string): string {
+        const candidateStr = candidate ? String(candidate) : '';
+        const fallbackStr = fallback ? String(fallback) : '';
+        if (candidateStr && !this.isLikelyEmail(candidateStr)) {
+            return candidateStr;
+        }
+        if (fallbackStr && !this.isLikelyEmail(fallbackStr)) {
+            return fallbackStr;
+        }
+        return candidateStr || fallbackStr;
+    }
+
+    private isLikelyEmail(value: string): boolean {
+        return !!value && /\S+@\S+\.\S+/.test(value);
     }
 
     private buildStudentLabel(student: {name: string; email?: string; grade_name?: string; student_id: string}): string {
@@ -2509,9 +2862,6 @@ export class ClassOverviewComponent implements OnInit, OnDestroy {
             topic_id: targetTopicId ? targetTopicId : '0',
             timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
         };
-        if (typeof position === 'number' && position > -1) {
-            payload.position = position + 1;
-        }
         this.isCurriculumLoading = true;
         const sub = this.classService.moveTopic(payload).subscribe({
             next: (response: ApiResponse<any>) => {

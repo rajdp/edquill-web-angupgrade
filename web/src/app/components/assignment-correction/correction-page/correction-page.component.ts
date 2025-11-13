@@ -968,7 +968,7 @@ export class CorrectionPageComponent implements OnInit, OnDestroy {
                 console.log(this.sheetInfo, 'sheetInfo');
                 this.pdfpath = pdfpath[0];
                 if (pdfpath[0].original_image_url != undefined) {
-                    this.common.downloadfilewithbytes(this.webhost + '/' + pdfpath[0]?.original_image_url)
+                    this.common.downloadfilewithbytes(this.webhost + '/' + pdfpath[0]?.original_image_url, { includeAuthHeader: false })
                         .subscribe((filebytes: ArrayBuffer) => {
                             this.pdfTemplate = filebytes;
                             this.functionCalled = true;

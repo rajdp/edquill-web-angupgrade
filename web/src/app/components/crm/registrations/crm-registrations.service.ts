@@ -125,12 +125,45 @@ export class CrmRegistrationsService {
       }));
   }
 
+  saveCourseDecisions(payload: any): Observable<any> {
+    return this.http
+      .post<ApiResponse<any>>(`${this.basePath}/course-decisions`, payload)
+      .pipe(map(res => {
+        if (!res.IsSuccess) {
+          throw new Error(res.ErrorObject || 'Unable to save course decisions');
+        }
+        return res.ResponseObject;
+      }));
+  }
+
   listAssignees(): Observable<any> {
     return this.http
       .post<ApiResponse<any>>(`${this.basePath}/assignees`, {})
       .pipe(map(res => {
         if (!res.IsSuccess) {
           throw new Error(res.ErrorObject || 'Unable to load assignees');
+        }
+        return res.ResponseObject;
+      }));
+  }
+
+  assignClass(payload: any): Observable<any> {
+    return this.http
+      .post<ApiResponse<any>>(`${this.basePath}/assign-class`, payload)
+      .pipe(map(res => {
+        if (!res.IsSuccess) {
+          throw new Error(res.ErrorObject || 'Unable to assign class');
+        }
+        return res.ResponseObject;
+      }));
+  }
+
+  approve(payload: any): Observable<any> {
+    return this.http
+      .post<ApiResponse<any>>(`${this.basePath}/approve`, payload)
+      .pipe(map(res => {
+        if (!res.IsSuccess) {
+          throw new Error(res.ErrorObject || 'Unable to approve registration');
         }
         return res.ResponseObject;
       }));

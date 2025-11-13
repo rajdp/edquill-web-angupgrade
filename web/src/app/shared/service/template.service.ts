@@ -21,7 +21,7 @@ export class TemplateService {
         const json = JSON.stringify(data);
         const token = this.authService.getAccessToken();
         const httpOptions = {
-            headers: new HttpHeaders({'Content-Type': 'application/json', 'accesstoken': token})
+            headers: new HttpHeaders({'Content-Type': 'application/json', 'Accesstoken': token})
         };
         const url = this.configurationService.getHost() + 'student/listCategory';
         return this.http.post(url , json, httpOptions).pipe(
@@ -33,7 +33,7 @@ export class TemplateService {
         const json = JSON.stringify(data);
         const token = this.authService.getAccessToken();
         const httpOptions = {
-            headers: new HttpHeaders({'Content-Type': 'application/json', 'accesstoken': token})
+            headers: new HttpHeaders({'Content-Type': 'application/json', 'Accesstoken': token})
         };
         const url = this.configurationService.getHost() + 'student/addCategory';
         return this.http.post(url , json, httpOptions).pipe(
@@ -45,7 +45,7 @@ export class TemplateService {
         const json = JSON.stringify(data);
         const token = this.authService.getAccessToken();
         const httpOptions = {
-            headers: new HttpHeaders({'Content-Type': 'application/json', 'accesstoken': token})
+            headers: new HttpHeaders({'Content-Type': 'application/json', 'Accesstoken': token})
         };
         const url = this.configurationService.getHost() + 'student/editCategory';
         return this.http.post(url , json, httpOptions).pipe(

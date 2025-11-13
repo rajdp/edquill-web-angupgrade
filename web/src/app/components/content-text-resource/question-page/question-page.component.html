@@ -126,9 +126,9 @@
     <!--    //////multichoice standard and multi section designs closed -->
     <!--    //////multichoice match table-Standard and table-Lables designs open -->
 
-    <div *ngIf="questionId == '5' || questionId == '7'" class="row">
+    <div *ngIf="questionId == '3' || questionId == '5' || questionId == '7'" class="row">
         <div class="col-12">
-            <h3 class="letter">Multiple Choice > Match Table-{{questionId == '5' ? 'Standard' : 'Labels'}}</h3>
+            <h3 class="letter">Multiple Choice > {{questionId == '3' ? 'True or False' : questionId == '5' ? 'Match Table-Standard' : 'Match Table-Labels'}}</h3>
             <hr class="letter">
         </div>
         <div class="col-12" [hidden]="selectOptionHeader != 'edit'">
@@ -243,7 +243,7 @@
                                     <td *ngIf="inputType == 'math'" class="innerhtml-margin-clear" id="{{'myId' + j}}"></td>
                                     <td *ngIf="inputType == 'text'">{{matchTable.get('addMultipleChoice')['controls'][j]['controls']['option'].value}}</td>
                                     <td *ngFor="let list of matchTable.get('addMatchTableChoose')['controls']; let i=index">
-                                        <input (change)="getAddChoiceAnswer(i, j, 'matchTableChooseSingle')" *ngIf="questionId == '5'" class="radio_animated cursor" name="choose{{j}}" type="radio" id="{{j}}chooseSingle{{i}}">
+                                        <input (change)="getAddChoiceAnswer(i, j, 'matchTableChooseSingle')" *ngIf="questionId == '3' || questionId == '5'" class="radio_animated cursor" name="choose{{j}}" type="radio" id="{{j}}chooseSingle{{i}}">
                                         <input (change)="getAddChoiceAnswer(i, j, 'matchTableChooseMultiple')" *ngIf="questionId == '7'" type="checkbox" class="cursor" id="{{j}}chooseMulti{{i}}">
                                     </td>
                                 </tr>

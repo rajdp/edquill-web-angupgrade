@@ -100,6 +100,7 @@ export class ContentHomeComponent implements OnInit, OnDestroy {
     public response: any;
     public teacherData: any = [];
     private teacherNameMap: Map<string, string> = new Map<string, string>();
+    private creatorData: any[] = [];
     public typeid: any;
     public contentDetaildata: any;
     public sortfilter: any;
@@ -1442,17 +1443,57 @@ export class ContentHomeComponent implements OnInit, OnDestroy {
     }
 
     teacherList() {
-        const data = {
-            platform: 'web',
-            role_id: this.auth.getRoleId(),
-            user_id: this.auth.getUserId(),
-            school_id: this.auth.getSessionData('school_id')
-        };
-        this.classService.individualTeacherList(data).subscribe((successData: any) => {
-                if (successData.IsSuccess) {
-                    this.teacherData = successData.ResponseObject;
-                    console.log(this.teacherData, 'teacherData');
-                    this.buildTeacherNameLookup();
+        // Build user lookup from content data first
+        this.buildUserLookupFromContent();
+    }
+
+    private buildUserLookupFromContent(): void {
+        if (!Array.isArray(this.contentdata) || this.contentdata.length === 0) {
+            // If no content yet, try to load users from other sources
+            this.loadUsersFromAPIs();
+            return;
+        }
+
+        // Extract all unique created_by user IDs from content
+        const userIds = new Set<string>();
+        this.contentdata.forEach((content) => {
+            const idCandidates = this.getCreatorIdCandidates(content);
+            idCandidates.forEach((id) => {
+                if (id && id.trim()) {
+                    userIds.add(id.trim());
+                }
+            });
+        });
+
+        if (userIds.size === 0) {
+            this.decorateContentCreatorNames();
+            return;
+        }
+
+        // Fetch user details for all unique IDs
+        this.fetchUsersByIds(Array.from(userIds));
+    }
+
+    private fetchUsersByIds(userIds: string[]): void {
+        // Fetch users in batches to avoid too many API calls
+        const batchSize = 10;
+        const batches: string[][] = [];
+        
+        for (let i = 0; i < userIds.length; i += batchSize) {
+            batches.push(userIds.slice(i, i + batchSize));
+        }
+
+        let completedBatches = 0;
+        const totalBatches = batches.length;
+
+        batches.forEach((batch) => {
+            // Fetch users for this batch
+            const userPromises = batch.map((userId) => this.fetchUserById(userId));
+            
+            Promise.all(userPromises).then(() => {
+                completedBatches++;
+                // Once all batches are done, decorate content
+                if (completedBatches === totalBatches) {
                     this.decorateContentCreatorNames();
                     if (this.contentDetaildata) {
                         this.createdby = this.resolveCreatorDisplayName(
@@ -1461,10 +1502,118 @@ export class ContentHomeComponent implements OnInit, OnDestroy {
                         );
                     }
                 }
-            },
-            (error) => {
-                console.log(error, 'error');
+            }).catch((error) => {
+                console.error('Error fetching user batch:', error);
+                completedBatches++;
+                if (completedBatches === totalBatches) {
+                    this.decorateContentCreatorNames();
+                }
             });
+        });
+
+        // If no batches (empty array), still decorate
+        if (totalBatches === 0) {
+            this.decorateContentCreatorNames();
+        }
+    }
+
+    private fetchUserById(userId: string): Promise<void> {
+        return new Promise((resolve, reject) => {
+            const data = {
+                platform: 'web',
+                role_id: this.auth.getRoleId(),
+                user_id: this.auth.getUserId(),
+                school_id: this.auth.getSessionData('school_id'),
+                selected_user_id: userId
+            };
+
+            // Use common service to get user detail
+            this.common.getUserDetail(data).subscribe({
+                next: (successData: any) => {
+                    if (successData?.IsSuccess && successData?.ResponseObject) {
+                        const user = successData.ResponseObject;
+                        const userName = this.extractUserName(user);
+                        if (userName) {
+                            this.teacherNameMap.set(String(userId), userName);
+                        }
+                    }
+                    resolve();
+                },
+                error: (error) => {
+                    console.warn(`Could not fetch user ${userId}:`, error);
+                    resolve(); // Resolve anyway to continue processing
+                }
+            });
+        });
+    }
+
+    private extractUserName(user: any): string {
+        if (!user) {
+            return '';
+        }
+
+        // Try multiple name fields
+        return user?.name ||
+               user?.user_name ||
+               user?.display_name ||
+               user?.full_name ||
+               (user?.first_name && user?.last_name ? `${user.first_name} ${user.last_name}`.trim() : '') ||
+               user?.first_name ||
+               user?.last_name ||
+               '';
+    }
+
+    private loadUsersFromAPIs(): void {
+        // Fallback: load teachers and creators if content is not available yet
+        const data = {
+            platform: 'web',
+            role_id: this.auth.getRoleId(),
+            user_id: this.auth.getUserId(),
+            school_id: this.auth.getSessionData('school_id')
+        };
+        
+        // Load teachers
+        this.classService.individualTeacherList(data).subscribe((successData: any) => {
+            if (successData.IsSuccess) {
+                this.teacherData = successData.ResponseObject || [];
+                this.buildTeacherNameLookup();
+            }
+        });
+
+        // Load content creators
+        this.creatorService.contentCreatorList(data).subscribe((successData: any) => {
+            if (successData.IsSuccess) {
+                this.creatorData = successData.ResponseObject || [];
+                this.addCreatorsToLookup();
+            }
+        });
+    }
+
+    private addCreatorsToLookup(): void {
+        if (!Array.isArray(this.creatorData)) {
+            return;
+        }
+
+        this.creatorData.forEach((creator) => {
+            const creatorName = this.extractUserName(creator);
+            if (!creatorName) {
+                return;
+            }
+
+            const possibleIds = [
+                creator?.creator_id,
+                creator?.user_id,
+                creator?.id
+            ];
+            
+            possibleIds
+                .filter((id) => id !== undefined && id !== null && id !== '')
+                .forEach((id) => {
+                    if (!this.teacherNameMap.has(String(id))) {
+                        this.teacherNameMap.set(String(id), creatorName);
+                    }
+                });
+        });
     }
 
     private buildTeacherNameLookup(): void {
@@ -1474,12 +1623,23 @@ export class ContentHomeComponent implements OnInit, OnDestroy {
         }
 
         this.teacherData.forEach((teacher) => {
-            const teacherName = teacher?.teacher_name || teacher?.name || teacher?.user_name;
+            // Try multiple name fields
+            const teacherName = teacher?.teacher_name || 
+                              teacher?.name || 
+                              teacher?.user_name ||
+                              (teacher?.first_name && teacher?.last_name ? `${teacher.first_name} ${teacher.last_name}`.trim() : '') ||
+                              teacher?.display_name ||
+                              teacher?.full_name;
             if (!teacherName) {
                 return;
             }
 
-            const possibleIds = [teacher?.teacher_id, teacher?.user_id];
+            // Map multiple possible ID fields
+            const possibleIds = [
+                teacher?.teacher_id,
+                teacher?.user_id,
+                teacher?.id
+            ];
             possibleIds
                 .filter((id) => id !== undefined && id !== null && id !== '')
                 .forEach((id) => this.teacherNameMap.set(String(id), teacherName));
@@ -1702,7 +1862,8 @@ export class ContentHomeComponent implements OnInit, OnDestroy {
                 console.log('📄 PAGINATION DEBUG - More pages likely, totalPages:', this.totalPages);
             }
             
-            this.decorateContentCreatorNames();
+            // Rebuild user lookup from the newly loaded content, then decorate
+            this.buildUserLookupFromContent();
 
             this.totalRecords = this.contentdata.length;
             this.threshhold = this.totalRecords - 2;

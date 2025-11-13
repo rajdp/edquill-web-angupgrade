@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { EnvironmentService } from '../../environment.service';
-import { map, Observable } from 'rxjs';
+import { catchError, map, Observable, throwError } from 'rxjs';
 
 interface ApiResponse<T> {
   IsSuccess: boolean;
@@ -89,6 +89,11 @@ export class SelfRegistrationService {
           throw new Error(response.ErrorObject || 'Unable to look up student record');
         }
         return response.ResponseObject;
+      }),
+      catchError(error => {
+        const backendMessage = error?.error?.ErrorObject || error?.error?.message;
+        const message = backendMessage || error?.message || 'Unable to look up student record';
+        return throwError(() => new Error(message));
       })
     );
   }

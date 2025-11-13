@@ -46,8 +46,12 @@
         <input type="search"
                class="form-control form-control-sm"
                placeholder="Search content"
-               [value]="librarySearchTerm"
-               (input)="onLibrarySearch($any($event.target).value)">
+               [(ngModel)]="librarySearchTerm"
+               (ngModelChange)="onLibrarySearch($event)"
+               (keydown.enter)="$event.preventDefault()"
+               autocomplete="off"
+               autocapitalize="none"
+               spellcheck="false">
     </div>
     <div class="assign-drawer__pane" [ngClass]="{'assign-drawer__pane--split': isAssignMode('library')}">
         <ng-container [ngSwitch]="assignMode">
@@ -184,7 +188,7 @@
                             </ng-template>
                             <button type="button" class="btn btn-link btn-sm text-danger p-0" *ngIf="uploadPayload.length" (click)="removeDirectUpload()">Remove</button>
                         </div>
-                        <input type="file" #directUploadInput class="visually-hidden" (change)="onDirectUploadFileSelected($event)">
+                        <input type="file" #directUploadInput hidden (change)="onDirectUploadFileSelected($event)">
                         <div class="text-danger small mt-1" *ngIf="uploadError">
                             {{ uploadError }}
                         </div>
@@ -308,7 +312,7 @@
                     <div class="text-neutral-600 small">
                         <span *ngIf="overview?.class_code">Class code: <strong>{{ overview.class_code }}</strong></span>
                         <span class="mx-2" *ngIf="overview?.class_code && overview?.status">•</span>
-                        <span *ngIf="overview?.status">Status: <strong>{{ overview.status | titlecase }}</strong></span>
+                        <span *ngIf="classStatusLabel">Status: <strong>{{ classStatusLabel }}</strong></span>
                     </div>
                 </div>
                 <div class="d-flex flex-wrap gap-2">
@@ -475,7 +479,7 @@
                     </div>
                 </section>
 
-                <section class="card shadow-sm border-0" *ngIf="topicGroups.length">
+                <section class="card shadow-sm border-0">
                     <div class="card-header border-0 pb-0">
                         <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
                             <div class="flex-grow-1">
@@ -493,176 +497,182 @@
                         </div>
                     </div>
                     <div class="card-body">
-                        <ng-container *ngIf="topicGroups.length">
-                            <div class="topic-group" *ngFor="let group of topicGroups; trackBy: trackByTopic">
-                                <div class="topic-group__header">
-                                <div>
-                                    <h3 class="h6 mb-1">{{ group.topic_name || group.name || group.topic }}</h3>
-                                    <p class="small text-neutral-600 mb-0" *ngIf="group.description">{{ group.description }}</p>
-                                    <p class="small text-neutral-500 mb-0" *ngIf="group.normalizedStart || group.normalizedEnd">
-                                        <span *ngIf="group.normalizedStart">Start: {{ group.normalizedStart }}</span>
-                                        <span *ngIf="group.normalizedStart && group.normalizedEnd" class="mx-1">•</span>
-                                        <span *ngIf="group.normalizedEnd">End: {{ group.normalizedEnd }}</span>
-                                    </p>
+                        <ng-container *ngIf="topicGroups.length; else emptyTopicState">
+                            <div class="topic-group-collection"
+                                 cdkDropList
+                                 [cdkDropListData]="topicGroups"
+                                 (cdkDropListDropped)="onTopicReorder($event)"
+                                 [cdkDropListDisabled]="isTopicOrderSaving">
+                                <div class="topic-group-card"
+                                     *ngFor="let group of topicGroups; trackBy: trackByTopic"
+                                     cdkDrag
+                                     cdkDragLockAxis="y"
+                                     [cdkDragData]="group"
+                                     [cdkDragDisabled]="isTopicOrderSaving">
+                                <div class="topic-group-card__header">
+                                    <div class="topic-group-card__drag" cdkDragHandle title="Drag to reorder topic">
+                                        <i class="bi bi-grip-vertical"></i>
+                                    </div>
+                                    <div class="topic-group-card__heading">
+                                        <span class="topic-group-card__pill"></span>
+                                        <div>
+                                            <h3 class="topic-group-card__title">{{ group.topic_name || group.name || group.topic }}</h3>
+                                            <p class="topic-group-card__description" *ngIf="group.description">{{ group.description }}</p>
+                                            <p class="topic-group-card__schedule" *ngIf="group.normalizedStart || group.normalizedEnd">
+                                                <span *ngIf="group.normalizedStart">Start: {{ group.normalizedStart }}</span>
+                                                <span *ngIf="group.normalizedStart && group.normalizedEnd" class="mx-1">•</span>
+                                                <span *ngIf="group.normalizedEnd">End: {{ group.normalizedEnd }}</span>
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="topic-group-card__meta">
+                                        <span class="topic-group-card__count" *ngIf="group.items?.length">{{ group.items.length }} item{{ group.items.length > 1 ? 's' : '' }}</span>
+                                        <button type="button" class="btn btn-link btn-sm" (click)="openEditTopic(group)">
+                                            <i class="bi bi-pencil-square"></i>
+                                            Edit
+                                        </button>
+                                    </div>
                                 </div>
-                                <button type="button" class="btn btn-link btn-sm" (click)="openEditTopic(group)">
-                                    <i class="bi bi-pencil-square"></i>
-                                    Edit
-                                </button>
-                            </div>
-                                <div class="curriculum-list"
-                                     cdkDropList
-                                     [id]="group.dropListId"
-                                     [cdkDropListData]="group.items"
-                                     [cdkDropListConnectedTo]="getDropConnections(group.dropListId)"
-                                     (cdkDropListDropped)="onTopicDrop($event, group)">
-                                    <ng-container *ngFor="let item of group.items; trackBy: trackById">
-                                        <div class="curriculum-card"
-                                             *ngIf="matchesFilter(item)"
-                                             cdkDrag
-                                             [cdkDragData]="item"
-                                             role="button"
-                                             tabindex="0"
-                                             (click)="openHomeworkDetail(item)">
-                                            <div class="curriculum-card__header">
-                                                <div class="curriculum-card__info">
-                                                    <h4 class="curriculum-card__title">{{ item.content_name }}</h4>
-                                                    <div class="curriculum-card__meta"
-                                                         *ngIf="item.subject_name || item.due_date || item.content_format">
-                                                        <span class="curriculum-card__meta-item" *ngIf="item.subject_name">
-                                                            <i class="bi bi-book"></i>
-                                                            {{ item.subject_name }}
-                                                        </span>
-                                                        <span class="curriculum-card__meta-item" *ngIf="item.due_date">
-                                                            <i class="bi bi-calendar-event"></i>
-                                                            Due {{ item.due_date | date:'MMM d, y' }}
-                                                        </span>
-                                                        <span class="curriculum-card__meta-item text-uppercase" *ngIf="item.content_format">
-                                                            <i class="bi bi-ui-radios-grid"></i>
-                                                            {{ item.content_format }}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                                <div class="curriculum-card__tools">
-                                                    <span class="curriculum-card__status"
-                                                          [ngClass]="getCurriculumStatusClass(item)">
-                                                        {{ resolveCurriculumStatus(item) | titlecase }}
-                                                    </span>
-                                                    <div ngbDropdown container="body" class="curriculum-card__dropdown"
-                                                         *ngIf="hasContentActions(item)">
-                                                        <button type="button"
-                                                                class="btn btn-sm btn-outline-secondary"
-                                                                ngbDropdownToggle
-                                                                (click)="$event.stopPropagation()">
-                                                            <i class="bi bi-three-dots"></i>
-                                                            <span class="ms-1">Actions</span>
-                                                        </button>
-                                                        <div ngbDropdownMenu (click)="$event.stopPropagation()">
-                                                            <button type="button" class="dropdown-item"
-                                                                    *ngIf="canGradeContent(item)"
-                                                                    (click)="openContentGrading(item)">
-                                                                <i class="bi bi-people-fill me-2"></i>
-                                                                Grading
-                                                            </button>
-                                                            <button type="button" class="dropdown-item"
-                                                                    (click)="previewContent(item, 'student')">
-                                                                <i class="bi bi-person-lines-fill me-2"></i>
-                                                                Student view
-                                                            </button>
-                                                            <button type="button" class="dropdown-item"
-                                                                    (click)="previewContent(item, 'teacher')">
-                                                                <i class="bi bi-person-badge me-2"></i>
-                                                                Teacher view
-                                                            </button>
-                                                            <button type="button" class="dropdown-item"
-                                                                    *ngIf="item.teacher_version_path"
-                                                                    (click)="openTeacherVersionPdf(item)">
-                                                                <i class="bi bi-file-earmark-pdf me-2"></i>
-                                                                Teacher version PDF
-                                                            </button>
-                                                            <button type="button" class="dropdown-item"
-                                                                    *ngIf="canManageClass"
-                                                                    (click)="openEditContent(item)">
-                                                                <i class="bi bi-pencil-square me-2"></i>
-                                                                Edit content
-                                                            </button>
-                                                            <button type="button" class="dropdown-item text-danger"
-                                                                    *ngIf="canManageClass"
-                                                                    (click)="openDeleteContent(item)">
-                                                                <i class="bi bi-trash me-2"></i>
-                                                                Delete content
-                                                            </button>
-                                                            <div *ngIf="canMoveBetweenTopics(item, group)">
-                                                                <span class="dropdown-header text-muted">
-                                                                    Move to topic
+                                <div class="topic-group-card__body">
+                                    <div class="topic-group-card__drop-zone curriculum-list"
+                                         cdkDropList
+                                         [id]="group.dropListId"
+                                         [cdkDropListData]="group.items"
+                                         [cdkDropListConnectedTo]="getDropConnections(group.dropListId)"
+                                         (cdkDropListDropped)="onTopicDrop($event, group)">
+                                        <ng-container *ngIf="hasVisibleItems(group.items); else topicNoVisibleState">
+                                            <ng-container *ngFor="let item of group.items; trackBy: trackById">
+                                                <div class="curriculum-card curriculum-card--compact"
+                                                     *ngIf="matchesFilter(item)"
+                                                     cdkDrag
+                                                     [cdkDragData]="item"
+                                                     role="button"
+                                                     tabindex="0"
+                                                     (click)="openHomeworkDetail(item)">
+                                                    <div class="curriculum-card__header">
+                                                        <div class="curriculum-card__info">
+                                                            <h4 class="curriculum-card__title">{{ item.content_name }}</h4>
+                                                            <div class="curriculum-card__meta"
+                                                                 *ngIf="item.subject_name || item.due_date || item.content_format">
+                                                                <span class="curriculum-card__meta-item" *ngIf="item.subject_name">
+                                                                    <i class="bi bi-book"></i>
+                                                                    {{ item.subject_name }}
                                                                 </span>
-                                                                <button type="button"
-                                                                        class="dropdown-item"
-                                                                        *ngFor="let topic of topics"
-                                                                        [disabled]="isSameTopic(item, topic)"
-                                                                        (click)="moveContentToTopic(item, topic)">
-                                                                    {{ topic?.topic_name || topic?.name || topic?.topic }}
-                                                                </button>
-                                                                <div *ngIf="!topics?.length" class="dropdown-item-text small text-neutral-500">
-                                                                    No topics available
-                                                                </div>
-                                                                <div class="dropdown-divider"></div>
+                                                                <span class="curriculum-card__meta-item" *ngIf="item.due_date">
+                                                                    <i class="bi bi-calendar-event"></i>
+                                                                    Due {{ item.due_date | date:'MMM d, y' }}
+                                                                </span>
+                                                                <span class="curriculum-card__meta-item text-uppercase" *ngIf="item.content_format">
+                                                                    <i class="bi bi-ui-radios-grid"></i>
+                                                                    {{ item.content_format }}
+                                                                </span>
                                                             </div>
-                                                            <button type="button" class="dropdown-item"
-                                                                    (click)="openContentReports(item)">
-                                                                <i class="bi bi-bar-chart-line me-2"></i>
-                                                                Reports
-                                                            </button>
+                                                        </div>
+                                                        <div class="curriculum-card__tools">
+                                                            <span class="curriculum-card__status"
+                                                                  [ngClass]="getCurriculumStatusClass(item)">
+                                                                {{ resolveCurriculumStatus(item) | titlecase }}
+                                                            </span>
+                                                            <div ngbDropdown container="body" class="curriculum-card__dropdown"
+                                                                 *ngIf="hasContentActions(item)">
+                                                                <button type="button"
+                                                                        class="btn btn-sm btn-outline-secondary"
+                                                                        ngbDropdownToggle
+                                                                        (click)="$event.stopPropagation()">
+                                                                    <i class="bi bi-three-dots"></i>
+                                                                    <span class="ms-1">Actions</span>
+                                                                </button>
+                                                                <div ngbDropdownMenu (click)="$event.stopPropagation()">
+                                                                    <button type="button" class="dropdown-item"
+                                                                            *ngIf="canGradeContent(item)"
+                                                                            (click)="openContentGrading(item)">
+                                                                        <i class="bi bi-people-fill me-2"></i>
+                                                                        Grading
+                                                                    </button>
+                                                                    <button type="button" class="dropdown-item"
+                                                                            (click)="previewContent(item, 'student')">
+                                                                        <i class="bi bi-person-lines-fill me-2"></i>
+                                                                        Student view
+                                                                    </button>
+                                                                    <button type="button" class="dropdown-item"
+                                                                            (click)="previewContent(item, 'teacher')">
+                                                                        <i class="bi bi-person-badge me-2"></i>
+                                                                        Teacher view
+                                                                    </button>
+                                                                    <button type="button" class="dropdown-item"
+                                                                            *ngIf="item.teacher_version_path"
+                                                                            (click)="openTeacherVersionPdf(item)">
+                                                                        <i class="bi bi-file-earmark-pdf me-2"></i>
+                                                                        Teacher version PDF
+                                                                    </button>
+                                                                    <button type="button" class="dropdown-item"
+                                                                            *ngIf="canManageClass"
+                                                                            (click)="openEditContent(item)">
+                                                                        <i class="bi bi-pencil-square me-2"></i>
+                                                                        Edit content
+                                                                    </button>
+                                                                    <button type="button" class="dropdown-item text-danger"
+                                                                            *ngIf="canManageClass"
+                                                                            (click)="openDeleteContent(item)">
+                                                                        <i class="bi bi-trash me-2"></i>
+                                                                        Delete content
+                                                                    </button>
+                                                                    <div *ngIf="canMoveBetweenTopics(item, group)">
+                                                                        <span class="dropdown-header text-muted">
+                                                                            Move to topic
+                                                                        </span>
+                                                                        <button type="button"
+                                                                                class="dropdown-item"
+                                                                                *ngFor="let topic of topics"
+                                                                                [disabled]="isSameTopic(item, topic)"
+                                                                                (click)="moveContentToTopic(item, topic)">
+                                                                            {{ topic?.topic_name || topic?.name || topic?.topic }}
+                                                                        </button>
+                                                                        <div *ngIf="!topics?.length" class="dropdown-item-text small text-neutral-500">
+                                                                            No topics available
+                                                                        </div>
+                                                                        <div class="dropdown-divider"></div>
+                                                                    </div>
+                                                                    <button type="button" class="dropdown-item"
+                                                                            (click)="openContentReports(item)">
+                                                                        <i class="bi bi-bar-chart-line me-2"></i>
+                                                                        Reports
+                                                                    </button>
+                                                                </div>
+                                                            </div>
                                                         </div>
                                                     </div>
+                                                    <div class="curriculum-card__footer curriculum-card__footer--compact">
+                                                        <span><i class="bi bi-arrows-move"></i> Drag to reorder</span>
+                                                        <span><i class="bi bi-eye"></i> View details</span>
+                                                    </div>
                                                 </div>
+                                            </ng-container>
+                                        </ng-container>
+                                        <ng-template #topicNoVisibleState>
+                                            <div class="topic-group-card__empty">
+                                                <i class="bi bi-inbox"></i>
+                                                <p class="mb-1">No curriculum items match this filter for this topic.</p>
+                                                <p class="small text-neutral-500 mb-0">Drag materials here or adjust the filter to see more.</p>
                                             </div>
-                                            <div class="curriculum-card__footer">
-                                                <span><i class="bi bi-arrows-move"></i> Drag to reorder</span>
-                                                <span><i class="bi bi-eye"></i> View details</span>
-                                            </div>
-                                        </div>
-                                    </ng-container>
-                                    <div class="p-3 text-center text-neutral-500" *ngIf="!hasVisibleItems(group.items)">
-                                        No curriculum items match this filter for this topic. Drag items here to add them.
+                                        </ng-template>
                                     </div>
                                 </div>
                             </div>
-                        </ng-container>
-                    </div>
-                </section>
-
-                <section class="card shadow-sm border-0">
-                    <div class="card-header border-0 pb-0">
-                        <div class="d-flex align-items-center justify-content-between">
-                            <div>
-                                <h3 class="h6 mb-1">Other Links</h3>
-                                <p class="small text-neutral-600 mb-0">
-                                    Quick access to supporting materials and external resources.
-                                </p>
                             </div>
-                            <button type="button" class="btn btn-sm btn-outline-primary" (click)="openAddResourceLink()">
-                                <i class="bi bi-link-45deg"></i>
-                                Add resource link
-                            </button>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <ul class="list-unstyled mb-0" *ngIf="resourceLinks.length; else noLinks">
-                            <li class="mb-3" *ngFor="let link of resourceLinks; index as i">
-                                <a [href]="link.url || link.link || link" target="_blank" rel="noopener noreferrer">
-                                    {{ link.title || link.name || link.url || link.link || 'Resource ' + (i + 1) }}
-                                </a>
-                                <div class="small text-neutral-600" *ngIf="link.description">{{ link.description }}</div>
-                            </li>
-                        </ul>
-                        <ng-template #noLinks>
+                        </ng-container>
+                        <ng-template #emptyTopicState>
                             <div class="empty-state text-center py-4 text-neutral-500">
-                                No additional resources yet.
+                                <p class="mb-3">No topics have been created for this class yet.</p>
+                                <button type="button" class="btn btn-sm btn-primary" (click)="openAddTopic()">
+                                    <i class="bi bi-plus-circle me-1"></i>
+                                    Add topic
+                                </button>
                             </div>
                         </ng-template>
                     </div>
                 </section>
+
             </div>
         </div>
 
@@ -774,17 +784,26 @@
                         </div>
                     </div>
                     <div class="card-body">
-                        <div class="list-group list-group-flush" *ngIf="announcements.length; else noAnnouncements">
-                            <div class="list-group-item py-3" *ngFor="let announcement of announcements; trackBy: trackById">
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <div>
-                                        <h3 class="h6 mb-1">{{ announcement.title || announcement.subject || 'Announcement' }}</h3>
-                                        <p class="mb-0 small text-neutral-600" [innerHTML]="announcement?.message || announcement?.body"></p>
+                        <div class="text-center py-3" *ngIf="isAnnouncementsLoading">
+                            <span class="spinner-border spinner-border-sm text-primary" role="status" aria-hidden="true"></span>
+                        </div>
+                        <ng-container *ngIf="!isAnnouncementsLoading">
+                            <div class="list-group list-group-flush" *ngIf="announcements.length; else noAnnouncements">
+                                <div class="list-group-item py-3" *ngFor="let announcement of announcements; trackBy: trackByAnnouncement">
+                                    <div class="d-flex flex-column">
+                                        <div class="small text-neutral-500 mb-1" *ngIf="announcement.created_by || announcement.created_at">
+                                            <span *ngIf="announcement.created_by">By <strong>{{ announcement.created_by }}</strong></span>
+                                            <span *ngIf="announcement.created_by && announcement.created_at"> • </span>
+                                            <span *ngIf="announcement.created_at">{{ announcement.created_at | date:'MMM d, y, h:mm a' }}</span>
+                                        </div>
+                                        <div class="small text-neutral-600" [innerHTML]="announcement.message || announcement.note"></div>
                                     </div>
-                                    <span class="small text-neutral-500">{{ announcement.created_at | date:'MMM d, y, h:mm a' }}</span>
+                                    <div class="small text-neutral-500 mt-2" *ngIf="announcement.comment_count">
+                                        {{ announcement.comment_count }} comment<span *ngIf="announcement.comment_count > 1">s</span>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        </ng-container>
                         <ng-template #noAnnouncements>
                             <div class="empty-state text-center py-4 text-neutral-500">
                                 No announcements yet. Use the button above to post one.
@@ -1114,9 +1133,12 @@
         <div class="col-12 text-danger small mt-3" *ngIf="addStudentError">{{ addStudentError }}</div>
     </div>
     <div class="modal-footer">
-        <button class="btn btn-outline-primary" type="button" (click)="addStudentEnabled ? addstudent() : submitClass(1)" [disabled]="isSubmittingStudents">
+        <button class="btn btn-outline-secondary mr-2" type="button" (click)="closeAddStudentModal()" [disabled]="isSubmittingStudents">
+            Cancel
+        </button>
+        <button class="btn btn-primary" type="button" (click)="addStudentEnabled ? addstudent() : submitClass(1)" [disabled]="isSubmittingStudents">
             <span *ngIf="isSubmittingStudents" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-            Submit
+            Save
         </button>
     </div>
 </ng-template>
@@ -1203,7 +1225,10 @@
         </div>
     </div>
     <div class="modal-footer">
-        <button class="btn btn-outline-primary" type="button" (click)="bulkMail()" [disabled]="!validationEmail && emailList.length">
+        <button class="btn btn-outline-secondary mr-2" type="button" (click)="closeInviteEmailModal()" [disabled]="isSubmittingStudents">
+            Cancel
+        </button>
+        <button class="btn btn-primary" type="button" (click)="bulkMail()" [disabled]="!validationEmail && emailList.length">
             Submit
         </button>
     </div>

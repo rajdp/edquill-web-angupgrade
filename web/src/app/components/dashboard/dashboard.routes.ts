@@ -12,6 +12,14 @@ export const DASHBOARD_ROUTES: Routes = [
           title: 'Dashboard',
           breadcrumb: 'Dashboard'
         }
+      },
+      {
+        path: 'admin',
+        loadChildren: () => import('../admin/admin-dashboard/admin-dashboard.routes').then(m => m.ADMIN_DASHBOARD_ROUTES),
+        data: {
+          title: 'Admin Dashboard',
+          breadcrumb: 'Admin Dashboard'
+        }
       }
     ]
   }

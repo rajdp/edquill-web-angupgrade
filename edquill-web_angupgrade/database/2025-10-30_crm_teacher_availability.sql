@@ -49,13 +49,7 @@ CREATE TABLE IF NOT EXISTS t_teacher_availability (
   KEY idx_teacher_availability_teacher (teacher_id),
   KEY idx_teacher_availability_school (school_id),
   KEY idx_teacher_availability_recurring (is_recurring, day_of_week),
-  CONSTRAINT fk_teacher_availability_teacher
-    FOREIGN KEY (teacher_id) REFERENCES user(id)
-      ON DELETE CASCADE
-  ,
-  CONSTRAINT fk_teacher_availability_school
-    FOREIGN KEY (school_id) REFERENCES school(id)
-      ON DELETE CASCADE
+
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Optional reference table to normalize time zone labels

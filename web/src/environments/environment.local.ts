@@ -21,7 +21,19 @@ function resolveFrontendOrigin(hostname: string): string {
 
 const hostname = resolveHostname();
 const frontendOrigin = resolveFrontendOrigin(hostname);
-const backendOrigin = `http://${DEFAULT_BACKEND_HOST}:${DEFAULT_BACKEND_PORT}`;
+function resolveBackendHost(hostname: string): string {
+  if (
+    !hostname ||
+    hostname === DEFAULT_HOST ||
+    hostname.endsWith('.localhost')
+  ) {
+    return DEFAULT_BACKEND_HOST;
+  }
+  return hostname;
+}
+
+const backendHost = resolveBackendHost(hostname);
+const backendOrigin = `http://${backendHost}:${DEFAULT_BACKEND_PORT}`;
 const backendBaseUrl = DEFAULT_BACKEND_BASE_PATH
   ? `${backendOrigin}/${DEFAULT_BACKEND_BASE_PATH.replace(/^\/|\/$/g, '')}`
   : backendOrigin;
@@ -30,12 +42,11 @@ export const environment = {
   production: false,
   apiHost: `${backendBaseUrl}/`,
   webHost: frontendOrigin,
-  imgUrl: `${backendBaseUrl}/`,
+  imgUrl: `${backendBaseUrl}/public`,
   version: '6.0.0',
   showStudent: true,
   sessionPrefix: 'rista_',
   envName: 'LOCAL'
 };
-
 
 

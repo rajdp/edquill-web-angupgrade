@@ -403,6 +403,14 @@ export class ClassService {
             catchError(this.handleError));
     }
 
+    fetchClassNotes(data) {
+        const json = JSON.stringify(data);
+        const url = 'classes/getClassNotes';
+        return this.http.post(url, json).pipe(
+            map(this.extractData),
+            catchError(this.handleError));
+    }
+
     deleteStudentList(data) {
         const json = JSON.stringify(data);
         const url = 'classes/removeStudent';

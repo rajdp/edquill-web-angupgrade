@@ -1,8 +1,8 @@
 import {Injectable} from '@angular/core';
-import {HttpClient} from '@angular/common/http';
+import {HttpClient, HttpHeaders} from '@angular/common/http';
 import {AuthService} from './auth.service';
 import {catchError, map} from 'rxjs/operators';
-import {throwError as observableThrowError} from 'rxjs';
+import {throwError as observableThrowError, Observable} from 'rxjs';
 import ApexCharts from 'apexcharts';
 
 @Injectable({
@@ -180,9 +180,22 @@ export class CommonService {
         }
     }
 
-    public downloadfilewithbytes(url: any) {
+    public downloadfilewithbytes(
+        url: string,
+        options?: { withCredentials?: boolean; includeAuthHeader?: boolean }
+    ): Observable<ArrayBuffer> {
         console.log(url, 'url');
-        return this.http.get(url, {responseType: 'arraybuffer'});
+        const includeAuthHeader = options?.includeAuthHeader ?? true;
+        const token = this.authService.getAccessToken();
+        const headersConfig = includeAuthHeader && token ? { Accesstoken: token } : undefined;
+        const headers = headersConfig ? new HttpHeaders(headersConfig) : undefined;
+        const withCredentials = options?.withCredentials ?? false;
+
+        return this.http.get(url, {
+            responseType: 'arraybuffer',
+            withCredentials,
+            headers
+        }) as Observable<ArrayBuffer>;
     }
 
     excelUpload(data) {
@@ -234,6 +247,14 @@ export class CommonService {
     }
 
     studentRegis(data) {
+        const json = JSON.stringify(data);
+        const url = 'user/getUserDetail';
+        return this.http.post(url, json).pipe(
+            map(this.extractData),
+            catchError(this.handleError));
+    }
+
+    getUserDetail(data) {
         const json = JSON.stringify(data);
         const url = 'user/getUserDetail';
         return this.http.post(url, json).pipe(

@@ -356,7 +356,8 @@ export class PreviewComponent implements OnInit {
                 this.webhost = this.confi.getimgUrl();
                 this.additionalLinks = this.getpdf[0]?.links ? this.getpdf[0]?.links : [];
                 console.log(this.additionalLinks, 'additionAlLinks');
-                console.log('PDF URL:', this.webhost + '/' + this.getpdf[0]?.original_image_url);
+                const pdfUrl = this.buildAssetUrl(this.webhost, this.getpdf[0]?.original_image_url);
+                console.log('PDF URL:', pdfUrl);
                 
                 if (this.getpdf[0] && this.getpdf[0].original_image_url != undefined) {
                     console.log('Starting PDF download...');
@@ -367,7 +368,7 @@ export class PreviewComponent implements OnInit {
                         this.isPdfAvailable = false;
                     }, 10000); // 10 second timeout
                     
-                    this.commonservice.downloadfilewithbytes(this.webhost + '/' + this.getpdf[0]?.original_image_url)
+                    this.commonservice.downloadfilewithbytes(pdfUrl, { includeAuthHeader: false })
                         .subscribe({
                             next: (filebytes: ArrayBuffer) => {
                                 clearTimeout(timeout);
@@ -730,6 +731,15 @@ export class PreviewComponent implements OnInit {
 
     deleteAction() {
         this.modalRef = this.modalService.open(this.deleteClass, {size: 'md', backdrop: 'static'});
+    }
+
+    private buildAssetUrl(baseUrl: string, assetPath: string | undefined): string {
+        if (!assetPath) {
+            return baseUrl || '';
+        }
+        const normalizedBase = (baseUrl || '').replace(/\/+$/, '');
+        const normalizedPath = assetPath.replace(/^\/+/, '');
+        return `${normalizedBase}/${normalizedPath}`;
     }
 }
 

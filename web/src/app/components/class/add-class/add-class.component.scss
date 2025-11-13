@@ -191,3 +191,36 @@
     padding: 7px;
   }
 }
+
+.day-toggle {
+  min-width: 90px;
+  border-radius: 999px;
+  transition: all .2s ease;
+}
+
+.day-toggle.active,
+.day-toggle:active,
+.day-toggle:hover {
+  background-color: #1d6aa5;
+  border-color: #1d6aa5;
+  color: #fff;
+}
+
+.schedule-day-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  transition: box-shadow .2s ease, transform .2s ease;
+}
+
+.schedule-day-card:hover {
+  box-shadow: 0 12px 24px rgba(29, 106, 165, 0.12);
+  transform: translateY(-2px);
+}
+
+.schedule-day-card .schedule-slot {
+  background-color: #f8fbff;
+}
+
+.border-dashed {
+  border-style: dashed !important;
+}

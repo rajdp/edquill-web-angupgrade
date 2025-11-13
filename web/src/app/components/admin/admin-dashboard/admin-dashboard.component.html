@@ -1,0 +1,101 @@
+<div class="admin-dashboard-container">
+  <!-- Header -->
+  <div class="dashboard-header mb-4">
+    <div class="d-flex justify-content-between align-items-center">
+      <h2 class="mb-0">Admin Dashboard</h2>
+      <form [formGroup]="dateRangeForm" class="d-flex gap-2 align-items-center">
+        <label class="form-label mb-0">From:</label>
+        <input type="date" formControlName="from" class="form-control form-control-sm" 
+               (change)="onDateRangeChange()" style="width: 150px;">
+        <label class="form-label mb-0">To:</label>
+        <input type="date" formControlName="to" class="form-control form-control-sm" 
+               (change)="onDateRangeChange()" style="width: 150px;">
+      </form>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+  </div>
+
+  <!-- KPI Tiles -->
+  <div *ngIf="!loading" class="kpi-tiles mb-4">
+    <div class="row g-3">
+      <div class="col-12 col-sm-6 col-md-4 col-lg-3" *ngFor="let tile of tiles">
+        <div class="card h-100 kpi-tile border-0 shadow-sm">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <div>
+                <h6 class="text-muted mb-1 small">{{ tile.label }}</h6>
+                <h3 class="mb-0 fw-bold text-{{ tile.color }}">
+                  {{ tile.value }}
+                </h3>
+                <small class="text-muted" *ngIf="tile.subtitle">{{ tile.subtitle }}</small>
+              </div>
+              <i [class]="'bi ' + tile.icon + ' fs-4 text-' + tile.color + '-subtle'"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Revenue Summary -->
+  <div *ngIf="!loading && revenue" class="revenue-summary mb-4">
+    <div class="card shadow-sm">
+      <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Revenue Summary</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-4">
+            <div class="text-center">
+              <h6 class="text-muted">MRR</h6>
+              <h4 class="text-primary">${{ (revenue.mrr_cents / 100).toFixed(2) }}</h4>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="text-center">
+              <h6 class="text-muted">ARR</h6>
+              <h4 class="text-success">${{ (revenue.arr_cents / 100).toFixed(2) }}</h4>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="text-center">
+              <h6 class="text-muted">Overdue</h6>
+              <h4 class="text-danger">${{ (revenue.overdue_cents / 100).toFixed(2) }}</h4>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Action Rail -->
+  <div *ngIf="!loading" class="action-rail">
+    <div class="card shadow-sm">
+      <div class="card-header bg-light">
+        <h5 class="mb-0">Quick Actions</h5>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-12 col-sm-6 col-md-3" *ngFor="let action of actionCards">
+            <button 
+              class="btn btn-outline-primary w-100 h-100 d-flex flex-column align-items-center justify-content-center p-3 action-card"
+              [disabled]="!action.enabled"
+              (click)="action.action()"
+              style="min-height: 120px;">
+              <i [class]="'bi ' + action.icon + ' fs-3 mb-2'"></i>
+              <strong>{{ action.label }}</strong>
+              <small class="text-muted text-center mt-1">{{ action.description }}</small>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+

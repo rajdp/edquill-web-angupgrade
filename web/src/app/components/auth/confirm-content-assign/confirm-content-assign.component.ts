@@ -110,6 +110,16 @@ export class ConfirmContentAssignComponent implements OnInit {
     }
 
     ngOnInit(): void {
+        // Debug: Log contentDetails to see what's being passed
+        console.log('confirm-content-assign ngOnInit - contentDetails:', this.contentDetails);
+        console.log('confirm-content-assign ngOnInit - multiContentId:', this.multiContentId);
+        
+        // If contentDetails is empty but we have multiContentId, try to use that
+        if ((!this.contentDetails || Object.keys(this.contentDetails).length === 0) && this.multiContentId.length > 0) {
+            // multiContentId might already have content_id, so we can use it
+            console.log('Using multiContentId as contentDetails source');
+        }
+        
         if (this.contentAssignedForm == 'class') {
             this.assignType = '1';
             this.showClassRelatedField = true;
@@ -142,12 +152,31 @@ export class ConfirmContentAssignComponent implements OnInit {
         }
         this.teacherList();
         if (this.multiContentId.length == 0) {
-            this.contentType = this.contentDetails.content_type;
-            this.releaseGrade = this.contentDetails.allow_autograde;
-            this.checkQuestion = this.contentDetails.without_question;
-            this.contentFormat = this.contentDetails.content_format;
-            this.downloadContentAvailable = true;
-            this.allowScore = this.releaseGrade == '1' && this.contentType != '1';
+            // Safely access contentDetails properties
+            if (this.contentDetails) {
+                this.contentType = this.contentDetails.content_type;
+                this.releaseGrade = this.contentDetails.allow_autograde;
+                this.checkQuestion = this.contentDetails.without_question;
+                this.contentFormat = this.contentDetails.content_format;
+                this.downloadContentAvailable = true;
+                this.allowScore = this.releaseGrade == '1' && this.contentType != '1';
+            } else {
+                // Try to get from session if contentDetails is not available
+                const editResources = this.auth.getSessionData('editresources');
+                if (editResources) {
+                    try {
+                        const editData = JSON.parse(editResources);
+                        this.contentType = editData?.content_type;
+                        this.releaseGrade = editData?.allow_autograde;
+                        this.checkQuestion = editData?.without_question;
+                        this.contentFormat = editData?.content_format;
+                        this.downloadContentAvailable = true;
+                        this.allowScore = this.releaseGrade == '1' && this.contentType != '1';
+                    } catch (e) {
+                        console.error('Error parsing editresources in ngOnInit:', e);
+                    }
+                }
+            }
         } else {
             this.downloadContentAvailable = this.multiContentId.some(code => code.download == '1');
             this.allowScore = this.settingList[2]?.value == 1 ?? true;
@@ -647,10 +676,91 @@ export class ConfirmContentAssignComponent implements OnInit {
                 classId = '';
             }
         }
+        // Debug logging
+        console.log('submitAssign - contentDetails:', this.contentDetails);
+        console.log('submitAssign - multiContentId:', this.multiContentId);
+        
         if (this.multiContentId.length == 0) {
-            this.multiContentId.push({
-                content_id: this.contentDetails.content_id
-            });
+            // Check if contentDetails exists and has content_id
+            if (this.contentDetails && this.contentDetails.content_id) {
+                this.multiContentId.push({
+                    content_id: this.contentDetails.content_id
+                });
+            } else if (this.contentDetails && Object.keys(this.contentDetails).length > 0) {
+                // contentDetails exists but might not have content_id directly
+                // Check if it's nested or has a different structure
+                const contentId = this.contentDetails.content_id || 
+                                 this.contentDetails.id || 
+                                 (this.contentDetails.Contentdetails && this.contentDetails.Contentdetails.content_id) ||
+                                 (this.contentDetails.ResponseObject && this.contentDetails.ResponseObject.content_id);
+                
+                if (contentId) {
+                    this.multiContentId.push({
+                        content_id: contentId
+                    });
+                } else {
+                    // Fall through to session data check
+                }
+            } else {
+                // Try to get content_id from multiple session sources
+                let contentId = null;
+                
+                // Try editresources first
+                const editResources = this.auth.getSessionData('editresources');
+                if (editResources) {
+                    try {
+                        const editData = JSON.parse(editResources);
+                        if (editData && editData.content_id) {
+                            contentId = editData.content_id;
+                        }
+                    } catch (e) {
+                        console.error('Error parsing editresources:', e);
+                    }
+                }
+                
+                // Try textAssignValue if contentId not found
+                if (!contentId) {
+                    const textAssignValue = this.auth.getSessionData('textAssignValue');
+                    if (textAssignValue) {
+                        try {
+                            const assignData = JSON.parse(textAssignValue);
+                            if (assignData && assignData.content_id) {
+                                contentId = assignData.content_id;
+                            }
+                        } catch (e) {
+                            console.error('Error parsing textAssignValue:', e);
+                        }
+                    }
+                }
+                
+                // Try editor session if contentId still not found
+                if (!contentId) {
+                    const editor = this.auth.getSessionData('editor');
+                    if (editor) {
+                        try {
+                            const editorData = JSON.parse(editor);
+                            if (editorData && editorData.content_id) {
+                                contentId = editorData.content_id;
+                            }
+                        } catch (e) {
+                            console.error('Error parsing editor:', e);
+                        }
+                    }
+                }
+                
+                // If we found a contentId, use it
+                if (contentId) {
+                    this.multiContentId.push({
+                        content_id: contentId
+                    });
+                } else {
+                    console.error('content_id not found in contentDetails or any session data');
+                    console.error('contentDetails:', this.contentDetails);
+                    console.error('multiContentId:', this.multiContentId);
+                    this.toastr.error('Content ID is missing. Please try again.');
+                    return;
+                }
+            }
         }
         const allStudentValue = allstudent == '1' || type == '2' || typeSelection == '2' ? '1' : '0';
         const selectedStudentId = allstudent == '1' || type == '2' || typeSelection == '2' ? '' : this.assignForm.controls.specificstudent.value == '' ? [] : this.assignForm.controls.specificstudent.value
@@ -684,8 +794,19 @@ export class ConfirmContentAssignComponent implements OnInit {
                                 });
                             });
                         } else {
+                            // Get content_id from multiContentId if available, otherwise from contentDetails
+                            const contentId = this.multiContentId.length > 0 && this.multiContentId[0].content_id 
+                                ? this.multiContentId[0].content_id 
+                                : (this.contentDetails && this.contentDetails.content_id ? this.contentDetails.content_id : '');
+                            
+                            if (!contentId) {
+                                console.error('content_id is missing');
+                                this.toastr.error('Content ID is missing. Please try again.');
+                                return;
+                            }
+                            
                             classDetails = [{
-                                content_id: this.contentDetails.content_id,
+                                content_id: contentId,
                                 class_id: this.classData[0]?.class_id,
                                 start_date: '',
                                 end_date: '',
@@ -712,7 +833,9 @@ export class ConfirmContentAssignComponent implements OnInit {
                             school_id: this.auth.getSessionData('school_id'),
                             classdetails: classDetails,
                             classroomDetails: [{
-                                content_id: this.assignType == '1' ? this.multiContentId[0]?.content_id ?? '' : [this.contentDetails.content_id],
+                                content_id: this.assignType == '1' 
+                                    ? (this.multiContentId[0]?.content_id ?? '') 
+                                    : [(this.contentDetails && this.contentDetails.content_id ? this.contentDetails.content_id : '')],
                                 batch_id: batchId,
                                 start_date: '',
                                 end_date: '',

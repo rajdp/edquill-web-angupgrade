@@ -109,6 +109,7 @@ export class CrmRegistrationsComponent implements OnInit {
   followUpSaving = false;
   assigneesLoading = false;
   assigneesError = '';
+  courseDecisionsSaving = false;
 
   readonly statusOptions = [
     { value: 'pending', label: 'Pending' },
@@ -528,6 +529,53 @@ export class CrmRegistrationsComponent implements OnInit {
       error: (error) => {
         this.promoteSaving = false;
         this.toastr.error(error.message || 'Unable to convert registration');
+      }
+    });
+  }
+
+  saveCourseDecisions(): void {
+    if (!this.selectedRegistrationId) {
+      return;
+    }
+
+    if (!this.courseDecisions.length) {
+      this.toastr.info('There are no course selections to review for this registration.');
+      return;
+    }
+
+    const prepared = this.prepareCourseDecisions();
+    if (prepared === null) {
+      return;
+    }
+
+    if (!prepared.length) {
+      this.toastr.info('No course decisions to save yet.');
+      return;
+    }
+
+    const payload = {
+      registration_id: this.selectedRegistrationId,
+      course_decisions: prepared
+    };
+
+    this.courseDecisionsSaving = true;
+    this.service.saveCourseDecisions(payload).subscribe({
+      next: (response) => {
+        this.courseDecisionsSaving = false;
+        this.toastr.success('Course decisions saved');
+        if (this.registrationDetail) {
+          if (response?.courses) {
+            this.registrationDetail.courses = response.courses;
+            this.buildCourseDecisionForm(this.registrationDetail);
+          }
+          if (response?.registration) {
+            this.registrationDetail.registration = response.registration;
+          }
+        }
+      },
+      error: (error) => {
+        this.courseDecisionsSaving = false;
+        this.toastr.error(error.message || 'Unable to save course decisions');
       }
     });
   }
@@ -1223,6 +1271,7 @@ export class CrmRegistrationsComponent implements OnInit {
 
       prepared.push({
         registration_course_id: raw.registration_course_id,
+        course_id: raw.course_id ?? null,
         decision_status: status,
         approved_schedule_id: status === 'approved' ? (raw.approved_schedule_id || null) : null,
         approved_fee_amount: status === 'approved' ? feeValue : null,

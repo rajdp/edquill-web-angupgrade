@@ -616,6 +616,18 @@
                       </div>
                     </div>
                   </div>
+                  <div class="row g-3 mt-3" *ngIf="courseDecisions.length">
+                    <div class="col-12 d-flex flex-wrap gap-2 justify-content-between align-items-center">
+                      <small class="text-muted">Save decisions once placements and fees are finalized.</small>
+                      <button
+                        class="btn btn-outline-primary"
+                        type="button"
+                        (click)="saveCourseDecisions()"
+                        [disabled]="courseDecisionsSaving || promoteSaving || isConverted">
+                        {{ courseDecisionsSaving ? 'Saving…' : 'Save course decisions' }}
+                      </button>
+                    </div>
+                  </div>
                   <div class="row g-3 mt-2">
                     <div class="col-md-6 d-flex align-items-center">
                       <div class="form-check">

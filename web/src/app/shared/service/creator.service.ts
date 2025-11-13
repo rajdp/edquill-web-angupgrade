@@ -28,7 +28,7 @@ export class CreatorService {
 
     contentCreatorList(data) {
         const json = JSON.stringify(data);
-        const url = 'content/contentCreatorList';
+        const url = 'contentcreator/list';
         return this.http.post(url, json).pipe(
             map(this.extractData),
             catchError(this.handleError));
